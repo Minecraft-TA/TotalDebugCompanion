@@ -1,6 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.editor
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -93,18 +95,24 @@ private fun Lines(lines: Editor.Lines, verticalScrollState: LazyListState, setti
             }.collect(Collectors.joining("\n"))
         val styles = getStylesForJavaCode(code)
 
-        Box(Modifier.fillMaxHeight()) {
+        Box(Modifier.fillMaxSize()) {
             val lineHeight = settings.fontSize.toDp() * 1.6f
-            Column {
-                Box(Modifier.height(0.dp)) {
-                    Line(
-                        Modifier.align(Alignment.CenterStart),
-                        maxNum,
-                        lines[longestLineIndex],
-                        listOf(),
-                        settings
-                    )
+            Column(
+                Modifier.fillMaxSize()
+                    .scrollable(verticalScrollState, orientation = Orientation.Vertical, reverseDirection = true)
+            ) {
+                if (lines.size > 0) {
+                    Box(Modifier.height(0.dp)) {
+                        Line(
+                            Modifier.align(Alignment.CenterStart),
+                            maxNum,
+                            lines[longestLineIndex],
+                            listOf(),
+                            settings
+                        )
+                    }
                 }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = verticalScrollState,

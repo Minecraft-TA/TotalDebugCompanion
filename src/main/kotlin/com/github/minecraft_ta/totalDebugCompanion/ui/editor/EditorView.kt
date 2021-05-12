@@ -1,11 +1,9 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.editor
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -31,53 +29,82 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
 import com.github.minecraft_ta.totalDebugCompanion.util.Fonts
 import com.github.minecraft_ta.totalDebugCompanion.util.getStylesForJavaCode
 import com.github.minecraft_ta.totalDebugCompanion.util.loadableScoped
-import com.github.minecraft_ta.totalDebugCompanion.util.withoutWidthConstraints
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditorView(model: Editor, settings: Settings) = key(model) {
-    with(LocalDensity.current) {
-        SelectionContainer {
-            Surface(
-                Modifier.fillMaxSize(),
-                color = AppTheme.colors.backgroundDark,
-            ) {
-                val lines by loadableScoped(model.lines)
+    val horizontalScrollState = rememberScrollState()
+    val verticalScrollState = rememberLazyListState()
 
-                if (lines != null) {
-                    Lines(lines!!, settings)
-                } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .padding(4.dp)
-                    )
+    val lines by loadableScoped(model.lines)
+
+    Box {
+        with(LocalDensity.current) {
+            SelectionContainer {
+                Surface(
+                    Modifier.fillMaxSize().horizontalScroll(horizontalScrollState),
+                    color = AppTheme.colors.backgroundDark,
+                ) {
+                    if (lines != null) {
+                        Lines(lines!!, verticalScrollState, settings)
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .padding(4.dp)
+                        )
+                    }
                 }
             }
+
+            if (lines != null) {
+                VerticalScrollbar(
+                    rememberScrollbarAdapter(verticalScrollState, lines!!.size, settings.lineHeight(this)),
+                    Modifier.align(Alignment.CenterEnd).width(settings.scrollbarWidth),
+                )
+            }
+
+            HorizontalScrollbar(
+                rememberScrollbarAdapter(horizontalScrollState),
+                modifier = Modifier.fillMaxWidth().height(settings.scrollbarWidth).align(Alignment.BottomCenter)
+            )
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Lines(lines: Editor.Lines, settings: Settings) = with(LocalDensity.current) {
-    val maxNum = remember(lines.lineNumberDigitCount) {
-        (1..lines.lineNumberDigitCount).joinToString(separator = "") { "9" }
-    }
+private fun Lines(lines: Editor.Lines, verticalScrollState: LazyListState, settings: Settings) =
+    with(LocalDensity.current) {
+        val maxNum = remember(lines.lineNumberDigitCount) {
+            (1..lines.lineNumberDigitCount).joinToString(separator = "") { "9" }
+        }
 
-    val code = IntStream.range(0, lines.size)
-        .mapToObj { lines[it].content.value.value }.collect(Collectors.joining("\n"))
-    val styles = getStylesForJavaCode(code)
+        var longestLineIndex = 0
 
-    val horizontalScrollState = rememberScrollState()
+        val code = IntStream.range(0, lines.size)
+            .mapToObj {
+                val line = lines[it].content.value.value
+                if (lines[longestLineIndex].content.value.value.length < line.length)
+                    longestLineIndex = it
+                line
+            }.collect(Collectors.joining("\n"))
+        val styles = getStylesForJavaCode(code)
 
-    Box(Modifier.fillMaxSize()) {
-        val verticalScrollState = rememberLazyListState()
-        val lineHeight = settings.fontSize.toDp() * 1.6f
-
-        LazyRow {
-            items(1) {
+        Box(Modifier.fillMaxHeight()) {
+            val lineHeight = settings.fontSize.toDp() * 1.6f
+            Column {
+                Box(Modifier.height(0.dp)) {
+                    Line(
+                        Modifier.align(Alignment.CenterStart),
+                        maxNum,
+                        lines[longestLineIndex],
+                        listOf(),
+                        settings
+                    )
+                }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = verticalScrollState,
@@ -96,18 +123,7 @@ private fun Lines(lines: Editor.Lines, settings: Settings) = with(LocalDensity.c
                 }
             }
         }
-
-        HorizontalScrollbar(
-            rememberScrollbarAdapter(horizontalScrollState),
-            Modifier.align(Alignment.BottomCenter)
-        )
-
-        VerticalScrollbar(
-            rememberScrollbarAdapter(verticalScrollState, lines.size, lineHeight),
-            Modifier.align(Alignment.CenterEnd),
-        )
     }
-}
 
 @Composable
 private fun Line(
@@ -124,12 +140,13 @@ private fun Line(
                 LineNumber(line.number.toString(), Modifier.align(Alignment.CenterEnd), settings)
             }
         }
+
+        //using the modifier parameter is a hack to get alignment CenterStart
         LineContent(
             line.content,
-            modifier = Modifier
+            modifier = modifier
                 .weight(1f)
-                .withoutWidthConstraints()
-                .padding(start = 28.dp, end = 12.dp),
+                .padding(start = 18.dp, end = 12.dp),
             styles,
             settings = settings
         )

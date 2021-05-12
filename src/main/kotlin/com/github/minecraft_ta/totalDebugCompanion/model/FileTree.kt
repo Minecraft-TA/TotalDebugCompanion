@@ -3,11 +3,15 @@ package com.github.minecraft_ta.totalDebugCompanion.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.nio.file.Files
-import java.nio.file.Path
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.nio.file.*
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
 import kotlin.streams.toList
+import kotlin.system.exitProcess
+
 
 @OptIn(ExperimentalPathApi::class)
 class ExpandableFile(
@@ -33,6 +37,8 @@ class ExpandableFile(
 class FileTree(root: Path, private val editors: Editors) {
     private val expandableRoot = ExpandableFile(root, 0).apply {
         toggleExpanded()
+
+        startDirectoryWatcher(this, editors)
     }
 
     val items: List<Item> get() = expandableRoot.toItems()
@@ -73,6 +79,46 @@ class FileTree(root: Path, private val editors: Editors) {
         val list = mutableListOf<Item>()
         addTo(list)
         return list
+    }
+}
+
+private fun startDirectoryWatcher(expandableFile: ExpandableFile, editors: Editors) {
+    //start directory watcher
+    val watchService = FileSystems.getDefault().newWatchService()
+    expandableFile.file.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE)
+
+    val scope = CoroutineScope(Dispatchers.IO)
+    scope.launch(Dispatchers.IO) {
+        while (true) {
+            val key = watchService.take()
+
+            var any = false
+            key.pollEvents().forEach {
+                val kind = it.kind()
+
+                if (kind == StandardWatchEventKinds.OVERFLOW || kind == StandardWatchEventKinds.ENTRY_MODIFY)
+                    return@forEach
+
+                any = true
+
+                if (kind == StandardWatchEventKinds.ENTRY_DELETE)
+                    editors.editors.find { editor ->
+                        editor.fileName == (it as WatchEvent<Path>).context().fileName.toString()
+                    }?.close?.invoke()
+            }
+
+            if (any) {
+                //refresh
+                expandableFile.toggleExpanded()
+                expandableFile.toggleExpanded()
+            }
+
+            val valid = key.reset()
+            if (!valid) {
+                println("Directory no longer accessible")
+                exitProcess(1)
+            }
+        }
     }
 }
 

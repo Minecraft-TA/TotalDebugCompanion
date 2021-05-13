@@ -120,8 +120,9 @@ fun runServer(root: Path, editors: Editors) {
                                 editors.open(path)
                                 val frame = AppManager.windows[0].window
 
+                                val state = frame.extendedState
                                 frame.extendedState = JFrame.ICONIFIED
-                                frame.extendedState = JFrame.NORMAL
+                                frame.extendedState = state
                             }
                         }
                     }

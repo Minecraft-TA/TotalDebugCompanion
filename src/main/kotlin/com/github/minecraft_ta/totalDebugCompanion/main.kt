@@ -1,6 +1,7 @@
 import androidx.compose.animation.core.Spring.StiffnessLow
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.desktop.AppManager
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.layout.*
@@ -22,7 +23,13 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.editor.EditorTabsView
 import com.github.minecraft_ta.totalDebugCompanion.ui.editor.EditorView
 import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeView
 import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeViewHeader
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.net.ServerSocket
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JFrame
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -33,6 +40,8 @@ fun main(args: Array<String>) {
     val fileTree = FileTree(Paths.get(args[0]), editors)
 
     val settings = Settings()
+
+    runServer(fileTree.root, editors)
 
     Window(title = "TotalDebugCompanion", size = IntSize(1280, 720)) {
         DisableSelection {
@@ -82,4 +91,58 @@ fun main(args: Array<String>) {
             }
         }
     }
+}
+
+fun runServer(root: Path, editors: Editors) {
+    Thread {
+        val socket = ServerSocket(25570)
+
+        while (true) {
+            try {
+                val client = socket.accept()
+
+                val inputStream = DataInputStream(client.getInputStream())
+                val outputStream = DataOutputStream(client.getOutputStream())
+                while (true) {
+                    when (inputStream.readUnsignedByte()) {
+                        //open a file
+                        1 -> {
+                            val path = Paths.get(inputStream.readUTF())
+
+                            if (!Files.exists(path) || !path.isSubPathOf(root))
+                                continue
+
+                            val existingEditor = editors.editors.find { it.fileName == path.fileName.toString() }
+
+                            if (existingEditor != null) {
+                                existingEditor.activate()
+                            } else {
+                                editors.open(path)
+                                val frame = AppManager.windows[0].window
+
+                                frame.extendedState = JFrame.ICONIFIED
+                                frame.extendedState = JFrame.NORMAL
+                            }
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                t.printStackTrace()
+            }
+        }
+    }.start()
+}
+
+fun Path.isSubPathOf(other: Path): Boolean {
+    val it1 = this.normalize().iterator();
+    val it2 = other.normalize().iterator();
+
+    while (it2.hasNext()) {
+        val part = it2.next();
+
+        if (!it1.hasNext() || !part.equals(it1.next()))
+            return false
+    }
+
+    return it1.hasNext()
 }

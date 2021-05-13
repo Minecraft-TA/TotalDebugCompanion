@@ -34,7 +34,7 @@ class ExpandableFile(
 }
 
 @OptIn(ExperimentalPathApi::class)
-class FileTree(root: Path, private val editors: Editors) {
+class FileTree(val root: Path, private val editors: Editors) {
     private val expandableRoot = ExpandableFile(root, 0).apply {
         toggleExpanded()
 

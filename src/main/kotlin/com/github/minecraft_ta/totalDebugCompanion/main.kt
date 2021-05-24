@@ -118,12 +118,14 @@ fun runServer(root: Path, editors: Editors) {
                                 existingEditor.activate()
                             } else {
                                 editors.open(path)
-                                val frame = AppManager.windows[0].window
-
-                                val state = frame.extendedState
-                                frame.extendedState = JFrame.ICONIFIED
-                                frame.extendedState = state
                             }
+
+                            //focus window
+                            val frame = AppManager.windows[0].window
+
+                            val state = frame.extendedState
+                            frame.extendedState = JFrame.ICONIFIED
+                            frame.extendedState = state
                         }
                     }
                 }

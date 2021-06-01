@@ -25,7 +25,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.github.minecraft_ta.totalDebugCompanion.model.Editor
+import com.github.minecraft_ta.totalDebugCompanion.model.CodeEditor
 import com.github.minecraft_ta.totalDebugCompanion.model.Settings
 import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
 import com.github.minecraft_ta.totalDebugCompanion.util.Fonts
@@ -36,7 +36,7 @@ import java.util.stream.IntStream
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun EditorView(model: Editor, settings: Settings) = key(model) {
+fun EditorView(model: CodeEditor, settings: Settings) = key(model) {
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberLazyListState()
 
@@ -78,7 +78,7 @@ fun EditorView(model: Editor, settings: Settings) = key(model) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Lines(lines: Editor.Lines, verticalScrollState: LazyListState, settings: Settings) =
+private fun Lines(lines: CodeEditor.Lines, verticalScrollState: LazyListState, settings: Settings) =
     with(LocalDensity.current) {
         val maxNum = remember(lines.lineNumberDigitCount) {
             (1..lines.lineNumberDigitCount).joinToString(separator = "") { "9" }
@@ -137,7 +137,7 @@ private fun Lines(lines: Editor.Lines, verticalScrollState: LazyListState, setti
 private fun Line(
     modifier: Modifier,
     maxNum: String,
-    line: Editor.Line,
+    line: CodeEditor.Line,
     styles: List<Triple<SpanStyle, Int, Int>>,
     settings: Settings
 ) {
@@ -172,7 +172,7 @@ private fun LineNumber(number: String, modifier: Modifier, settings: Settings) =
 
 @Composable
 private fun LineContent(
-    content: Editor.Content,
+    content: CodeEditor.Content,
     modifier: Modifier,
     styles: List<Triple<SpanStyle, Int, Int>>,
     settings: Settings

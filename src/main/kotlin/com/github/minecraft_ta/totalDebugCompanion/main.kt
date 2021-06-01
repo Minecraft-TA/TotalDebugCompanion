@@ -10,9 +10,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
-import com.github.minecraft_ta.totalDebugCompanion.model.Editors
-import com.github.minecraft_ta.totalDebugCompanion.model.FileTree
-import com.github.minecraft_ta.totalDebugCompanion.model.Settings
+import com.github.minecraft_ta.totalDebugCompanion.model.*
 import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.PanelState
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.ResizablePanel
@@ -21,15 +19,19 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.VerticalSplitta
 import com.github.minecraft_ta.totalDebugCompanion.ui.editor.EditorEmptyView
 import com.github.minecraft_ta.totalDebugCompanion.ui.editor.EditorTabsView
 import com.github.minecraft_ta.totalDebugCompanion.ui.editor.EditorView
+import com.github.minecraft_ta.totalDebugCompanion.ui.editor.SearchEditorView
 import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeView
 import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeViewHeader
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.lang.IllegalStateException
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.stream.IntStream
 import javax.swing.JFrame
+import kotlin.streams.toList
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -41,7 +43,7 @@ fun main(args: Array<String>) {
 
     val settings = Settings()
 
-    runServer(fileTree.root, editors)
+    TotalDebugServer.run(fileTree.root, editors)
 
     Window(title = "TotalDebugCompanion", size = IntSize(1280, 720)) {
         DisableSelection {
@@ -78,7 +80,13 @@ fun main(args: Array<String>) {
                                 Column(Modifier.fillMaxSize()) {
                                     EditorTabsView(editors)
                                     Box(Modifier.weight(1f)) {
-                                        EditorView(editors.active!!, settings)
+                                        val activeEditor = editors.active!!
+                                        if (activeEditor is CodeEditor)
+                                            EditorView(activeEditor, settings)
+                                        else if (activeEditor is SearchEditor)
+                                            SearchEditorView(activeEditor, settings)
+                                        else
+                                            throw IllegalStateException()
                                     }
                                     StatusBar(settings)
                                 }
@@ -93,47 +101,69 @@ fun main(args: Array<String>) {
     }
 }
 
-fun runServer(root: Path, editors: Editors) {
-    Thread {
-        val socket = ServerSocket(25570)
+object TotalDebugServer {
+    var currentOutputStream: DataOutputStream? = null
 
-        while (true) {
-            try {
-                val client = socket.accept()
+    fun run(root: Path, editors: Editors) {
+        Thread {
+            val socket = ServerSocket(25570)
 
-                val inputStream = DataInputStream(client.getInputStream())
-                val outputStream = DataOutputStream(client.getOutputStream())
-                while (true) {
-                    when (inputStream.readUnsignedByte()) {
-                        //open a file
-                        1 -> {
-                            val path = Paths.get(inputStream.readUTF())
+            while (true) {
+                try {
+                    val client = socket.accept()
 
-                            if (!Files.exists(path) || !path.isSubPathOf(root))
-                                continue
+                    val inputStream = DataInputStream(client.getInputStream())
+                    currentOutputStream = DataOutputStream(client.getOutputStream())
+                    while (true) {
+                        when (inputStream.readUnsignedByte()) {
+                            1 -> { //open a file
+                                val path = Paths.get(inputStream.readUTF())
 
-                            val existingEditor = editors.editors.find { it.fileName == path.fileName.toString() }
+                                if (!Files.exists(path) || !path.isSubPathOf(root))
+                                    continue
 
-                            if (existingEditor != null) {
-                                existingEditor.activate()
-                            } else {
-                                editors.open(path)
+                                val existingEditor = editors.editors
+                                    .filterIsInstance<CodeEditor>()
+                                    .find { it.fileName == path.fileName.toString() }
+
+                                if (existingEditor != null) {
+                                    existingEditor.activate()
+                                } else {
+                                    editors.openFile(path)
+                                }
+
+                                focusWindow()
                             }
+                            2 -> { //open reference search results
+                                val query = inputStream.readUTF()
+                                val resultCount = inputStream.readInt()
+                                val results =
+                                    IntStream.range(0, resultCount).mapToObj { inputStream.readUTF() }.toList()
+                                val methodSearch = inputStream.readBoolean()
+                                val classesCount = inputStream.readInt()
+                                val time = inputStream.readInt()
 
-                            //focus window
-                            val frame = AppManager.windows[0].window
+                                editors.openSearchEditor(query, results, methodSearch, classesCount, time)
 
-                            val state = frame.extendedState
-                            frame.extendedState = JFrame.ICONIFIED
-                            frame.extendedState = state
+                                focusWindow()
+                            }
                         }
                     }
+                } catch (t: Throwable) {
+                    t.printStackTrace()
+                    currentOutputStream = null
                 }
-            } catch (t: Throwable) {
-                t.printStackTrace()
             }
-        }
-    }.start()
+        }.start()
+    }
+}
+
+fun focusWindow() {
+    val frame = AppManager.windows[0].window
+
+    val state = frame.extendedState
+    frame.extendedState = JFrame.ICONIFIED
+    frame.extendedState = state
 }
 
 fun Path.isSubPathOf(other: Path): Boolean {

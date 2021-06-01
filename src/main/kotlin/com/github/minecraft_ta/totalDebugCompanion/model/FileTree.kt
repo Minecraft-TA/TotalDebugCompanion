@@ -59,7 +59,7 @@ class FileTree(val root: Path, private val editors: Editors) {
 
         fun open() = when (type) {
             is ItemType.Folder -> file.toggleExpanded()
-            is ItemType.File -> editors.open(file.file)
+            is ItemType.File -> editors.openFile(file.file)
         }
     }
 
@@ -102,7 +102,7 @@ private fun startDirectoryWatcher(expandableFile: ExpandableFile, editors: Edito
                 any = true
 
                 if (kind == StandardWatchEventKinds.ENTRY_DELETE)
-                    editors.editors.find { editor ->
+                    editors.editors.filterIsInstance<CodeEditor>().find { editor ->
                         editor.fileName == (it as WatchEvent<Path>).context().fileName.toString()
                     }?.close?.invoke()
             }
@@ -115,7 +115,7 @@ private fun startDirectoryWatcher(expandableFile: ExpandableFile, editors: Edito
 
             val valid = key.reset()
             if (!valid) {
-                println("Directory no longer accessible")
+                System.err.println("Directory no longer accessible")
                 exitProcess(1)
             }
         }

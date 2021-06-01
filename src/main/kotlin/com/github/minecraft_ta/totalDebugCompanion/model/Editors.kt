@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.model
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -17,14 +18,23 @@ class SingleSelection {
 class Editors {
     private val selection = SingleSelection()
 
-    var editors = mutableStateListOf<Editor>()
+    var editors = mutableStateListOf<AbstractEditor>()
         private set
 
-    val active: Editor? get() = selection.selected as Editor?
+    val active: AbstractEditor? get() = selection.selected as AbstractEditor?
 
     @OptIn(ExperimentalPathApi::class)
-    fun open(file: Path) {
+    fun openFile(file: Path) {
         val editor = Editor(file)
+        openEditor(editor)
+    }
+
+    fun openSearchEditor(query: String, results: List<String>, methodSearch: Boolean, classesCount: Int, time: Int) {
+        val editor = SearchEditor(query, mutableStateListOf(*results.sorted().toTypedArray()), methodSearch, classesCount, time)
+        openEditor(editor)
+    }
+
+    private fun openEditor(editor: AbstractEditor) {
         editor.selection = selection
         editor.close = {
             close(editor)
@@ -33,7 +43,7 @@ class Editors {
         editor.activate()
     }
 
-    private fun close(editor: Editor) {
+    private fun close(editor: AbstractEditor) {
         val index = editors.indexOf(editor)
         editors.remove(editor)
         if (editor.isActive) {
@@ -42,10 +52,7 @@ class Editors {
     }
 }
 
-class Editor(
-    val fileName: String,
-    val lines: (backgroundScope: CoroutineScope) -> Lines,
-) {
+abstract class AbstractEditor {
     var close: (() -> Unit)? = null
     lateinit var selection: SingleSelection
 
@@ -54,6 +61,31 @@ class Editor(
 
     fun activate() {
         selection.selected = this
+    }
+
+    abstract fun getTitle(): String
+}
+
+class SearchEditor(
+    val query: String,
+    val results: SnapshotStateList<String>,
+    val methodSearch: Boolean,
+    val classesCount: Int,
+    val time: Int
+) : AbstractEditor() {
+
+    override fun getTitle(): String {
+        return query
+    }
+}
+
+class CodeEditor(
+    val fileName: String,
+    val lines: (backgroundScope: CoroutineScope) -> Lines,
+) : AbstractEditor() {
+
+    override fun getTitle(): String {
+        return fileName
     }
 
     class Line(val number: Int, val content: Content)
@@ -68,7 +100,7 @@ class Editor(
 }
 
 @ExperimentalPathApi
-fun Editor(file: Path) = Editor(
+fun Editor(file: Path) = CodeEditor(
     fileName = file.name
 ) { backgroundScope ->
     val textLines = try {
@@ -79,20 +111,20 @@ fun Editor(file: Path) = Editor(
     }
     val isCode = file.name.endsWith(".java", ignoreCase = true)
 
-    fun content(index: Int): Editor.Content {
+    fun content(index: Int): CodeEditor.Content {
         val text = textLines.get(index)
             .trim('\n') // fix for native crash in Skia.
         // Workaround for another Skia problem with empty line layout.
         // TODO: maybe use another symbols, i.e. \u2800 or \u00a0.
         val state = mutableStateOf(if (text.isEmpty()) " " else text)
-        return Editor.Content(state, isCode)
+        return CodeEditor.Content(state, isCode)
     }
 
-    object : Editor.Lines {
+    object : CodeEditor.Lines {
         override val size get() = textLines.size
 
-        override fun get(index: Int): Editor.Line {
-            return Editor.Line(
+        override fun get(index: Int): CodeEditor.Line {
+            return CodeEditor.Line(
                 number = index + 1,
                 content = content(index)
             )

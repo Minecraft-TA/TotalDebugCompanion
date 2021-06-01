@@ -1,6 +1,5 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.fileTree
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
@@ -21,10 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerMoveFilter
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -69,7 +66,7 @@ fun FileTreeView(model: FileTree) = Surface(
 
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd),
-                adapter = ScrollbarAdapter(scrollState, model.items.size, lineHeight.value)
+                adapter = ScrollbarAdapter(scrollState)
             )
         }
     }

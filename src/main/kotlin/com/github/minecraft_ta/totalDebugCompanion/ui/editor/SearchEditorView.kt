@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchEditor
 import com.github.minecraft_ta.totalDebugCompanion.model.Settings
 import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
+import com.github.minecraft_ta.totalDebugCompanion.util.Fonts
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -119,7 +120,9 @@ fun SearchResultLine(model: SearchEditor, index: Int, settings: Settings) {
                 contentDescription = ""
             )
             Text(
-                model.results[index], fontSize = settings.fontSize,
+                model.results[index],
+                fontSize = settings.fontSize,
+                fontFamily = Fonts.jetbrainsMono(),
             )
         }
     }

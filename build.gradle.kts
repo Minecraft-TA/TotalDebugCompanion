@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.minecraft_ta"
-version = "1.2.0"
+version = "1.2.1"
 
 repositories {
     jcenter()

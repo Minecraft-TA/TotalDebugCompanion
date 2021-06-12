@@ -1,15 +1,13 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.editor
 
+import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
@@ -17,14 +15,17 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchEditor
 import com.github.minecraft_ta.totalDebugCompanion.model.Settings
+import com.github.minecraft_ta.totalDebugCompanion.model.TextLines
 import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
 import com.github.minecraft_ta.totalDebugCompanion.util.Fonts
+import org.jetbrains.skija.paragraph.TextBox
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -103,8 +104,10 @@ fun SearchResultLine(model: SearchEditor, index: Int, settings: Settings) {
         ).width(3_000.dp).clickable {
             val outStream = TotalDebugServer.currentOutputStream ?: return@clickable
 
-            outStream.write(1)
-            outStream.writeUTF(model.results[index].substringBefore('#').replace('/', '.'))
+            synchronized(outStream) {
+                outStream.write(1)
+                outStream.writeUTF(model.results[index].substringBefore('#').replace('/', '.'))
+            }
         }
     ) {
         Row(

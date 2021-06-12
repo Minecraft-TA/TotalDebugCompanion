@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.editor
 
+import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.CircularProgressIndicator
@@ -20,8 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.Keyboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -31,6 +35,8 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.AppTheme
 import com.github.minecraft_ta.totalDebugCompanion.util.Fonts
 import com.github.minecraft_ta.totalDebugCompanion.util.getStylesForJavaCode
 import com.github.minecraft_ta.totalDebugCompanion.util.loadableScoped
+import kotlinx.coroutines.runBlocking
+import java.awt.event.KeyEvent
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
@@ -38,7 +44,7 @@ import java.util.stream.IntStream
 @Composable
 fun EditorView(model: CodeEditor, settings: Settings) = key(model) {
     val horizontalScrollState = rememberScrollState()
-    val verticalScrollState = rememberLazyListState()
+    val verticalScrollState = rememberLazyListState(initialFirstVisibleItemIndex = model.initialScrollPosition)
 
     val lines by loadableScoped(model.lines)
 
@@ -50,7 +56,8 @@ fun EditorView(model: CodeEditor, settings: Settings) = key(model) {
                     color = AppTheme.colors.backgroundDark,
                 ) {
                     if (lines != null) {
-                        Lines(lines!!, verticalScrollState, settings)
+                        Lines(model, lines!!, verticalScrollState, settings)
+                        println(model.initialScrollPosition)
                     } else {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -78,7 +85,7 @@ fun EditorView(model: CodeEditor, settings: Settings) = key(model) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Lines(lines: CodeEditor.Lines, verticalScrollState: LazyListState, settings: Settings) =
+private fun Lines(model: CodeEditor, lines: CodeEditor.Lines, verticalScrollState: LazyListState, settings: Settings) =
     with(LocalDensity.current) {
         val maxNum = remember(lines.lineNumberDigitCount) {
             (1..lines.lineNumberDigitCount).joinToString(separator = "") { "9" }
@@ -109,7 +116,7 @@ private fun Lines(lines: CodeEditor.Lines, verticalScrollState: LazyListState, s
                             lines[longestLineIndex],
                             listOf(),
                             settings
-                        )
+                        ) {}
                     }
                 }
 
@@ -125,7 +132,19 @@ private fun Lines(lines: CodeEditor.Lines, verticalScrollState: LazyListState, s
                                 lines[index],
                                 styles[index] ?: listOf(),
                                 settings
-                            )
+                            ) {
+                                if (!GlobalKeyboardState.isPressed(KeyEvent.VK_CONTROL) || lines[index].content.value.value[it] == ' ')
+                                    return@Line
+
+                                val outStream = TotalDebugServer.currentOutputStream ?: return@Line
+
+                                synchronized(outStream) {
+                                    outStream.write(2)
+                                    outStream.writeUTF(model.fileName)
+                                    outStream.writeInt(index) // row
+                                    outStream.writeInt(it) // column
+                                }
+                            }
                         }
                     }
                 }
@@ -139,7 +158,8 @@ private fun Line(
     maxNum: String,
     line: CodeEditor.Line,
     styles: List<Triple<SpanStyle, Int, Int>>,
-    settings: Settings
+    settings: Settings,
+    onClick: (Int) -> Unit
 ) {
     Row(modifier = modifier) {
         DisableSelection {
@@ -156,7 +176,8 @@ private fun Line(
                 .weight(1f)
                 .padding(start = 18.dp, end = 12.dp),
             styles,
-            settings = settings
+            settings = settings,
+            onClick = onClick
         )
     }
 }
@@ -175,8 +196,9 @@ private fun LineContent(
     content: CodeEditor.Content,
     modifier: Modifier,
     styles: List<Triple<SpanStyle, Int, Int>>,
-    settings: Settings
-) = Text(
+    settings: Settings,
+    onClick: (Int) -> Unit
+) = ClickableText(
     text = if (content.isCode) {
         codeString(content.value.value, styles)
     } else {
@@ -186,10 +208,10 @@ private fun LineContent(
             }
         }
     },
-    fontSize = settings.fontSize,
-    fontFamily = Fonts.jetbrainsMono(),
+    style = TextStyle(fontSize = settings.fontSize, fontFamily = Fonts.jetbrainsMono()),
     modifier = modifier,
-    softWrap = false
+    softWrap = false,
+    onClick = onClick
 )
 
 private fun codeString(str: String, styles: List<Triple<SpanStyle, Int, Int>>) = buildAnnotatedString {

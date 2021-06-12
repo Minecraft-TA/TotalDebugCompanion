@@ -24,7 +24,6 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeView
 import com.github.minecraft_ta.totalDebugCompanion.ui.fileTree.FileTreeViewHeader
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.lang.IllegalStateException
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Path
@@ -118,6 +117,7 @@ object TotalDebugServer {
                         when (inputStream.readUnsignedByte()) {
                             1 -> { //open a file
                                 val path = Paths.get(inputStream.readUTF())
+                                val row = inputStream.readInt();
 
                                 if (!Files.exists(path) || !path.isSubPathOf(root))
                                     continue
@@ -129,7 +129,7 @@ object TotalDebugServer {
                                 if (existingEditor != null) {
                                     existingEditor.activate()
                                 } else {
-                                    editors.openFile(path)
+                                    editors.openFile(path, row)
                                 }
 
                                 focusWindow()

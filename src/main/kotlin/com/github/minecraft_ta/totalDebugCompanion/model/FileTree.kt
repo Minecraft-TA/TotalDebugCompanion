@@ -59,7 +59,7 @@ class FileTree(val root: Path, private val editors: Editors) {
 
         fun open() = when (type) {
             is ItemType.Folder -> file.toggleExpanded()
-            is ItemType.File -> editors.openFile(file.file)
+            is ItemType.File -> editors.openFile(file.file, 0)
         }
     }
 

@@ -24,8 +24,8 @@ class Editors {
     val active: AbstractEditor? get() = selection.selected as AbstractEditor?
 
     @OptIn(ExperimentalPathApi::class)
-    fun openFile(file: Path) {
-        val editor = Editor(file)
+    fun openFile(file: Path, row: Int) {
+        val editor = Editor(file, row)
         openEditor(editor)
     }
 
@@ -81,6 +81,7 @@ class SearchEditor(
 
 class CodeEditor(
     val fileName: String,
+    val initialScrollPosition: Int,
     val lines: (backgroundScope: CoroutineScope) -> Lines,
 ) : AbstractEditor() {
 
@@ -100,8 +101,9 @@ class CodeEditor(
 }
 
 @ExperimentalPathApi
-fun Editor(file: Path) = CodeEditor(
-    fileName = file.name
+fun Editor(file: Path, row: Int) = CodeEditor(
+    fileName = file.name,
+    initialScrollPosition = row
 ) { backgroundScope ->
     val textLines = try {
         file.readLines(backgroundScope)

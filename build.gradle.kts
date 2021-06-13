@@ -14,4 +14,5 @@ dependencies {
     implementation("com.formdev:flatlaf:1.2")
     implementation("com.formdev:flatlaf-intellij-themes:1.2")
     implementation("com.formdev:flatlaf-extras:1.2")
+    implementation("com.github.javaparser:javaparser-core:3.22.0")
 }

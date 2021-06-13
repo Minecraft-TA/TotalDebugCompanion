@@ -1,13 +1,13 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui;
 
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodePanel;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeViewPanel;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.TreeView;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeView;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeViewHeader;
+import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.nio.file.Path;
 
 public class MainWindow extends JFrame {
@@ -15,19 +15,13 @@ public class MainWindow extends JFrame {
     public MainWindow(Path rootPath) {
         var root = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
-        var tree = new TreeView(rootPath);
-
         var tabs = new EditorTabs();
+        var tree = new FileTreeView(rootPath, tabs);
 
-        var editor = new CodePanel();
+        var editor = new CodeViewPanel();
         editor.setMinimumSize(new Dimension(100, 100));
 
-        tabs.addTab("Test", editor);
-        tabs.addTab("Test1", new JLabel("yo"));
-        tabs.addTab("Tes2t", new JTextArea("yo"));
-        tabs.setTabComponentAt(0, getTitlePanel(tabs, null, "Test"));
-
-        root.setLeftComponent(tree);
+        root.setLeftComponent(UIUtils.verticalLayout(new FileTreeViewHeader(), tree));
         root.setRightComponent(tabs);
         root.setDividerSize(10);
         root.setDividerLocation(350);
@@ -41,21 +35,11 @@ public class MainWindow extends JFrame {
     private static JPanel getTitlePanel(final JTabbedPane tabbedPane, final JPanel panel, String title)
     {
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        titlePanel.setBorder(BorderFactory.createEmptyBorder());
         titlePanel.setOpaque(false);
         JLabel titleLbl = new JLabel(title);
         titleLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         titlePanel.add(titleLbl);
-        JButton closeButton = new JButton("x");
-
-        closeButton.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                tabbedPane.remove(panel);
-            }
-        });
-        titlePanel.add(closeButton);
 
         return titlePanel;
     }

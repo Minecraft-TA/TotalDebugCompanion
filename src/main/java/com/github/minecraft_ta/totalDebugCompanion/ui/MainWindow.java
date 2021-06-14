@@ -25,22 +25,9 @@ public class MainWindow extends JFrame {
         root.setRightComponent(tabs);
         root.setDividerSize(10);
         root.setDividerLocation(350);
-        root.setOneTouchExpandable(true);
 
         this.getContentPane().add(root);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-    }
-
-    private static JPanel getTitlePanel(final JTabbedPane tabbedPane, final JPanel panel, String title)
-    {
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        titlePanel.setBorder(BorderFactory.createEmptyBorder());
-        titlePanel.setOpaque(false);
-        JLabel titleLbl = new JLabel(title);
-        titleLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-        titlePanel.add(titleLbl);
-
-        return titlePanel;
     }
 }

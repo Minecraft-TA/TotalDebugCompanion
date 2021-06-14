@@ -1,17 +1,23 @@
-package com.github.minecraft_ta.totalDebugCompanion.util;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LabelWithButtonTabComponent extends JPanel {
+
+    private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/close.svg");
+    private static final FlatSVGIcon CLOSE_HOVERED_ICON = new FlatSVGIcon("icons/closeHovered.svg");
+
     private final JTabbedPane pane;
 
-    public LabelWithButtonTabComponent(final JTabbedPane pane) {
+    public LabelWithButtonTabComponent(JTabbedPane pane, Icon icon) {
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        if (pane == null)
-            throw new NullPointerException("TabbedPane is null");
-
         this.pane = pane;
         setOpaque(false);
 
@@ -26,6 +32,7 @@ public class LabelWithButtonTabComponent extends JPanel {
         };
 
         add(label);
+        label.setIcon(icon);
         label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 
         JButton button = new CloseButton();
@@ -44,19 +51,13 @@ public class LabelWithButtonTabComponent extends JPanel {
             setFocusable(false);
             addMouseListener(new MouseAdapter() {
                 public void mouseEntered(MouseEvent e) {
-                    Component component = e.getComponent();
-                    if (component instanceof CloseButton) {
-                        CloseButton button = (CloseButton) component;
-                        button.hovered = true;
-                    }
+                    var component = (CloseButton) e.getComponent();
+                    component.hovered = true;
                 }
 
                 public void mouseExited(MouseEvent e) {
-                    Component component = e.getComponent();
-                    if (component instanceof CloseButton) {
-                        CloseButton button = (CloseButton) component;
-                        button.hovered = false;
-                    }
+                    var component = (CloseButton) e.getComponent();
+                    component.hovered = false;
                 }
             });
             addActionListener(this);
@@ -74,19 +75,11 @@ public class LabelWithButtonTabComponent extends JPanel {
             Graphics2D g2 = (Graphics2D) g.create();
 
             if (this.hovered) {
-                g2.setColor(new Color(10, 10, 10, 50));
-                g2.fillOval(0, 0, getWidth() - 1, getHeight() - 1);
+                CLOSE_HOVERED_ICON.paintIcon(this, g, 0, 0);
+            } else {
+                CLOSE_ICON.paintIcon(this, g, 0, 0);
             }
 
-            g2.setStroke(new BasicStroke(2));
-            if(this.hovered) {
-                g2.setColor(Color.WHITE);
-            } else {
-                g2.setColor(Color.LIGHT_GRAY);
-            }
-            int delta = 6;
-            g2.drawLine(delta, delta, getWidth() - delta - 1, getHeight() - delta - 1);
-            g2.drawLine(getWidth() - delta - 1, delta, delta, getHeight() - delta - 1);
             g2.dispose();
         }
     }

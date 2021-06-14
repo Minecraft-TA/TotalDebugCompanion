@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
+import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class FileTreeView extends JScrollPane {
@@ -43,9 +45,7 @@ public class FileTreeView extends JScrollPane {
                     return;
                 var userObject = (TreeItem) treeNode.getUserObject();
 
-                treeNode.removeAllChildren();
-                loadItems(userObject.path).forEach(treeNode::add);
-                ((DefaultTreeModel) tree.getModel()).nodeStructureChanged(treeNode);
+                loadItemsForNode(tree, treeNode);
             }
 
             @Override
@@ -82,7 +82,19 @@ public class FileTreeView extends JScrollPane {
             }
         });
 
+        FileUtils.startNewDirectoryWatcher(rootPath, () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
+
         this.setViewportView(tree);
+    }
+
+    private void loadItemsForNode(JTree tree, LazyTreeNode node) {
+        CompletableFuture.supplyAsync(() -> loadItems(((TreeItem) node.getUserObject()).path)).thenAccept((items) -> {
+            SwingUtilities.invokeLater(() -> {
+                node.removeAllChildren();
+                items.forEach(node::add);
+                ((DefaultTreeModel) tree.getModel()).nodeStructureChanged(node);
+            });
+        });
     }
 
     private List<LazyTreeNode> loadItems(Path rootPath) {
@@ -117,12 +129,7 @@ public class FileTreeView extends JScrollPane {
             super(treeItem);
 
             if (treeItem.isDirectory)
-                add(new DefaultMutableTreeNode("Loading"));
+                add(new DefaultMutableTreeNode("Loading..."));
         }
-
-       /* @Override
-        public boolean isLeaf() {
-            return !((TreeItem) this.getUserObject()).isDirectory;
-        }*/
     }
 }

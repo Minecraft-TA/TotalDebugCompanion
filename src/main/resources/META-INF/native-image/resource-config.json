@@ -1,0 +1,15 @@
+{
+  "resources":{
+  "includes":[
+    {"pattern":"\\Qcom/formdev/flatlaf/FlatDarculaLaf.properties\\E"}, 
+    {"pattern":"\\Qcom/formdev/flatlaf/FlatDarkLaf.properties\\E"}, 
+    {"pattern":"\\Qcom/formdev/flatlaf/FlatLaf.properties\\E"}, 
+    {"pattern":"\\Qcom/formdev/flatlaf/natives/flatlaf-windows-x86_64.dll\\E"}, 
+    {"pattern":"\\Qfont/jetbrainsmono_regular.ttf\\E"}
+  ]},
+  "bundles":[
+    {"name":"com.formdev.flatlaf.resources.Bundle"}, 
+    {"name":"com.sun.swing.internal.plaf.basic.resources.basic"}, 
+    {"name":"sun.awt.resources.awt"}
+  ]
+}

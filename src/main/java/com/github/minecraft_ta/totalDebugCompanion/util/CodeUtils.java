@@ -19,11 +19,11 @@ public class CodeUtils {
     private static final SimpleAttributeSet SEPARATOR_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet COMMENT_ATTRIBUTES = new SimpleAttributeSet();
     static {
-        StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#C679DD"));
-        StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#D19A66"));
+        StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#CC7832"));
+        StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#6897BB"));
         StyleConstants.setForeground(STRING_LITERAL_ATTRIBUTES, Color.decode("#98C379"));
-        StyleConstants.setForeground(OPERATOR_ATTRIBUTES, Color.decode("#61AFEF"));
-        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#A6B2C0"));
+        StyleConstants.setForeground(OPERATOR_ATTRIBUTES, Color.decode("#A1C17E"));
+        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#A1C17E"));
         StyleConstants.setForeground(COMMENT_ATTRIBUTES, Color.decode("#59626F"));
     }
 

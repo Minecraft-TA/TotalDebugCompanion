@@ -1,8 +1,11 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.StringUtils;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeViewPanel;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FontSizeSliderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
+import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -11,6 +14,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class CodeView implements IEditorPanel {
+
+    private static final Icon CLASS_ICON = new FlatSVGIcon("icons/class.svg");
 
     private final Path path;
     private final CodeViewPanel codeViewPanel;
@@ -34,11 +39,22 @@ public class CodeView implements IEditorPanel {
 
     @Override
     public String getTitle() {
-        return this.path.getFileName().toString().replace(".java", "");
+        String fullClassName = this.path.getFileName().toString().replace(".java", "");
+        return fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
+    }
+
+    @Override
+    public Icon getIcon() {
+        return CLASS_ICON;
+    }
+
+    @Override
+    public String getTooltip() {
+        return this.path.getFileName().toString();
     }
 
     @Override
     public JComponent getComponent() {
-        return this.codeViewPanel;
+        return UIUtils.verticalLayout(this.codeViewPanel, new FontSizeSliderBar());
     }
 }

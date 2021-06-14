@@ -26,8 +26,8 @@ public class MainWindow extends JFrame {
         root.setDividerSize(10);
         root.setDividerLocation(350);
 
-        this.getContentPane().add(root);
-
+        getContentPane().add(root);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setTitle("TotalDebugCompanion");
     }
 }

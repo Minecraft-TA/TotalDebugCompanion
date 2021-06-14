@@ -31,7 +31,6 @@ public class FileTreeView extends JScrollPane {
         tree.setBorder(BorderFactory.createEmptyBorder());
 
         tree.setModel(new DefaultTreeModel(new LazyTreeNode(new TreeItem(rootPath))));
-        tree.collapseRow(0);
         tree.addTreeWillExpandListener(new TreeWillExpandListener() {
             @Override
             public void treeWillExpand(TreeExpansionEvent event) {
@@ -82,6 +81,9 @@ public class FileTreeView extends JScrollPane {
             }
         });
 
+        //Expand root by default
+        tree.collapseRow(0);
+        tree.expandRow(0);
         FileUtils.startNewDirectoryWatcher(rootPath, () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
 
         this.setViewportView(tree);

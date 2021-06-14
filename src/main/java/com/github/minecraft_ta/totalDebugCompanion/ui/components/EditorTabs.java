@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class EditorTabs extends JTabbedPane {
 
@@ -12,7 +13,7 @@ public class EditorTabs extends JTabbedPane {
     }
 
     public void openEditorTab(IEditorPanel editorPanel) {
-        JComponent component = editorPanel.getComponent();
+        Component component = editorPanel.getComponent();
         addTab(editorPanel.getTitle(), component);
         int index = indexOfComponent(component);
         setToolTipTextAt(index, editorPanel.getTooltip());

@@ -7,10 +7,10 @@ public class FileTreeViewHeader extends JPanel {
 
     public FileTreeViewHeader() {
         super();
-        setMaximumSize(new Dimension(10000, 30));
-        setLayout(new FlowLayout(FlowLayout.LEFT));
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        setMaximumSize(new Dimension(10000, 3));
         JLabel files = new JLabel("Files");
-        files.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+        files.setBorder(BorderFactory.createEmptyBorder(3, 10, 3, 0));
         files.setFont(files.getFont().deriveFont(files.getFont().getSize() * 1.2f));
         add(files);
     }

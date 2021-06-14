@@ -1,21 +1,26 @@
 package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class UIUtils {
 
-    public static JComponent verticalLayout(JComponent... component) {
+    public static Component topAndBottomStickyLayout(Component top, Component bottom) {
+        return verticalLayout(top, Box.createVerticalGlue(), bottom);
+    }
+
+    public static JComponent verticalLayout(Component... component) {
         var box = Box.createVerticalBox();
-        for (JComponent c : component) {
+        for (Component c : component) {
             box.add(c);
         }
 
         return box;
     }
 
-    public static JComponent horizontalLayout(JComponent... component) {
+    public static Component horizontalLayout(Component... component) {
         var box = Box.createHorizontalBox();
-        for (JComponent c : component) {
+        for (Component c : component) {
             box.add(c, Box.LEFT_ALIGNMENT);
         }
 

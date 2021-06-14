@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface IEditorPanel {
 
@@ -10,5 +11,5 @@ public interface IEditorPanel {
 
     Icon getIcon();
 
-    JComponent getComponent();
+    Component getComponent();
 }

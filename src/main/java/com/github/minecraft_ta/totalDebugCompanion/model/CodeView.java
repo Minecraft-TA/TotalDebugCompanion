@@ -8,6 +8,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,7 +55,7 @@ public class CodeView implements IEditorPanel {
     }
 
     @Override
-    public JComponent getComponent() {
-        return UIUtils.verticalLayout(this.codeViewPanel, new FontSizeSliderBar());
+    public Component getComponent() {
+        return UIUtils.topAndBottomStickyLayout(this.codeViewPanel, new FontSizeSliderBar());
     }
 }

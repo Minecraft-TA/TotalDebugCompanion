@@ -2,7 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.model;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.StringUtils;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeViewPanel;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.CodeViewPanel;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FontSizeSliderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;

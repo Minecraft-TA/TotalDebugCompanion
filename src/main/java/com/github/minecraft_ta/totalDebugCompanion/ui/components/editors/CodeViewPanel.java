@@ -1,4 +1,4 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public class CodeViewPanel extends JScrollPane {
 
-    private static Font JETBRAINS_MONO_FONT = null;
+    public static Font JETBRAINS_MONO_FONT = null;
     static {
         try {
             JETBRAINS_MONO_FONT = Font.createFont(Font.TRUETYPE_FONT, CodeViewPanel.class.getResourceAsStream("/font/jetbrainsmono_regular.ttf"));

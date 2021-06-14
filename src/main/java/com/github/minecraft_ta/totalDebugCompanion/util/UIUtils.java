@@ -1,9 +1,15 @@
 package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class UIUtils {
+
+    public static <T extends JComponent> T withBorder(T c, Border border) {
+        c.setBorder(border);
+        return c;
+    }
 
     public static Component topAndBottomStickyLayout(Component top, Component bottom) {
         return verticalLayout(top, Box.createVerticalGlue(), bottom);

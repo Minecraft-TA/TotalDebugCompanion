@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.server;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
+import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
@@ -13,6 +14,8 @@ import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CompanionAppServer {
 
@@ -75,6 +78,27 @@ public class CompanionAppServer {
                                         }, () -> {
                                             editorTabs.openEditorTab(new CodeView(path));
                                         });
+
+                                UIUtils.focusWindow(this.mainWindow);
+                            case 2:
+                                var query = inputStream.readUTF();
+                                var resultCount = inputStream.readInt();
+                                var results =
+                                        IntStream.range(0, resultCount).mapToObj(i -> {
+                                            try {
+                                                return inputStream.readUTF();
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                                return "";
+                                            }
+                                        }).collect(Collectors.toList());
+                                var methodSearch = inputStream.readBoolean();
+                                var classesCount = inputStream.readInt();
+                                var time = inputStream.readInt();
+
+                                this.mainWindow.getEditorTabs().openEditorTab(new SearchResultView(
+                                        query, results, methodSearch, classesCount, time
+                                ));
 
                                 UIUtils.focusWindow(this.mainWindow);
                         }

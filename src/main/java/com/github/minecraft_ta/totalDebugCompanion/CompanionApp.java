@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
 
 import javax.swing.*;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.nio.file.Files;
@@ -28,6 +29,8 @@ public class CompanionApp {
         UIManager.put("TabbedPane.tabInsets", new Insets(0, 10, 0, 10));
         UIManager.put("TabbedPane.tabHeight", 25);
         UIManager.put("Slider.focusedColor", new ColorUIResource(new Color(0, 0, 0, 0)));
+        UIManager.put("Table.focusSelectedCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 5, 0, 0)));
+        UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 3, 0, 0)));
 
         var mainWindow = new MainWindow(rootPath);
         mainWindow.setSize(1280, 720);

@@ -7,6 +7,8 @@ public interface IEditorPanel {
 
     String getTitle();
 
+    String getIdentifier();
+
     String getTooltip();
 
     Icon getIcon();

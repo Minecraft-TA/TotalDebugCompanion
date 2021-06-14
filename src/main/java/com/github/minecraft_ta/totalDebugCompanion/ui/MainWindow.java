@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui;
 
+import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeViewPanel;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeView;
@@ -12,22 +13,40 @@ import java.nio.file.Path;
 
 public class MainWindow extends JFrame {
 
+    private final EditorTabs editorTabs = new EditorTabs();
+    private final Path rootPath;
+    private final CompanionAppServer server = new CompanionAppServer(25570, this);
+
     public MainWindow(Path rootPath) {
+        this.rootPath = rootPath;
         var root = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
-        var tabs = new EditorTabs();
-        var tree = new FileTreeView(rootPath, tabs);
+        var tree = new FileTreeView(rootPath, editorTabs);
 
         var editor = new CodeViewPanel();
         editor.setMinimumSize(new Dimension(100, 100));
 
         root.setLeftComponent(UIUtils.verticalLayout(new FileTreeViewHeader(), tree));
-        root.setRightComponent(tabs);
+        root.setRightComponent(editorTabs);
         root.setDividerSize(10);
         root.setDividerLocation(350);
 
         getContentPane().add(root);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("TotalDebugCompanion");
+
+        server.run();
+    }
+
+    public CompanionAppServer getServer() {
+        return server;
+    }
+
+    public EditorTabs getEditorTabs() {
+        return editorTabs;
+    }
+
+    public Path getRootPath() {
+        return rootPath;
     }
 }

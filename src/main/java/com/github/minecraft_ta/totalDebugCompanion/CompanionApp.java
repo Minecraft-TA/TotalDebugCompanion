@@ -24,8 +24,8 @@ public class CompanionApp {
         }
 
         FlatDarculaLaf.setup();
-        UIManager.put("Component.focusColor", new ColorUIResource(new Color(0,0,0,0)));
-        UIManager.put("TabbedPane.tabInsets", new Insets(0,10,0,10));
+        UIManager.put("Component.focusColor", new ColorUIResource(new Color(0, 0, 0, 0)));
+        UIManager.put("TabbedPane.tabInsets", new Insets(0, 10, 0, 10));
         UIManager.put("TabbedPane.tabHeight", 25);
         UIManager.put("Slider.focusedColor", new ColorUIResource(new Color(0, 0, 0, 0)));
 

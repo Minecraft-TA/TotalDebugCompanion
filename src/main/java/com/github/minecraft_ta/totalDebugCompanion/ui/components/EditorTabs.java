@@ -4,12 +4,22 @@ import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EditorTabs extends JTabbedPane {
+
+    private final List<IEditorPanel> editors = new ArrayList<>();
 
     public EditorTabs() {
         super();
         setTabLayoutPolicy(SCROLL_TAB_LAYOUT);
+    }
+
+    @Override
+    public void removeTabAt(int index) {
+        super.removeTabAt(index);
+        editors.remove(index);
     }
 
     public void openEditorTab(IEditorPanel editorPanel) {
@@ -19,6 +29,18 @@ public class EditorTabs extends JTabbedPane {
         setToolTipTextAt(index, editorPanel.getTooltip());
         setTabComponentAt(index, new LabelWithButtonTabComponent(this, editorPanel.getIcon()));
         setSelectedIndex(index);
+
+        editors.add(editorPanel);
     }
 
+    public List<IEditorPanel> getEditors() {
+        List<IEditorPanel> editors = new ArrayList<>();
+        for (int i = 0; i < this.getTabCount(); i++) {
+            var c = getComponentAt(i);
+            if (c instanceof IEditorPanel)
+                editors.add((IEditorPanel) c);
+        }
+
+        return editors;
+    }
 }

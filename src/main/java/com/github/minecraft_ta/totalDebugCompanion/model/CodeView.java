@@ -45,6 +45,11 @@ public class CodeView implements IEditorPanel {
     }
 
     @Override
+    public String getIdentifier() {
+        return this.path.toString();
+    }
+
+    @Override
     public Icon getIcon() {
         return CLASS_ICON;
     }

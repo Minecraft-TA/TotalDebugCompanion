@@ -38,4 +38,15 @@ public class FileUtils {
             e.printStackTrace();
         }
     }
+
+    public static boolean isSubPathOf(Path base, Path other) {
+        var it1 = other.normalize().iterator();
+
+        for (Path part : base.normalize()) {
+            if (!it1.hasNext() || !part.equals(it1.next()))
+                return false;
+        }
+
+        return it1.hasNext();
+    }
 }

@@ -26,4 +26,10 @@ public class UIUtils {
 
         return box;
     }
+
+    public static void focusWindow(JFrame frame) {
+        var state = frame.getExtendedState();
+        frame.setExtendedState(JFrame.ICONIFIED);
+        frame.setExtendedState(state);
+    }
 }

@@ -35,5 +35,8 @@ public class CompanionApp {
         var mainWindow = new MainWindow(rootPath);
         mainWindow.setSize(1280, 720);
         mainWindow.setVisible(true);
+
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        mainWindow.setLocation(dim.width / 2 - mainWindow.getSize().width / 2, dim.height / 2 - mainWindow.getSize().height / 2);
     }
 }

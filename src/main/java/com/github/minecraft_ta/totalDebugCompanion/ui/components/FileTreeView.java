@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
@@ -54,16 +55,24 @@ public class FileTreeView extends JScrollPane {
 
         tree.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if (e.getButton() != MouseEvent.BUTTON1 || e.getClickCount() != 2)
-                    return;
                 TreePath pathForRow = tree.getPathForRow(tree.getRowForLocation(e.getX(), e.getY()));
                 if (pathForRow == null)
                     return;
+
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) pathForRow.getLastPathComponent();
                 if (node == null)
                     return;
                 TreeItem treeItem = (TreeItem) node.getUserObject();
                 if (treeItem.isDirectory)
+                    return;
+
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    tree.setSelectionPath(pathForRow);
+                    showPopupMenu(tree, e.getX(), e.getY());
+                    return;
+                }
+
+                if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() != 2)
                     return;
 
                 tabs.openEditorTab(new CodeView(treeItem.path));
@@ -87,6 +96,34 @@ public class FileTreeView extends JScrollPane {
         FileUtils.startNewDirectoryWatcher(rootPath, () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
 
         this.setViewportView(tree);
+    }
+
+    private void showPopupMenu(JTree tree, int x, int y) {
+        var popupMenu = new JPopupMenu();
+        var deleteItem = popupMenu.add("Delete");
+        deleteItem.setIcon(new FlatSVGIcon("icons/remove.svg"));
+        deleteItem.addActionListener(event -> {
+            var path = tree.getSelectionModel().getSelectionPath();
+            if (path == null)
+                return;
+            var node = path.getLastPathComponent();
+            if (node == null)
+                return;
+
+            var item = ((TreeItem) ((LazyTreeNode) node).getUserObject());
+            if (item.isDirectory)
+                return;
+
+            try {
+                Files.deleteIfExists(item.path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) node).getParent());
+        });
+
+        popupMenu.show(tree, x, y);
     }
 
     private void loadItemsForNode(JTree tree, LazyTreeNode node) {

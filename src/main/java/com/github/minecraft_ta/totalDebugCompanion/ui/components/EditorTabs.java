@@ -34,13 +34,6 @@ public class EditorTabs extends JTabbedPane {
     }
 
     public List<IEditorPanel> getEditors() {
-        List<IEditorPanel> editors = new ArrayList<>();
-        for (int i = 0; i < this.getTabCount(); i++) {
-            var c = getComponentAt(i);
-            if (c instanceof IEditorPanel)
-                editors.add((IEditorPanel) c);
-        }
-
-        return editors;
+        return this.editors;
     }
 }

@@ -8,6 +8,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -30,8 +32,15 @@ public class SearchResultViewPanel extends JPanel {
             }
         };
 
-        resultTable.getColumnModel().getColumn(0).setPreferredWidth(500);
-        resultTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        resultTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
+                    return;
+
+
+            }
+        });
 
         resultTable.addKeyListener(new KeyAdapter() {
             @Override
@@ -48,6 +57,8 @@ public class SearchResultViewPanel extends JPanel {
             }
         });
 
+        resultTable.getColumnModel().getColumn(0).setPreferredWidth(500);
+        resultTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultTable.setFont(CodeViewPanel.JETBRAINS_MONO_FONT.deriveFont(14f));
 
         add(constructHeader(searchResultView), BorderLayout.NORTH);

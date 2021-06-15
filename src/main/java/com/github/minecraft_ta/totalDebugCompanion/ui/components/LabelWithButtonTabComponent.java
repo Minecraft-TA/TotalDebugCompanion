@@ -50,6 +50,14 @@ public class LabelWithButtonTabComponent extends JPanel {
             setContentAreaFilled(false);
             setFocusable(false);
             addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (!SwingUtilities.isMiddleMouseButton(e))
+                        return;
+
+                    closeTab();
+                }
+
                 public void mouseEntered(MouseEvent e) {
                     var component = (CloseButton) e.getComponent();
                     component.hovered = true;
@@ -64,6 +72,10 @@ public class LabelWithButtonTabComponent extends JPanel {
         }
 
         public void actionPerformed(ActionEvent e) {
+            closeTab();
+        }
+
+        private void closeTab() {
             int i = pane.indexOfTabComponent(LabelWithButtonTabComponent.this);
             if (i != -1) {
                 pane.remove(i);

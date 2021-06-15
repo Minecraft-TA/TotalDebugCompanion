@@ -4,6 +4,8 @@ import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +16,28 @@ public class EditorTabs extends JTabbedPane {
     public EditorTabs() {
         super();
         setTabLayoutPolicy(SCROLL_TAB_LAYOUT);
+    }
+
+    /**
+     * Allow closing with middle mouse button.
+     *
+     * We do this here to prevent selecting the tab when closing it. {@link #addMouseListener(MouseListener)} gets
+     * called too late
+     */
+    @Override
+    protected void processMouseEvent(MouseEvent e) {
+        if (!SwingUtilities.isMiddleMouseButton(e) || e.getID() != MouseEvent.MOUSE_PRESSED) {
+            super.processMouseEvent(e);
+            return;
+        }
+
+        int tabIndex = indexAtLocation(e.getX(), e.getY());
+        if (tabIndex == -1) {
+            super.processMouseEvent(e);
+            return;
+        }
+
+        removeTabAt(tabIndex);
     }
 
     @Override

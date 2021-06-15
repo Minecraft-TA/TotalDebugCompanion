@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
+import com.github.minecraft_ta.totalDebugCompanion.util.ThrowingConsumer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import java.io.DataInputStream;
@@ -13,23 +14,16 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class CompanionAppServer {
 
-    private final int port;
-    private final MainWindow mainWindow;
+    private static CompanionAppServer INSTANCE = null;
 
     private DataOutputStream outputStream;
 
-    public CompanionAppServer(int port, MainWindow mainWindow) {
-        this.port = port;
-        this.mainWindow = mainWindow;
-    }
-
-    public void writeBatch(Consumer<DataOutputStream> block) {
+    public void writeBatch(ThrowingConsumer<DataOutputStream> block) {
         if (outputStream == null)
             return;
 
@@ -42,10 +36,10 @@ public class CompanionAppServer {
         }
     }
 
-    public void run() {
+    public void run(int port, MainWindow mainWindow) {
         ServerSocket serverSocket;
         try {
-            serverSocket = new ServerSocket(this.port);
+            serverSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -60,15 +54,18 @@ public class CompanionAppServer {
                     var inputStream = new DataInputStream(socket.getInputStream());
 
                     while (true) {
+                        System.out.println("loop start");
                         switch (inputStream.readUnsignedByte()) {
                             case 1:
                                 var path = Paths.get(inputStream.readUTF()).toAbsolutePath();
                                 var row = inputStream.readInt();
+                                System.out.println(row);
+                                System.out.println(path);
 
-                                if (!Files.exists(path) || !FileUtils.isSubPathOf(this.mainWindow.getRootPath(), path))
+                                if (!Files.exists(path) || !FileUtils.isSubPathOf(mainWindow.getRootPath(), path))
                                     break;
 
-                                EditorTabs editorTabs = this.mainWindow.getEditorTabs();
+                                EditorTabs editorTabs = mainWindow.getEditorTabs();
                                 editorTabs.getEditors().stream()
                                         .filter(e -> e instanceof CodeView)
                                         .map(e -> (CodeView) e)
@@ -79,7 +76,8 @@ public class CompanionAppServer {
                                             editorTabs.openEditorTab(new CodeView(path));
                                         });
 
-                                UIUtils.focusWindow(this.mainWindow);
+                                UIUtils.focusWindow(mainWindow);
+                                break;
                             case 2:
                                 var query = inputStream.readUTF();
                                 var resultCount = inputStream.readInt();
@@ -96,11 +94,14 @@ public class CompanionAppServer {
                                 var classesCount = inputStream.readInt();
                                 var time = inputStream.readInt();
 
-                                this.mainWindow.getEditorTabs().openEditorTab(new SearchResultView(
+                                mainWindow.getEditorTabs().openEditorTab(new SearchResultView(
                                         query, results, methodSearch, classesCount, time
                                 ));
 
-                                UIUtils.focusWindow(this.mainWindow);
+                                UIUtils.focusWindow(mainWindow);
+                                break;
+                            default:
+                                System.out.println("Received unknown packet id");
                         }
                     }
                 } catch (IOException e) {
@@ -111,5 +112,12 @@ public class CompanionAppServer {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public static CompanionAppServer getInstance() {
+        if (INSTANCE == null)
+            INSTANCE = new CompanionAppServer();
+
+        return INSTANCE;
     }
 }

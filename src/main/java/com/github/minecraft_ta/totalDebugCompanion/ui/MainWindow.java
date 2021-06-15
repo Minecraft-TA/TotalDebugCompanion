@@ -15,7 +15,6 @@ public class MainWindow extends JFrame {
 
     private final EditorTabs editorTabs = new EditorTabs();
     private final Path rootPath;
-    private final CompanionAppServer server = new CompanionAppServer(25570, this);
 
     public MainWindow(Path rootPath) {
         this.rootPath = rootPath;
@@ -35,11 +34,7 @@ public class MainWindow extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("TotalDebugCompanion");
 
-        server.run();
-    }
-
-    public CompanionAppServer getServer() {
-        return server;
+        CompanionAppServer.getInstance().run(25570, this);
     }
 
     public EditorTabs getEditorTabs() {

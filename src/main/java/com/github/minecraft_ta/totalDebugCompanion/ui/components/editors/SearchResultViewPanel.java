@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
+import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -35,10 +36,21 @@ public class SearchResultViewPanel extends JPanel {
         resultTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
+                if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
                     return;
 
+                int row = resultTable.rowAtPoint(e.getPoint());
+                if (row == -1)
+                    return;
 
+                var className = (String) resultTable.getValueAt(row, 0);
+                className = className.replace('/', '.');
+
+                final var finalClassName = className;
+                CompanionAppServer.getInstance().writeBatch((out) -> {
+                    out.write(1);
+                    out.writeUTF(finalClassName);
+                });
             }
         });
 

@@ -32,11 +32,6 @@ public class SearchResultView implements IEditorPanel {
     }
 
     @Override
-    public String getIdentifier() {
-        return this.query;
-    }
-
-    @Override
     public String getTooltip() {
         return this.query;
     }

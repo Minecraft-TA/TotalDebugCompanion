@@ -75,7 +75,7 @@ public class FileTreeView extends JScrollPane {
                 if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
                     return;
 
-                tabs.openEditorTab(new CodeView(treeItem.path));
+                tabs.openEditorTab(new CodeView(treeItem.path, 1));
             }
         });
 

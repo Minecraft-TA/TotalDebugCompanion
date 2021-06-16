@@ -54,26 +54,27 @@ public class CompanionAppServer {
                     var inputStream = new DataInputStream(socket.getInputStream());
 
                     while (true) {
-                        System.out.println("loop start");
-                        switch (inputStream.readUnsignedByte()) {
+                        int packetId = inputStream.readUnsignedByte();
+                        switch (packetId) {
                             case 1:
                                 var path = Paths.get(inputStream.readUTF()).toAbsolutePath();
                                 var row = inputStream.readInt();
-                                System.out.println(row);
-                                System.out.println(path);
 
                                 if (!Files.exists(path) || !FileUtils.isSubPathOf(mainWindow.getRootPath(), path))
                                     break;
+
+                                System.out.printf("Opening %s at line %d%n", path, row);
 
                                 EditorTabs editorTabs = mainWindow.getEditorTabs();
                                 editorTabs.getEditors().stream()
                                         .filter(e -> e instanceof CodeView)
                                         .map(e -> (CodeView) e)
-                                        .filter(e -> e.getIdentifier().equals(path.toString()))
+                                        .filter(e -> e.getPath().equals(path))
                                         .findFirst().ifPresentOrElse(c -> {
                                             editorTabs.setSelectedIndex(editorTabs.getEditors().indexOf(c));
+                                            c.focusLine(row);
                                         }, () -> {
-                                            editorTabs.openEditorTab(new CodeView(path));
+                                            editorTabs.openEditorTab(new CodeView(path, row));
                                         });
 
                                 UIUtils.focusWindow(mainWindow);
@@ -101,7 +102,7 @@ public class CompanionAppServer {
                                 UIUtils.focusWindow(mainWindow);
                                 break;
                             default:
-                                System.out.println("Received unknown packet id");
+                                System.out.printf("Received unknown packet id %d\n", packetId);
                         }
                     }
                 } catch (IOException e) {

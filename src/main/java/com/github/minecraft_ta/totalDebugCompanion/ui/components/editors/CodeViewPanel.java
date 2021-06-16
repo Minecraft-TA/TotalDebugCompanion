@@ -1,6 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
+import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -23,7 +25,9 @@ public class CodeViewPanel extends JScrollPane {
     private final JTextPane editorPane = new JTextPane();
     private final JTextArea lineNumbers = new JTextArea();
 
-    public CodeViewPanel() {
+    private int lineCount;
+
+    public CodeViewPanel(CodeView codeView) {
         super();
 
         editorPane.setEditable(false);
@@ -33,7 +37,13 @@ public class CodeViewPanel extends JScrollPane {
                 int offset = editorPane.viewToModel2D(e.getPoint());
                 int line = editorPane.getDocument().getDefaultRootElement().getElementIndex(offset);
                 int column = (offset - editorPane.getDocument().getDefaultRootElement().getElement(line).getStartOffset());
-                System.out.println(line + ":" + column);
+
+                CompanionAppServer.getInstance().writeBatch(out -> {
+                    out.write(2);
+                    out.writeUTF(codeView.getPath().getFileName().toString());
+                    out.writeInt(line);
+                    out.writeInt(column);
+                });
             }
 
             @Override
@@ -73,14 +83,14 @@ public class CodeViewPanel extends JScrollPane {
     public void setCode(String code) {
         editorPane.setText(code);
 
-        int lineCount = code.split("\n").length;
-        int lineNumberLength = (lineCount + "").length();
+        this.lineCount = code.split("\n").length;
+        int lineNumberLength = (this.lineCount + "").length();
 
         var lineNumberTextBuilder = new StringBuilder();
-        for (int i = 0; i < lineCount; i++) {
+        for (int i = 0; i < this.lineCount; i++) {
             lineNumberTextBuilder.append(String.format("%" + lineNumberLength + "d", i + 1));
 
-            if (i != lineCount - 1)
+            if (i != this.lineCount - 1)
                 lineNumberTextBuilder.append("\n");
         }
 
@@ -92,8 +102,8 @@ public class CodeViewPanel extends JScrollPane {
         lineNumbers.setMaximumSize(new Dimension(charsWidth, Integer.MAX_VALUE));
     }
 
-    public JTextPane getEditorPane() {
-        return editorPane;
+    public void focusLine(int line) {
+        this.getVerticalScrollBar().setValue((line - 1) * (this.getVerticalScrollBar().getMaximum() / this.lineCount));
     }
 
     private void initFonts() {
@@ -115,5 +125,9 @@ public class CodeViewPanel extends JScrollPane {
 
         getVerticalScrollBar().setUnitIncrement((int) (lineHeight * verticalIncrement * mul));
         getHorizontalScrollBar().setUnitIncrement((int) (charWidth * horizontalIncrement * mul));
+    }
+
+    public JTextPane getEditorPane() {
+        return editorPane;
     }
 }

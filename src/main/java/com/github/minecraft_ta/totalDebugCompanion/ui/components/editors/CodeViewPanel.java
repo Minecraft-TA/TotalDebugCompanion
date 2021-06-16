@@ -6,9 +6,12 @@ import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
 public class CodeViewPanel extends JScrollPane {
@@ -35,6 +38,16 @@ public class CodeViewPanel extends JScrollPane {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int offset = editorPane.viewToModel2D(e.getPoint());
+                Rectangle2D modelView;
+                try {
+                    modelView = editorPane.modelToView2D(offset);
+                    //Did we click to the right of a line, and the cursor got adjusted to the left?
+                    if (modelView.getX() < e.getX() && offset == Utilities.getRowEnd(editorPane, offset))
+                        return;
+                } catch (BadLocationException ex) {
+                    throw new RuntimeException("Offset not in view", ex);
+                }
+
                 int line = editorPane.getDocument().getDefaultRootElement().getElementIndex(offset);
                 int column = (offset - editorPane.getDocument().getDefaultRootElement().getElement(line).getStartOffset());
 

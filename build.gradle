@@ -20,7 +20,7 @@ dependencies {
 }
 
 shadowJar {
-    classifier("")
+    archiveName("${archivesBaseName}.${archiveExtension.get()}")
 }
 
 runtime {

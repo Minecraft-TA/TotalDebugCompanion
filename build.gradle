@@ -1,0 +1,39 @@
+plugins {
+    id('java')
+    id('com.github.johnrengelman.shadow') version '7.0.0'
+    id 'org.beryx.runtime' version '1.12.5'
+}
+
+group = "com.github.minecraft_ta"
+version = "1.2.1"
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("com.formdev:flatlaf:1.2")
+    implementation("com.formdev:flatlaf-intellij-themes:1.2")
+    implementation("com.formdev:flatlaf-extras:1.2")
+    implementation("com.github.javaparser:javaparser-core:3.22.0")
+}
+
+shadowJar {
+    classifier("")
+}
+
+runtime {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    modules = [
+            'java.desktop',
+            'java.logging',
+            'java.prefs',
+            'java.xml',
+            'java.datatransfer'
+    ]
+}
+
+application {
+    mainClass = "com.github.minecraft_ta.totalDebugCompanion.CompanionApp"
+}

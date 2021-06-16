@@ -12,16 +12,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 15
+      - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '15'
+          java-version: '11'
       - name: Build with Gradle
-        run: ./gradlew.bat createDistributable
+        run: ./gradlew.bat shadowJar runtime
       - uses: papeloto/action-zip@v1
         with:
-          files: build/compose/binaries/main/app/TotalDebugCompanion
+          files: build/image build/libs
           dest: TotalDebugCompanion.zip
           recursive: true
       - name: Create Release
@@ -34,7 +34,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           body: |
             Changes in this Release
-            - Initial release
+            - Switched to java swing
           draft: false
           prerelease: false
       - name: Upload zip to release

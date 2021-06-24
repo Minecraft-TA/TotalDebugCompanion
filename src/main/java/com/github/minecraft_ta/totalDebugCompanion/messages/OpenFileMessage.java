@@ -24,7 +24,6 @@ public class OpenFileMessage extends AbstractMessageIncoming {
     }
 
     public static void handle(OpenFileMessage message, MainWindow window) {
-        System.out.println("yo");
         if (!Files.exists(message.path) || !FileUtils.isSubPathOf(window.getRootPath(), message.path))
             return;
 

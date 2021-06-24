@@ -7,8 +7,7 @@ import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -88,7 +87,9 @@ public class CodeViewPanel extends JScrollPane {
         initFonts();
         initScrolling();
         GlobalConfig.getInstance().addPropertyChangeListener("scrollMul", event -> initScrolling());
-        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> initFonts());
+        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> {
+            initFonts();
+        });
     }
 
     public void setCode(String code) {

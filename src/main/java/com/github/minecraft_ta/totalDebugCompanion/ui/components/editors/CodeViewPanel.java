@@ -1,8 +1,9 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.messages.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
-import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -51,12 +52,9 @@ public class CodeViewPanel extends JScrollPane {
                 int line = editorPane.getDocument().getDefaultRootElement().getElementIndex(offset);
                 int column = (offset - editorPane.getDocument().getDefaultRootElement().getElement(line).getStartOffset());
 
-                CompanionAppServer.getInstance().writeBatch(out -> {
-                    out.write(2);
-                    out.writeUTF(codeView.getPath().getFileName().toString());
-                    out.writeInt(line);
-                    out.writeInt(column);
-                });
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(
+                        new CodeViewClickMessage(codeView.getPath().getFileName().toString(), line, column)
+                );
             }
 
             @Override

@@ -1,7 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
-import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -46,11 +47,7 @@ public class SearchResultViewPanel extends JPanel {
                 var className = (String) resultTable.getValueAt(row, 0);
                 className = className.replace('/', '.');
 
-                final var finalClassName = className;
-                CompanionAppServer.getInstance().writeBatch((out) -> {
-                    out.write(1);
-                    out.writeUTF(finalClassName);
-                });
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(className));
             }
         });
 

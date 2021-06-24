@@ -1,6 +1,5 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui;
 
-import com.github.minecraft_ta.totalDebugCompanion.server.CompanionAppServer;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeViewHeader;
@@ -28,8 +27,6 @@ public class MainWindow extends JFrame {
         getContentPane().add(root);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("TotalDebugCompanion");
-
-        CompanionAppServer.getInstance().run(25570, this);
     }
 
     public EditorTabs getEditorTabs() {

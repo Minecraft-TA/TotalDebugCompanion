@@ -10,9 +10,12 @@ version = "1.3.0"
 repositories {
     jcenter()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
+    implementation("com.github.tth05:SCNet:master-SNAPSHOT")
+
     implementation("com.formdev:flatlaf:1.2")
     implementation("com.formdev:flatlaf-intellij-themes:1.2")
     implementation("com.formdev:flatlaf-extras:1.2")
@@ -36,4 +39,8 @@ runtime {
 
 application {
     mainClass = "com.github.minecraft_ta.totalDebugCompanion.CompanionApp"
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }

@@ -4,37 +4,47 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.messages.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
+import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FontSizeSliderBar;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.SearchHeaderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Utilities;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.util.Objects;
 
-public class CodeViewPanel extends JScrollPane {
+public class CodeViewPanel extends Box {
 
     public static Font JETBRAINS_MONO_FONT = null;
     static {
         try {
-            JETBRAINS_MONO_FONT = Font.createFont(Font.TRUETYPE_FONT, CodeViewPanel.class.getResourceAsStream("/font/jetbrainsmono_regular.ttf"));
+            JETBRAINS_MONO_FONT = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(CodeViewPanel.class.getResourceAsStream("/font/jetbrainsmono_regular.ttf"), "Unable to load font"));
         } catch (FontFormatException | IOException e) {
             e.printStackTrace();
         }
     }
 
+    private final JScrollPane scrollPane = new JScrollPane();
     private final JTextPane editorPane = new JTextPane();
     private final JTextArea lineNumbers = new JTextArea();
 
+    private final SearchManager searchManager = new SearchManager(editorPane);
+
+    private JComponent headerComponent;
     private int lineCount;
 
     public CodeViewPanel(CodeView codeView) {
-        super();
+        super(BoxLayout.Y_AXIS);
 
-        editorPane.setEditable(false);
-        editorPane.addMouseListener(new MouseListener() {
+        this.editorPane.setEditable(false);
+        this.editorPane.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int offset = editorPane.viewToModel2D(e.getPoint());
@@ -56,33 +66,26 @@ public class CodeViewPanel extends JScrollPane {
                 );
             }
 
+            //@formatter:off
             @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
+            public void mousePressed(MouseEvent e) {}
             @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
+            public void mouseReleased(MouseEvent e) {}
             @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
+            public void mouseEntered(MouseEvent e) {}
             @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
+            public void mouseExited(MouseEvent e) {}
+            //@formatter:on
         });
 
-        lineNumbers.setEditable(false);
-        lineNumbers.setForeground(Color.GRAY);
-        lineNumbers.setHighlighter(null);
+        this.lineNumbers.setEditable(false);
+        this.lineNumbers.setForeground(Color.GRAY);
+        this.lineNumbers.setHighlighter(null);
 
-        setViewportView(UIUtils.horizontalLayout(lineNumbers, editorPane));
-        setBorder(BorderFactory.createEmptyBorder());
+        this.scrollPane.setViewportView(UIUtils.horizontalLayout(this.lineNumbers, this.editorPane));
+        this.scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        this.add(this.scrollPane);
+        this.add(new FontSizeSliderBar());
 
         initFonts();
         initScrolling();
@@ -90,10 +93,25 @@ public class CodeViewPanel extends JScrollPane {
         GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> {
             initFonts();
         });
+
+        this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed F"), "openSearchPopup");
+        this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), "closeSearchPopup");
+        this.editorPane.getActionMap().put("closeSearchPopup", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                removeHeaderComponent();
+            }
+        });
+        this.editorPane.getActionMap().put("openSearchPopup", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setHeaderComponent(new SearchHeaderBar());
+            }
+        });
     }
 
     public void setCode(String code) {
-        editorPane.setText(code);
+        this.editorPane.setText(code);
 
         this.lineCount = code.split("\n").length;
         int lineNumberLength = (this.lineCount + "").length();
@@ -106,25 +124,58 @@ public class CodeViewPanel extends JScrollPane {
                 lineNumberTextBuilder.append("\n");
         }
 
-        lineNumbers.setText(lineNumberTextBuilder.toString());
+        this.lineNumbers.setText(lineNumberTextBuilder.toString());
         //Adjust max width, otherwise it will take up too much space
-        int charsWidth = lineNumbers.getFontMetrics(lineNumbers.getFont())
+        int charsWidth = this.lineNumbers.getFontMetrics(this.lineNumbers.getFont())
                 .charsWidth("9".repeat(lineNumberLength).toCharArray(), 0, lineNumberLength);
-        lineNumbers.setColumns(lineNumberLength);
-        lineNumbers.setMaximumSize(new Dimension(charsWidth, Integer.MAX_VALUE));
+        this.lineNumbers.setColumns(lineNumberLength);
+        this.lineNumbers.setMaximumSize(new Dimension(charsWidth, Integer.MAX_VALUE));
     }
 
     public void focusLine(int line) {
-        this.getVerticalScrollBar().setValue((line - 1) * (this.getVerticalScrollBar().getMaximum() / this.lineCount));
+        var verticalScrollBar = this.scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setValue((line - 1) * (verticalScrollBar.getMaximum() / this.lineCount));
+    }
+
+    public void setHeaderComponent(JComponent component) {
+        removeHeaderComponent();
+        this.headerComponent = component;
+        CodeViewPanel.this.add(component, 0);
+        CodeViewPanel.this.revalidate();
+        CodeViewPanel.this.repaint();
+        SwingUtilities.invokeLater(() -> {
+            //Adjust scroll bar to keep it in place
+            var verticalScrollBar = scrollPane.getVerticalScrollBar();
+            verticalScrollBar.setValue((int) (verticalScrollBar.getValue() + component.getPreferredSize().getHeight()));
+        });
+    }
+
+    public void removeHeaderComponent() {
+        if (this.headerComponent == null)
+            return;
+
+        synchronized (getTreeLock()) {
+            Component component = getComponent(0);
+            if (this.headerComponent == component) {
+                CodeViewPanel.this.remove(0);
+                CodeViewPanel.this.revalidate();
+                CodeViewPanel.this.repaint();
+                //Adjust scroll bar to keep it in place
+                var verticalScrollBar = scrollPane.getVerticalScrollBar();
+                verticalScrollBar.setValue(verticalScrollBar.getValue() - component.getHeight());
+            }
+        }
+
+        this.headerComponent = null;
     }
 
     private void initFonts() {
-        editorPane.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize")));
-        lineNumbers.setFont(editorPane.getFont());
+        this.editorPane.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize")));
+        this.lineNumbers.setFont(this.editorPane.getFont());
     }
 
     private void initScrolling() {
-        FontMetrics metrics = getFontMetrics(editorPane.getFont());
+        FontMetrics metrics = getFontMetrics(this.editorPane.getFont());
         int lineHeight = metrics.getHeight();
         int charWidth = metrics.getMaxAdvance();
 
@@ -135,11 +186,11 @@ public class CodeViewPanel extends JScrollPane {
 
         float mul = GlobalConfig.getInstance().<Float>getValue("scrollMul");
 
-        getVerticalScrollBar().setUnitIncrement((int) (lineHeight * verticalIncrement * mul));
-        getHorizontalScrollBar().setUnitIncrement((int) (charWidth * horizontalIncrement * mul));
+        this.scrollPane.getVerticalScrollBar().setUnitIncrement((int) (lineHeight * verticalIncrement * mul));
+        this.scrollPane.getHorizontalScrollBar().setUnitIncrement((int) (charWidth * horizontalIncrement * mul));
     }
 
     public JTextPane getEditorPane() {
-        return editorPane;
+        return this.editorPane;
     }
 }

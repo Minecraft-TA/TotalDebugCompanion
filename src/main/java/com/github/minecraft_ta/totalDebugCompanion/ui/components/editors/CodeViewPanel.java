@@ -13,9 +13,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.Objects;
@@ -100,13 +98,27 @@ public class CodeViewPanel extends Box {
             @Override
             public void actionPerformed(ActionEvent e) {
                 removeHeaderComponent();
+                searchManager.hideHighlights();
             }
         });
         this.editorPane.getActionMap().put("openSearchPopup", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                setHeaderComponent(new SearchHeaderBar());
+                setHeaderComponent(new SearchHeaderBar(searchManager));
             }
+        });
+
+        addHierarchyListener(e -> {
+            if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
+                searchManager.stopThread();
+            }
+        });
+
+        searchManager.addFocusedIndexChangedListener(i -> {
+            if (searchManager.getMatchCount() == 0)
+                return;
+
+            SwingUtilities.invokeLater(() -> focusLine(searchManager.getFocusedMatchLine()));
         });
     }
 

@@ -39,13 +39,17 @@ public class SearchHeaderBar extends JPanel {
         textField.addActionListener(e -> searchManager.focusNextMatch());
         add(textField);
 
-        add(createToggleableFlatButton(new FlatSVGIcon("icons/regex.svg"), (b) -> {
-            searchManager.setUseRegex(b);
+        add(createToggleableFlatButton("Match case", new FlatSVGIcon("icons/matchCase.svg"), (b) -> {
+            searchManager.setMatchCase(b);
             //Force refresh
             searchManager.setQuery(textField.getText());
         }));
-        add(createFlatButton(new FlatSVGIcon("icons/previousOccurence.svg"), (e) -> searchManager.focusPreviousMatch()));
-        add(createFlatButton(new FlatSVGIcon("icons/nextOccurence.svg"), (e) -> searchManager.focusNextMatch()));
+        add(createToggleableFlatButton("Regex", new FlatSVGIcon("icons/regex.svg"), (b) -> {
+            searchManager.setUseRegex(b);
+            searchManager.setQuery(textField.getText());
+        }));
+        add(createFlatButton("Previous", new FlatSVGIcon("icons/previousOccurence.svg"), (e) -> searchManager.focusPreviousMatch()));
+        add(createFlatButton("Next", new FlatSVGIcon("icons/nextOccurence.svg"), (e) -> searchManager.focusNextMatch()));
 
         JLabel indexLabel = new JLabel("");
         searchManager.addFocusedIndexChangedListener(i -> {
@@ -64,34 +68,54 @@ public class SearchHeaderBar extends JPanel {
         SwingUtilities.invokeLater(textField::requestFocus);
     }
 
-    private JButton createToggleableFlatButton(Icon icon, Consumer<Boolean> toggleListener) {
+    private JButton createToggleableFlatButton(String tooltip, Icon icon, Consumer<Boolean> toggleListener) {
         var button = new JButton(icon);
+        button.setToolTipText(tooltip);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setContentAreaFilled(false);
         button.addMouseListener(new MouseAdapter() {
 
-            boolean state;
+            private final Color HOVER_COLOR = Color.GRAY.darker();
+            private final Color TOGGLED_COLOR = new Color(90, 90, 90);
+            private boolean state;
 
             @Override
             public void mouseClicked(MouseEvent e) {
                 this.state = !this.state;
                 toggleListener.accept(this.state);
 
-                if (state) {
+                if (this.state) {
                     button.setContentAreaFilled(true);
-                    button.setBackground(Color.GRAY.darker());
+                    button.setBackground(HOVER_COLOR);
+                    ((FlatSVGIcon) button.getIcon()).setColorFilter(new FlatSVGIcon.ColorFilter((c) -> new Color(74, 136, 199)));
                 } else {
-                    button.setContentAreaFilled(false);
+                    button.setBackground(HOVER_COLOR);
+                    ((FlatSVGIcon) button.getIcon()).setColorFilter(null);
                 }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setContentAreaFilled(true);
+                button.setBackground(HOVER_COLOR);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (this.state)
+                    button.setBackground(TOGGLED_COLOR);
+                else
+                    button.setContentAreaFilled(false);
             }
         });
 
         return button;
     }
 
-    private JButton createFlatButton(Icon icon, Consumer<MouseEvent> clickListener) {
+    private JButton createFlatButton(String tooltip, Icon icon, Consumer<MouseEvent> clickListener) {
         var button = new JButton(icon);
+        button.setToolTipText(tooltip);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setContentAreaFilled(false);

@@ -26,6 +26,7 @@ public class SearchManager {
     private Object focusedMatchReference;
     private int focusedMatchIndex;
 
+    private boolean matchCase;
     private boolean useRegex;
 
     public SearchManager(JTextPane textPane) {
@@ -50,7 +51,8 @@ public class SearchManager {
 
                 Matcher matcher;
                 try {
-                    matcher = Pattern.compile(this.useRegex ? query : Pattern.quote(query)).matcher(text);
+                    int flags = matchCase ? 0 : Pattern.CASE_INSENSITIVE;
+                    matcher = Pattern.compile(this.useRegex ? query : Pattern.quote(query), flags).matcher(text);
                 } catch (Throwable t) {continue;}
 
                 while (matcher.find()) {
@@ -178,6 +180,10 @@ public class SearchManager {
         });
 
         focusMatchAtIndex(0);
+    }
+
+    public void setMatchCase(boolean matchCase) {
+        this.matchCase = matchCase;
     }
 
     private static final class HighlightInfo {

@@ -53,11 +53,19 @@ public class SearchManager {
                 try {
                     int flags = matchCase ? 0 : Pattern.CASE_INSENSITIVE;
                     matcher = Pattern.compile(this.useRegex ? query : Pattern.quote(query), flags).matcher(text);
-                } catch (Throwable t) {continue;}
+                } catch (Throwable t) {
+                    this.focusedMatchReference = null;
+                    this.focusedIndexChangeListeners.forEach(i -> i.accept(0));
+                    this.focusedMatchIndex = 0;
+                    SwingUtilities.invokeLater(this::hideHighlights);
+                    continue;
+                }
 
                 while (matcher.find()) {
                     if (!this.searchQueue.isEmpty())
                         break;
+                    if (matcher.start() == matcher.end())
+                        continue;
                     this.highlights.add(new HighlightInfo(matcher.start(), matcher.end()));
                 }
 
@@ -129,10 +137,14 @@ public class SearchManager {
     }
 
     public int getFocusedRangeStart() {
+        if (this.highlights.isEmpty())
+            return 0;
         return this.highlights.get(this.focusedMatchIndex).start;
     }
 
     public int getFocusedRangeEnd() {
+        if (this.highlights.isEmpty())
+            return 0;
         return this.highlights.get(this.focusedMatchIndex).end;
     }
 

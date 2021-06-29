@@ -5,7 +5,6 @@ import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,7 +29,7 @@ public class SearchHeaderBar extends JPanel {
                 graphics.dispose();
             }
         };
-        textField.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.GRAY), BorderFactory.createEmptyBorder(5, 25, 5, 5)));
+        textField.setBorder(BorderFactory.createEmptyBorder(5, 25, 5, 5));
         textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
         textField.setMaximumSize(textField.getPreferredSize());
         textField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
@@ -38,16 +37,19 @@ public class SearchHeaderBar extends JPanel {
         });
         textField.addActionListener(e -> searchManager.focusNextMatch());
         add(textField);
+        add(createSeparator());
 
         add(createToggleableFlatButton("Match case", new FlatSVGIcon("icons/matchCase.svg"), (b) -> {
             searchManager.setMatchCase(b);
             //Force refresh
             searchManager.setQuery(textField.getText());
         }));
-        add(createToggleableFlatButton("Regex", new FlatSVGIcon("icons/regex.svg"), (b) -> {
+        JButton regexButton = createToggleableFlatButton("Regex", new FlatSVGIcon("icons/regex.svg"), (b) -> {
             searchManager.setUseRegex(b);
             searchManager.setQuery(textField.getText());
-        }));
+        });
+        add(regexButton);
+        add(createSeparator());
         add(createFlatButton("Previous", new FlatSVGIcon("icons/previousOccurence.svg"), (e) -> searchManager.focusPreviousMatch()));
         add(createFlatButton("Next", new FlatSVGIcon("icons/nextOccurence.svg"), (e) -> searchManager.focusNextMatch()));
 
@@ -66,6 +68,13 @@ public class SearchHeaderBar extends JPanel {
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
 
         SwingUtilities.invokeLater(textField::requestFocus);
+    }
+
+    private JSeparator createSeparator() {
+        JSeparator separator = new JSeparator(JSeparator.VERTICAL);
+        separator.setForeground(Color.GRAY);
+        separator.setMaximumSize(new Dimension(1, 100));
+        return separator;
     }
 
     private JButton createToggleableFlatButton(String tooltip, Icon icon, Consumer<Boolean> toggleListener) {

@@ -8,6 +8,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.IntConsumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SearchManager {
@@ -24,6 +25,8 @@ public class SearchManager {
 
     private Object focusedMatchReference;
     private int focusedMatchIndex;
+
+    private boolean useRegex;
 
     public SearchManager(JTextPane textPane) {
         this.textPane = textPane;
@@ -44,7 +47,12 @@ public class SearchManager {
                 this.highlights.clear();
 
                 var text = textPane.getText();
-                var matcher = Pattern.compile(Pattern.quote(query)).matcher(text);
+
+                Matcher matcher;
+                try {
+                    matcher = Pattern.compile(this.useRegex ? query : Pattern.quote(query)).matcher(text);
+                } catch (Throwable t) {continue;}
+
                 while (matcher.find()) {
                     if (!this.searchQueue.isEmpty())
                         break;
@@ -110,12 +118,20 @@ public class SearchManager {
         }
     }
 
+    public void setUseRegex(boolean useRegex) {
+        this.useRegex = useRegex;
+    }
+
     public int getFocusedMatchIndex() {
         return this.focusedMatchIndex;
     }
 
-    public int getFocusedMatchLine() {
-        return textPane.getDocument().getDefaultRootElement().getElementIndex(this.highlights.get(this.focusedMatchIndex).start) + 1;
+    public int getFocusedRangeStart() {
+        return this.highlights.get(this.focusedMatchIndex).start;
+    }
+
+    public int getFocusedRangeEnd() {
+        return this.highlights.get(this.focusedMatchIndex).end;
     }
 
     public void addFocusedIndexChangedListener(IntConsumer listener) {

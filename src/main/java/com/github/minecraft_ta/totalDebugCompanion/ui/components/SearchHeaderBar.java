@@ -31,7 +31,7 @@ public class SearchHeaderBar extends JPanel {
             }
         };
         textField.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.GRAY), BorderFactory.createEmptyBorder(5, 25, 5, 5)));
-        textField.setPreferredSize(new Dimension(400, (int) textField.getPreferredSize().getHeight()));
+        textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
         textField.setMaximumSize(textField.getPreferredSize());
         textField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
             searchManager.setQuery(textField.getText());
@@ -39,8 +39,14 @@ public class SearchHeaderBar extends JPanel {
         textField.addActionListener(e -> searchManager.focusNextMatch());
         add(textField);
 
+        add(createToggleableFlatButton(new FlatSVGIcon("icons/regex.svg"), (b) -> {
+            searchManager.setUseRegex(b);
+            //Force refresh
+            searchManager.setQuery(textField.getText());
+        }));
         add(createFlatButton(new FlatSVGIcon("icons/previousOccurence.svg"), (e) -> searchManager.focusPreviousMatch()));
         add(createFlatButton(new FlatSVGIcon("icons/nextOccurence.svg"), (e) -> searchManager.focusNextMatch()));
+
         JLabel indexLabel = new JLabel("");
         searchManager.addFocusedIndexChangedListener(i -> {
             if (searchManager.getMatchCount() == 0) {
@@ -56,6 +62,32 @@ public class SearchHeaderBar extends JPanel {
         setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
 
         SwingUtilities.invokeLater(textField::requestFocus);
+    }
+
+    private JButton createToggleableFlatButton(Icon icon, Consumer<Boolean> toggleListener) {
+        var button = new JButton(icon);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setContentAreaFilled(false);
+        button.addMouseListener(new MouseAdapter() {
+
+            boolean state;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                this.state = !this.state;
+                toggleListener.accept(this.state);
+
+                if (state) {
+                    button.setContentAreaFilled(true);
+                    button.setBackground(Color.GRAY.darker());
+                } else {
+                    button.setContentAreaFilled(false);
+                }
+            }
+        });
+
+        return button;
     }
 
     private JButton createFlatButton(Icon icon, Consumer<MouseEvent> clickListener) {

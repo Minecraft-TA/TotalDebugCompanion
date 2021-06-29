@@ -82,16 +82,16 @@ public class CodeViewPanel extends Box {
 
         this.scrollPane.setViewportView(UIUtils.horizontalLayout(this.lineNumbers, this.editorPane));
         this.scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        this.add(this.scrollPane);
-        this.add(new FontSizeSliderBar());
+        add(this.scrollPane);
+        add(new FontSizeSliderBar());
 
+        //Scrolling and fonts
         initFonts();
         initScrolling();
         GlobalConfig.getInstance().addPropertyChangeListener("scrollMul", event -> initScrolling());
-        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> {
-            initFonts();
-        });
+        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> initFonts());
 
+        //Ctrl+F keybind for search
         this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed F"), "openSearchPopup");
         this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), "closeSearchPopup");
         this.editorPane.getActionMap().put("closeSearchPopup", new AbstractAction() {
@@ -108,17 +108,19 @@ public class CodeViewPanel extends Box {
             }
         });
 
+        //Stop search thread if the tab is closed
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
-                searchManager.stopThread();
+                this.searchManager.stopThread();
             }
         });
 
-        searchManager.addFocusedIndexChangedListener(i -> {
-            if (searchManager.getMatchCount() == 0)
+        //Scroll to focused search position
+        this.searchManager.addFocusedIndexChangedListener(i -> {
+            if (this.searchManager.getMatchCount() == 0)
                 return;
 
-            SwingUtilities.invokeLater(() -> focusLine(searchManager.getFocusedMatchLine()));
+            SwingUtilities.invokeLater(() -> focusRange(this.searchManager.getFocusedRangeStart(), this.searchManager.getFocusedRangeEnd()));
         });
     }
 
@@ -138,8 +140,7 @@ public class CodeViewPanel extends Box {
 
         this.lineNumbers.setText(lineNumberTextBuilder.toString());
         //Adjust max width, otherwise it will take up too much space
-        int charsWidth = this.lineNumbers.getFontMetrics(this.lineNumbers.getFont())
-                .charsWidth("9".repeat(lineNumberLength).toCharArray(), 0, lineNumberLength);
+        int charsWidth = UIUtils.getFontWidth(this.lineNumbers, "9".repeat(lineNumberLength));
         this.lineNumbers.setColumns(lineNumberLength);
         this.lineNumbers.setMaximumSize(new Dimension(charsWidth, Integer.MAX_VALUE));
     }
@@ -147,6 +148,26 @@ public class CodeViewPanel extends Box {
     public void focusLine(int line) {
         var verticalScrollBar = this.scrollPane.getVerticalScrollBar();
         verticalScrollBar.setValue((line - 1) * (verticalScrollBar.getMaximum() / this.lineCount));
+    }
+
+    public void focusRange(int offsetStart, int offsetEnd) {
+        try {
+            var rect = this.editorPane.modelToView2D(offsetStart);
+            var viewport = this.scrollPane.getViewport();
+
+            var viewSize = viewport.getViewSize();
+            var extentSize = viewport.getExtentSize();
+
+            int rangeWidth = UIUtils.getFontWidth(this.editorPane, "9".repeat(offsetEnd - offsetStart));
+            int x = (int) Math.max(0, rect.getX() - ((extentSize.width - rangeWidth) / 2f));
+            x = Math.min(x, viewSize.width - extentSize.width);
+            int y = (int) Math.max(0, rect.getY() - ((extentSize.height - rect.getHeight()) / 2f));
+            y = Math.min(y, viewSize.height - extentSize.height);
+
+            viewport.setViewPosition(new Point(x, y));
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setHeaderComponent(JComponent component) {

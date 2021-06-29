@@ -6,6 +6,10 @@ import java.awt.*;
 
 public class UIUtils {
 
+    public static int getFontWidth(JComponent component, String s) {
+        return component.getFontMetrics(component.getFont()).stringWidth(s);
+    }
+
     public static <T extends JComponent> T withBorder(T c, Border border) {
         c.setBorder(border);
         return c;

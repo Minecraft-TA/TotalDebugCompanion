@@ -97,11 +97,17 @@ public class SearchManager {
     }
 
     public void focusNextMatch() {
-        focusMatchAtIndex(Math.min(getMatchCount() - 1, this.focusedMatchIndex + 1));
+        if (this.focusedMatchIndex >= getMatchCount() - 1)
+            focusMatchAtIndex(0);
+        else
+            focusMatchAtIndex(this.focusedMatchIndex + 1);
     }
 
     public void focusPreviousMatch() {
-        focusMatchAtIndex(Math.max(0, this.focusedMatchIndex - 1));
+        if (this.focusedMatchIndex <= 0)
+            focusMatchAtIndex(getMatchCount() - 1);
+        else
+            focusMatchAtIndex(this.focusedMatchIndex - 1);
     }
 
     public int getMatchCount() {

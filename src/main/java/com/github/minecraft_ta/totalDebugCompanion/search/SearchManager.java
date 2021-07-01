@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 public class SearchManager {
 
-    private static final DefaultHighlighter.DefaultHighlightPainter HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 255, 0, 200));
-    private static final DefaultHighlighter.DefaultHighlightPainter FOCUSED_HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(0, 0, 255, 100));
+    private static final DefaultHighlighter.DefaultHighlightPainter HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(74, 136, 199));
+    private static final DefaultHighlighter.DefaultHighlightPainter FOCUSED_HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(45, 83, 220));
 
     private final JTextPane textPane;
     private final List<IntConsumer> focusedIndexChangeListeners = new ArrayList<>();

@@ -7,7 +7,6 @@ import com.github.tth05.scnet.message.AbstractMessageIncoming;
 import com.github.tth05.scnet.util.ByteBufferInputStream;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class OpenSearchResultsMessage extends AbstractMessageIncoming {
@@ -23,7 +22,7 @@ public class OpenSearchResultsMessage extends AbstractMessageIncoming {
         this.query = messageStream.readString();
 
         var resultCount = messageStream.readInt();
-        this.results = IntStream.range(0, resultCount).mapToObj(i -> messageStream.readString()).collect(Collectors.toList());
+        this.results = IntStream.range(0, resultCount).mapToObj(i -> messageStream.readString()).toList();
         this.methodSearch = messageStream.readBoolean();
         this.classesCount = messageStream.readInt();
         this.time = messageStream.readInt();

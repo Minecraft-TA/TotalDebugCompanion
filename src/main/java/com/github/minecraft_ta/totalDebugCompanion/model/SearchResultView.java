@@ -5,7 +5,6 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.SearchR
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
 
 public class SearchResultView implements IEditorPanel {
@@ -20,7 +19,7 @@ public class SearchResultView implements IEditorPanel {
 
     public SearchResultView(String query, List<String> results, boolean methodSearch, int classesCount, int time) {
         this.query = query;
-        this.results = Collections.unmodifiableList(results);
+        this.results = results;
         this.methodSearch = methodSearch;
         this.classesCount = classesCount;
         this.time = time;

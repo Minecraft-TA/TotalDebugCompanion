@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 public class FileTreeView extends JScrollPane {
 
@@ -42,9 +41,9 @@ public class FileTreeView extends JScrollPane {
                 var treePath = event.getPath();
                 var lastComponent = treePath.getLastPathComponent();
 
-                if (!(lastComponent instanceof LazyTreeNode))
+                if (!(lastComponent instanceof LazyTreeNode treeNode))
                     return;
-                var treeNode = (LazyTreeNode) lastComponent;
+
                 if (!(treeNode.getUserObject() instanceof TreeItem))
                     return;
 
@@ -97,9 +96,10 @@ public class FileTreeView extends JScrollPane {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
                 super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-                if (!(value instanceof LazyTreeNode))
+                if (!(value instanceof LazyTreeNode treeNode))
                     return this;
-                setText(((TreeItem) ((LazyTreeNode) value).getUserObject()).fileName);
+
+                setText(((TreeItem) treeNode.getUserObject()).fileName);
                 return this;
             }
         });
@@ -139,11 +139,10 @@ public class FileTreeView extends JScrollPane {
 
     private List<LazyTreeNode> loadItems(Path rootPath) {
         try {
-            var files = Files.walk(rootPath, 1)
+            return Files.walk(rootPath, 1)
                     .map(path -> new LazyTreeNode(new TreeItem(path)))
-                    .collect(Collectors.toList());
-            files.remove(0);
-            return files;
+                    .skip(1)
+                    .toList();
         } catch (IOException e) {
             e.printStackTrace();
             return Collections.emptyList();

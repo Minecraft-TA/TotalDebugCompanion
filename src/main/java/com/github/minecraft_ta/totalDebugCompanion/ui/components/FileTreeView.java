@@ -12,13 +12,17 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -43,7 +47,6 @@ public class FileTreeView extends JScrollPane {
                 var treeNode = (LazyTreeNode) lastComponent;
                 if (!(treeNode.getUserObject() instanceof TreeItem))
                     return;
-                var userObject = (TreeItem) treeNode.getUserObject();
 
                 loadItemsForNode(tree, treeNode);
             }
@@ -53,9 +56,19 @@ public class FileTreeView extends JScrollPane {
             }
         });
 
+        tree.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() != KeyEvent.VK_DELETE)
+                    return;
+
+                deleteSelectedItems(tree);
+            }
+        });
+
         tree.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                TreePath pathForRow = tree.getPathForRow(tree.getRowForLocation(e.getX(), e.getY()));
+                TreePath pathForRow = tree.getPathForRow(tree.getClosestRowForLocation(e.getX(), e.getY()));
                 if (pathForRow == null)
                     return;
 
@@ -67,7 +80,8 @@ public class FileTreeView extends JScrollPane {
                     return;
 
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    tree.setSelectionPath(pathForRow);
+                    if (!tree.getSelectionModel().isPathSelected(pathForRow))
+                        tree.setSelectionPath(pathForRow);
                     showPopupMenu(tree, e.getX(), e.getY());
                     return;
                 }
@@ -103,24 +117,7 @@ public class FileTreeView extends JScrollPane {
         var deleteItem = popupMenu.add("Delete");
         deleteItem.setIcon(new FlatSVGIcon("icons/remove.svg"));
         deleteItem.addActionListener(event -> {
-            var path = tree.getSelectionModel().getSelectionPath();
-            if (path == null)
-                return;
-            var node = path.getLastPathComponent();
-            if (node == null)
-                return;
-
-            var item = ((TreeItem) ((LazyTreeNode) node).getUserObject());
-            if (item.isDirectory)
-                return;
-
-            try {
-                Files.deleteIfExists(item.path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) node).getParent());
+            deleteSelectedItems(tree);
         });
 
         popupMenu.show(tree, x, y);
@@ -129,9 +126,13 @@ public class FileTreeView extends JScrollPane {
     private void loadItemsForNode(JTree tree, LazyTreeNode node) {
         CompletableFuture.supplyAsync(() -> loadItems(((TreeItem) node.getUserObject()).path)).thenAccept((items) -> {
             SwingUtilities.invokeLater(() -> {
+                var selection = tree.getSelectionRows();
+
                 node.removeAllChildren();
                 items.forEach(node::add);
                 ((DefaultTreeModel) tree.getModel()).nodeStructureChanged(node);
+
+                tree.setSelectionRows(selection);
             });
         });
     }
@@ -147,6 +148,37 @@ public class FileTreeView extends JScrollPane {
             e.printStackTrace();
             return Collections.emptyList();
         }
+    }
+
+    private void deleteSelectedItems(JTree tree) {
+        var paths = tree.getSelectionModel().getSelectionPaths();
+        if (paths == null || paths.length == 0)
+            return;
+
+        var rows = tree.getSelectionRows();
+
+        Arrays.stream(paths)
+                .map(TreePath::getLastPathComponent)
+                .filter(Objects::nonNull)
+                .forEach(node -> {
+                    var item = (TreeItem) ((LazyTreeNode) node).getUserObject();
+                    if (!item.isDirectory) {
+                        try {
+                            Files.deleteIfExists(item.path);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) node).getParent());
+                });
+
+        if (rows == null || rows.length == 0)
+            return;
+
+        SwingUtilities.invokeLater(() -> {
+            tree.setSelectionRow(Math.max(0, rows[0] - 1));
+        });
     }
 
     private static final class TreeItem {

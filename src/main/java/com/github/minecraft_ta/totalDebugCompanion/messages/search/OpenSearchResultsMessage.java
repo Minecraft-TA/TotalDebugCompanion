@@ -1,4 +1,4 @@
-package com.github.minecraft_ta.totalDebugCompanion.messages;
+package com.github.minecraft_ta.totalDebugCompanion.messages.search;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;

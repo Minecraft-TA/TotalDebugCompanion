@@ -1,4 +1,4 @@
-package com.github.minecraft_ta.totalDebugCompanion.messages;
+package com.github.minecraft_ta.totalDebugCompanion.messages.codeView;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;

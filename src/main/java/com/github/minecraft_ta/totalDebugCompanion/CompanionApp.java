@@ -1,10 +1,12 @@
 package com.github.minecraft_ta.totalDebugCompanion;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
-import com.github.minecraft_ta.totalDebugCompanion.messages.CodeViewClickMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.DecompileAndOpenRequestMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.OpenFileMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.OpenSearchResultsMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.Server;
@@ -52,6 +54,9 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) 2, OpenSearchResultsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 3, DecompileAndOpenRequestMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 4, CodeViewClickMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) 5, ReceiveDataStateMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) 6, ChunkGridDataMessage.class);
+
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
 

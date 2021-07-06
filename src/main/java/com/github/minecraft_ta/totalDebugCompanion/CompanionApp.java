@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
@@ -56,6 +57,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) 4, CodeViewClickMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 5, ReceiveDataStateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 6, ChunkGridDataMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) 7, ChunkGridRequestInfoUpdateMessage.class);
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));

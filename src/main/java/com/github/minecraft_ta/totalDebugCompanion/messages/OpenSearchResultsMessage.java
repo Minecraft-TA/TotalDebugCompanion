@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.messages;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.SearchResultView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.message.AbstractMessageIncoming;
 import com.github.tth05.scnet.util.ByteBufferInputStream;

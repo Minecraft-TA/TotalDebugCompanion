@@ -5,7 +5,8 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.CodeViewClickMessage
 import com.github.minecraft_ta.totalDebugCompanion.messages.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.OpenFileMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.OpenSearchResultsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.Server;
 
 import javax.swing.*;
@@ -14,11 +15,13 @@ import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class CompanionApp {
 
     public static final Server SERVER = new Server();
+    private static Path ROOT_PATH;
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -26,8 +29,8 @@ public class CompanionApp {
             return;
         }
 
-        var rootPath = Paths.get(args[0]);
-        if (!Files.exists(rootPath)) {
+        ROOT_PATH = Paths.get(args[0]);
+        if (!Files.exists(ROOT_PATH)) {
             System.out.println("Path does not exist");
             return;
         }
@@ -40,7 +43,7 @@ public class CompanionApp {
         UIManager.put("Table.focusSelectedCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 5, 0, 0)));
         UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 3, 0, 0)));
 
-        var mainWindow = new MainWindow(rootPath);
+        var mainWindow = new MainWindow();
         mainWindow.setSize(1280, 720);
         mainWindow.setVisible(true);
 
@@ -52,7 +55,10 @@ public class CompanionApp {
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
 
-        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        mainWindow.setLocation(dim.width / 2 - mainWindow.getSize().width / 2, dim.height / 2 - mainWindow.getSize().height / 2);
+        UIUtils.centerJFrame(mainWindow);
+    }
+
+    public static Path getRootPath() {
+        return ROOT_PATH;
     }
 }

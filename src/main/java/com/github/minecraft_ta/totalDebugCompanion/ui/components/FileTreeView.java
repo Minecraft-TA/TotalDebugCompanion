@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
@@ -27,14 +28,14 @@ import java.util.concurrent.CompletableFuture;
 
 public class FileTreeView extends JScrollPane {
 
-    public FileTreeView(Path rootPath, EditorTabs tabs) {
+    public FileTreeView(EditorTabs tabs) {
         super();
 
         var tree = new JTree();
         tree.setShowsRootHandles(true);
         tree.setBorder(BorderFactory.createEmptyBorder());
 
-        tree.setModel(new DefaultTreeModel(new LazyTreeNode(new TreeItem(rootPath))));
+        tree.setModel(new DefaultTreeModel(new LazyTreeNode(new TreeItem(CompanionApp.getRootPath()))));
         tree.addTreeWillExpandListener(new TreeWillExpandListener() {
             @Override
             public void treeWillExpand(TreeExpansionEvent event) {
@@ -107,7 +108,7 @@ public class FileTreeView extends JScrollPane {
         //Expand root by default
         tree.collapseRow(0);
         tree.expandRow(0);
-        FileUtils.startNewDirectoryWatcher(rootPath, () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
+        FileUtils.startNewDirectoryWatcher(CompanionApp.getRootPath(), () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
 
         this.setViewportView(tree);
     }

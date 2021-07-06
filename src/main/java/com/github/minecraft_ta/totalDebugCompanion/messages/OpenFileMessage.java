@@ -1,7 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.messages;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -24,7 +25,7 @@ public class OpenFileMessage extends AbstractMessageIncoming {
     }
 
     public static void handle(OpenFileMessage message, MainWindow window) {
-        if (!Files.exists(message.path) || !FileUtils.isSubPathOf(window.getRootPath(), message.path))
+        if (!Files.exists(message.path) || !FileUtils.isSubPathOf(CompanionApp.getRootPath(), message.path))
             return;
 
         System.out.printf("Opening %s at line %d%n", message.path, message.row);

@@ -33,19 +33,27 @@ public class ChunkGridWindow extends JFrame {
                 for (int i = 0; i < stateArray.length; i++) {
                     byte[] bytes = stateArray[i];
                     for (int j = 0; j < bytes.length; j++) {
-                        g.setColor(switch (bytes[j]) {
+                        byte b = bytes[j];
+                        if (b == 0)
+                            continue;
+
+                        g.setColor(switch (b) {
                             case 1 -> Color.MAGENTA;
                             case 2 -> Color.BLUE.brighter();
-                            default -> new Color(60, 63, 65);
+                            default -> throw new IllegalStateException("Unknown state received");
                         });
                         g.fillRect(renderChunkSize * i, renderChunkSize * j, renderChunkSize, renderChunkSize);
                     }
                 }
 
                 g.setColor(Color.BLACK);
-                //Grid lines
+                //Vertical grid lines
                 for (int i = 1; i < chunkGridRequestInfo.getWidth(); i++) {
                     g.drawLine(i * renderChunkSize, 0, i * renderChunkSize, getHeight());
+                }
+
+                //Horizontal grid lines
+                for (int i = 1; i < chunkGridRequestInfo.getHeight(); i++) {
                     g.drawLine(0, i * renderChunkSize, getWidth(), i * renderChunkSize);
                 }
             }
@@ -60,14 +68,62 @@ public class ChunkGridWindow extends JFrame {
 
         });
 
-        addComponentListener(new ComponentAdapter() {
+        getContentPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                chunkGridRequestInfo.setMaxChunkX(getWidth() / renderChunkSize);
-                chunkGridRequestInfo.setMaxChunkZ(getHeight() / renderChunkSize);
+                chunkGridRequestInfo.setSize(
+                        getContentPane().getWidth() / renderChunkSize + 1,
+                        getContentPane().getHeight() / renderChunkSize + 1
+                );
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
             }
         });
+
+        var mouseAdapter = new MouseAdapter() {
+
+            private int prevCellX = -1;
+            private int prevCellY = -1;
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (!SwingUtilities.isRightMouseButton(e))
+                    return;
+
+                this.prevCellX = -1;
+                this.prevCellY = -1;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (!SwingUtilities.isRightMouseButton(e))
+                    return;
+
+                int cellX = e.getX() / renderChunkSize;
+                int cellY = e.getY() / renderChunkSize;
+
+                if ((this.prevCellX == -1 || this.prevCellY == -1) ||
+                    (this.prevCellX == cellX && this.prevCellY == cellY)) {
+                    this.prevCellX = cellX;
+                    this.prevCellY = cellY;
+                    return;
+                }
+
+                int xDiff = this.prevCellX - cellX;
+                int zDiff = this.prevCellY - cellY;
+
+                chunkGridRequestInfo.setMinChunkX(chunkGridRequestInfo.getMinChunkX() + xDiff);
+                chunkGridRequestInfo.setMinChunkZ(chunkGridRequestInfo.getMinChunkZ() + zDiff);
+                chunkGridRequestInfo.setMaxChunkX(chunkGridRequestInfo.getMaxChunkX() + xDiff);
+                chunkGridRequestInfo.setMaxChunkZ(chunkGridRequestInfo.getMaxChunkZ() + zDiff);
+
+                this.prevCellX = cellX;
+                this.prevCellY = cellY;
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(INSTANCE.chunkGridRequestInfo));
+            }
+        };
+
+        getContentPane().addMouseListener(mouseAdapter);
+        getContentPane().addMouseMotionListener(mouseAdapter);
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ChunkGridDataMessage.class, (m) -> {
             if (!isVisible())

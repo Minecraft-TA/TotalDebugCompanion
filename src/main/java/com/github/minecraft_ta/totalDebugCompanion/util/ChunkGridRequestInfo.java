@@ -90,4 +90,20 @@ public class ChunkGridRequestInfo {
     public void setDimension(int dimension) {
         this.dimension = dimension;
     }
+
+    public void setSize(int width, int height) {
+        this.maxChunkX = this.minChunkX + width;
+        this.maxChunkZ = this.minChunkZ + height;
+    }
+
+    @Override
+    public String toString() {
+        return "ChunkGridRequestInfo{" +
+               "minChunkX=" + minChunkX +
+               ", minChunkZ=" + minChunkZ +
+               ", maxChunkX=" + maxChunkX +
+               ", maxChunkZ=" + maxChunkZ +
+               ", dimension=" + dimension +
+               '}';
+    }
 }

@@ -91,9 +91,24 @@ public class ChunkGridRequestInfo {
         this.dimension = dimension;
     }
 
-    public void setSize(int width, int height) {
+    public void setWidth(int width) {
         this.maxChunkX = this.minChunkX + width;
+    }
+
+    public void setHeight(int height) {
         this.maxChunkZ = this.minChunkZ + height;
+    }
+
+    public void setSize(int width, int height) {
+        setWidth(width);
+        setHeight(height);
+    }
+
+    public void addToAll(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ) {
+        this.minChunkX += minChunkX;
+        this.minChunkZ += minChunkZ;
+        this.maxChunkX += maxChunkX;
+        this.maxChunkZ += maxChunkZ;
     }
 
     @Override

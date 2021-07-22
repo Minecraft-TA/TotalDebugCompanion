@@ -142,12 +142,11 @@ public class ChunkGridWindow extends JFrame {
             public void mouseWheelMoved(MouseWheelEvent e) {
                 int wheelRotation = e.getWheelRotation();
 
-                chunkGridRequestInfo.addToAll(-wheelRotation, -wheelRotation, wheelRotation, wheelRotation);
-//                chunkGridRequestInfo.setSize(
-//                        getContentPane().getWidth() / chunkRenderSize,
-//                        getContentPane().getHeight() / chunkRenderSize
-//                );
-                chunkRenderSize = getContentPane().getWidth() / chunkGridRequestInfo.getWidth();
+                chunkRenderSize = Math.max(1, chunkRenderSize - wheelRotation);
+                chunkGridRequestInfo.setSize(
+                        getContentPane().getWidth() / chunkRenderSize,
+                        getContentPane().getHeight() / chunkRenderSize
+                );
 
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
             }

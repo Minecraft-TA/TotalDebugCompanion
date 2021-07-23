@@ -4,24 +4,26 @@ import com.github.minecraft_ta.totalDebugCompanion.util.ChunkGridRequestInfo;
 import com.github.tth05.scnet.message.AbstractMessageIncoming;
 import com.github.tth05.scnet.util.ByteBufferInputStream;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ChunkGridDataMessage extends AbstractMessageIncoming {
 
     private ChunkGridRequestInfo requestInfo;
-    private byte[][] stateArray;
+    private Map<Long, Byte> stateMap;
 
     @Override
     public void read(ByteBufferInputStream messageStream) {
         this.requestInfo = ChunkGridRequestInfo.fromBytes(messageStream);
-        short width = messageStream.readShort();
-        short height = messageStream.readShort();
+        int count = messageStream.readInt();
 
-        this.stateArray = new byte[width][height];
-        for (int i = 0; i < width; i++) {
-            messageStream.readByteArray(this.stateArray[i], 0, height);
+        this.stateMap = new HashMap<>();
+        for (int i = 0; i < count; i++) {
+            this.stateMap.put(messageStream.readLong(), messageStream.readByte());
         }
     }
 
-    public byte[][] getStateArray() {
-        return this.stateArray;
+    public Map<Long, Byte> getStateArray() {
+        return this.stateMap;
     }
 }

@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
+import java.util.Map;
 
 public class ChunkGridWindow extends JFrame {
 
@@ -19,17 +20,17 @@ public class ChunkGridWindow extends JFrame {
     private static final Color[] COLORS = new Color[]{
             new Color(40, 40, 40),
             new Color(35, 35, 35),
-            new Color(150, 50, 133),
             new Color(165, 65, 150),
-            new Color(50, 100, 150),
-            new Color(65, 115, 165)
+            new Color(150, 50, 133),
+            new Color(65, 115, 165),
+            new Color(50, 100, 150)
     };
 
     private int chunkRenderSize = 20;
 
     private final ChunkGridRequestInfo chunkGridRequestInfo = new ChunkGridRequestInfo(0, 0, 21, 21, 0);
-    private byte[][] stateArray;
-    private GridStyle gridStyle = GridStyle.CHECKER_BOARD;
+    private Map<Long, Byte> stateMap;
+    private GridStyle gridStyle = GridStyle.LINES;
 
     public ChunkGridWindow() {
         setTitle("Chunk Grid");
@@ -38,21 +39,25 @@ public class ChunkGridWindow extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                if (stateArray == null)
+                if (stateMap == null)
                     return;
 
                 int outerPaddingX = (getWidth() - (chunkRenderSize * chunkGridRequestInfo.getWidth())) / 2;
                 int outerPaddingY = (getHeight() - (chunkRenderSize * chunkGridRequestInfo.getHeight())) / 2;
 
-                for (int i = 0; i < stateArray.length; i++) {
-                    byte[] bytes = stateArray[i];
-                    for (int j = 0; j < bytes.length; j++) {
-                        byte b = bytes[j];
+                for (int x = chunkGridRequestInfo.getMinChunkX(); x < chunkGridRequestInfo.getMaxChunkX(); x++) {
+                    for (int z = chunkGridRequestInfo.getMinChunkZ(); z < chunkGridRequestInfo.getMaxChunkZ(); z++) {
+                        long posLong = (long) x << 32 | (z & 0xffffffffL);
+
+                        byte b = stateMap.getOrDefault(posLong, (byte) 0);
                         if (b == 0 && gridStyle != GridStyle.CHECKER_BOARD)
                             continue;
 
-                        g.setColor(COLORS[gridStyle == GridStyle.CHECKER_BOARD && (i % 2 == 0) == (j % 2 == 0) ? (b * 2) + 1 : (b * 2)]);
-                        g.fillRect(chunkRenderSize * i + outerPaddingX, chunkRenderSize * j + outerPaddingY, chunkRenderSize, chunkRenderSize);
+                        g.setColor(COLORS[gridStyle == GridStyle.CHECKER_BOARD && (x % 2 == 0) == (z % 2 == 0) ? (b * 2) + 1 : (b * 2)]);
+
+                        int renderX = x - chunkGridRequestInfo.getMinChunkX();
+                        int renderZ = z - chunkGridRequestInfo.getMinChunkZ();
+                        g.fillRect(chunkRenderSize * renderX + outerPaddingX, chunkRenderSize * renderZ + outerPaddingY, chunkRenderSize, chunkRenderSize);
                     }
                 }
 
@@ -200,14 +205,10 @@ public class ChunkGridWindow extends JFrame {
             if (!isVisible())
                 return;
 
-            byte[][] newStateArray = m.getStateArray();
-            //Invalid data
-            if (newStateArray.length != chunkGridRequestInfo.getWidth() ||
-                newStateArray[0].length != chunkGridRequestInfo.getHeight())
-                return;
+            Map<Long, Byte> newStateMap = m.getStateArray();
 
-            this.stateArray = newStateArray;
-            SwingUtilities.invokeLater(() -> contentPane.repaint());
+            this.stateMap = newStateMap;
+            SwingUtilities.invokeLater(contentPane::repaint);
         });
 
         pack();

@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridD
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.util.ChunkGridRequestInfo;
+import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public class ChunkGridWindow extends JFrame {
     public ChunkGridWindow() {
         setTitle("Chunk Grid");
 
-        setContentPane(new JPanel() {
+        final JPanel contentPane = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -75,8 +76,10 @@ public class ChunkGridWindow extends JFrame {
                 g.setClip(area);
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
-        });
-        getContentPane().setPreferredSize(new Dimension(420, 420));
+        };
+
+        setContentPane(contentPane);
+        contentPane.setPreferredSize(new Dimension(420, 420));
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -86,13 +89,13 @@ public class ChunkGridWindow extends JFrame {
 
         });
 
-        getContentPane().addComponentListener(new ComponentAdapter() {
+        contentPane.addComponentListener(new ComponentAdapter() {
 
             @Override
             public void componentResized(ComponentEvent e) {
                 chunkGridRequestInfo.setSize(
-                        getContentPane().getWidth() / chunkRenderSize,
-                        getContentPane().getHeight() / chunkRenderSize
+                        contentPane.getWidth() / chunkRenderSize,
+                        contentPane.getHeight() / chunkRenderSize
                 );
 
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
@@ -144,17 +147,54 @@ public class ChunkGridWindow extends JFrame {
 
                 chunkRenderSize = Math.max(1, chunkRenderSize - wheelRotation);
                 chunkGridRequestInfo.setSize(
-                        getContentPane().getWidth() / chunkRenderSize,
-                        getContentPane().getHeight() / chunkRenderSize
+                        contentPane.getWidth() / chunkRenderSize,
+                        contentPane.getHeight() / chunkRenderSize
                 );
 
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
             }
         };
 
-        getContentPane().addMouseWheelListener(mouseAdapter);
-        getContentPane().addMouseListener(mouseAdapter);
-        getContentPane().addMouseMotionListener(mouseAdapter);
+        contentPane.addMouseWheelListener(mouseAdapter);
+        contentPane.addMouseListener(mouseAdapter);
+        contentPane.addMouseMotionListener(mouseAdapter);
+
+        contentPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("shift F"), "openCoordinatePopup");
+        contentPane.getActionMap().put("openCoordinatePopup", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var popupMenu = new JPopupMenu();
+                var chunkXTextField = new JTextField();
+                chunkXTextField.setText(chunkGridRequestInfo.getMinChunkX() + "");
+                chunkXTextField.getDocument().addDocumentListener((DocumentChangeListener) e1 -> {
+                    try {
+                        int x = Integer.parseInt(chunkXTextField.getText());
+                        int width = chunkGridRequestInfo.getWidth();
+                        chunkGridRequestInfo.setMinChunkX(x);
+                        chunkGridRequestInfo.setWidth(width);
+                        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
+                    } catch (Throwable t) {
+                    }
+                });
+
+                var chunkZTextField = new JTextField();
+                chunkZTextField.setText(chunkGridRequestInfo.getMinChunkZ() + "");
+                chunkZTextField.getDocument().addDocumentListener((DocumentChangeListener) e1 -> {
+                    try {
+                        int z = Integer.parseInt(chunkZTextField.getText());
+                        int height = chunkGridRequestInfo.getHeight();
+                        chunkGridRequestInfo.setMinChunkZ(z);
+                        chunkGridRequestInfo.setHeight(height);
+                        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
+                    } catch (Throwable t) {
+                    }
+                });
+
+                popupMenu.add(chunkXTextField);
+                popupMenu.add(chunkZTextField);
+                popupMenu.show(contentPane, 10, 10);
+            }
+        });
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ChunkGridDataMessage.class, (m) -> {
             if (!isVisible())
@@ -167,7 +207,7 @@ public class ChunkGridWindow extends JFrame {
                 return;
 
             this.stateArray = newStateArray;
-            SwingUtilities.invokeLater(() -> getContentPane().repaint());
+            SwingUtilities.invokeLater(() -> contentPane.repaint());
         });
 
         pack();

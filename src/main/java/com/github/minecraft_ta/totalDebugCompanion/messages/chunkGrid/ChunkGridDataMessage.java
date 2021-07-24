@@ -23,7 +23,7 @@ public class ChunkGridDataMessage extends AbstractMessageIncoming {
         }
     }
 
-    public Map<Long, Byte> getStateArray() {
+    public Map<Long, Byte> getStateMap() {
         return this.stateMap;
     }
 }

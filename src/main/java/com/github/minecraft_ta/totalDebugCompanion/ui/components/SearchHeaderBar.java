@@ -6,7 +6,6 @@ import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
@@ -77,76 +76,16 @@ public class SearchHeaderBar extends JPanel {
         return separator;
     }
 
-    private JButton createToggleableFlatButton(String tooltip, Icon icon, Consumer<Boolean> toggleListener) {
-        var button = new JButton(icon);
+    private JButton createToggleableFlatButton(String tooltip, FlatSVGIcon icon, Consumer<Boolean> toggleListener) {
+        var button = new FlatIconButton(icon, true);
         button.setToolTipText(tooltip);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setContentAreaFilled(false);
-        button.addMouseListener(new MouseAdapter() {
-
-            private final Color HOVER_COLOR = Color.GRAY.darker();
-            private final Color TOGGLED_COLOR = new Color(90, 90, 90);
-            private boolean state;
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                this.state = !this.state;
-                toggleListener.accept(this.state);
-
-                if (this.state) {
-                    button.setContentAreaFilled(true);
-                    button.setBackground(HOVER_COLOR);
-                    ((FlatSVGIcon) button.getIcon()).setColorFilter(new FlatSVGIcon.ColorFilter((c) -> new Color(74, 136, 199)));
-                } else {
-                    button.setBackground(HOVER_COLOR);
-                    ((FlatSVGIcon) button.getIcon()).setColorFilter(null);
-                }
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setContentAreaFilled(true);
-                button.setBackground(HOVER_COLOR);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (this.state)
-                    button.setBackground(TOGGLED_COLOR);
-                else
-                    button.setContentAreaFilled(false);
-            }
-        });
-
+        button.addToggleListener(toggleListener);
         return button;
     }
 
-    private JButton createFlatButton(String tooltip, Icon icon, Consumer<MouseEvent> clickListener) {
-        var button = new JButton(icon);
+    private JButton createFlatButton(String tooltip, FlatSVGIcon icon, Consumer<MouseEvent> clickListener) {
+        var button = new FlatIconButton(icon, false);
         button.setToolTipText(tooltip);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setContentAreaFilled(false);
-        button.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                clickListener.accept(e);
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setContentAreaFilled(true);
-                button.setBackground(Color.GRAY.darker());
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setContentAreaFilled(false);
-            }
-        });
-
         return button;
     }
 }

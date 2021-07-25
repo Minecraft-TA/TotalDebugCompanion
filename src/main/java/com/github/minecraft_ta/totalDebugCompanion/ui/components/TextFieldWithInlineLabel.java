@@ -21,7 +21,11 @@ public class TextFieldWithInlineLabel extends JTextField {
     }
 
     public TextFieldWithInlineLabel(String labelText, String placeholderText) {
-        super();
+        this(null, labelText, placeholderText);
+    }
+
+    public TextFieldWithInlineLabel(String text, String labelText, String placeholderText) {
+        super(text);
         this.labelText = labelText;
         this.placeholderText = placeholderText;
 

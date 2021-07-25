@@ -111,6 +111,13 @@ public class ChunkGridRequestInfo {
         this.maxChunkZ += maxChunkZ;
     }
 
+    public void moveTo(int minChunkX, int minChunkZ) {
+        int width = getWidth(), height = getHeight();
+        this.minChunkX = minChunkX;
+        this.minChunkZ = minChunkZ;
+        setSize(width, height);
+    }
+
     @Override
     public String toString() {
         return "ChunkGridRequestInfo{" +

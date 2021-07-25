@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.RequestCenterOnPlayerMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.TextFieldWithInlineLabel;
 import com.github.minecraft_ta.totalDebugCompanion.util.*;
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChunkGridWindow extends JFrame {
 
@@ -32,23 +34,36 @@ public class ChunkGridWindow extends JFrame {
         var chunkZTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkZ() + "", "CZ", "ChunkZ");
         var xTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "X", null);
         var zTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "Z", null);
+        var dimensionTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getDimension() + "", "Dim", null);
 
+        var updateLock = new AtomicBoolean();
         var updateChunkGridCoordinates = (TriConsumer<Integer, Integer, Boolean>) (x, z, useOffset) -> {
+            if (updateLock.get())
+                return;
             var info = getChunkGridRequestInfo();
             if (info.getMinChunkX() == x && info.getMinChunkZ() == z)
                 return;
+            updateLock.set(true);
             info.moveTo(x, z);
 
             SwingUtilities.invokeLater(() -> {
-                chunkXTextField.setText(x + "");
-                chunkZTextField.setText(z + "");
+                UIUtils.setTextAndKeepCaret(chunkXTextField, x + "");
+                UIUtils.setTextAndKeepCaret(chunkZTextField, z + "");
                 var xOffset = useOffset ? TextUtils.asIntOrDefault(xTextField.getText(), info.getMinChunkX()) - (x << 4) : 0;
                 UIUtils.setTextAndKeepCaret(xTextField, ((x << 4) + xOffset) + "");
                 var zOffset = useOffset ? TextUtils.asIntOrDefault(zTextField.getText(), info.getMinChunkZ()) - (z << 4) : 0;
                 UIUtils.setTextAndKeepCaret(zTextField, ((z << 4) + zOffset) + "");
+                updateLock.set(false);
             });
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(info));
         };
+
+        CompanionApp.SERVER.getMessageBus().listenAlways(ChunkGridRequestInfoUpdateMessage.class, (m) -> {
+            var requestInfo = m.getChunkGridRequestInfo();
+            getChunkGridRequestInfo().setDimension(requestInfo.getDimension());
+            dimensionTextField.setText(requestInfo.getDimension() + "");
+            updateChunkGridCoordinates.accept(requestInfo.getMinChunkX(), requestInfo.getMinChunkZ(), false);
+        });
 
         //ChunkX TextField
         UIUtils.setIntegerTextFieldEnabled(chunkXTextField);
@@ -87,7 +102,6 @@ public class ChunkGridWindow extends JFrame {
             );
         });
         //Dimension TextField
-        var dimensionTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getDimension() + "", "Dim", null);
         UIUtils.setIntegerTextFieldEnabled(dimensionTextField);
         dimensionTextField.setPreferredSize(new Dimension(42, (int) dimensionTextField.getPreferredSize().getHeight()));
         dimensionTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
@@ -96,6 +110,7 @@ public class ChunkGridWindow extends JFrame {
         });
         var centerOnPlayerButton = new FlatIconButton(new FlatSVGIcon("icons/target.svg"), false);
         centerOnPlayerButton.setToolTipText("Center on player");
+        centerOnPlayerButton.addActionListener(e -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestCenterOnPlayerMessage()));
 
         bottomPanel.add(chunkXTextField);
         bottomPanel.add(chunkZTextField);
@@ -110,8 +125,8 @@ public class ChunkGridWindow extends JFrame {
             public void windowClosing(WindowEvent e) {
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false));
             }
-
         });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false))));
 
         pack();
     }
@@ -153,7 +168,7 @@ public class ChunkGridWindow extends JFrame {
 
         private final ChunkGridRequestInfo chunkGridRequestInfo = new ChunkGridRequestInfo(0, 0, 21, 21, 0);
         private Map<Long, Byte> stateMap;
-        private GridStyle gridStyle = GridStyle.LINES;
+        private GridStyle gridStyle = GridStyle.CHECKER_BOARD;
 
         public ChunkGridPanel() {
             setMinimumSize(new Dimension(100, 100));
@@ -271,6 +286,7 @@ public class ChunkGridWindow extends JFrame {
             g.setColor(Color.BLACK);
 
             if (this.gridStyle == GridStyle.LINES) {
+                ((Graphics2D) g).setStroke(new BasicStroke(1f));
                 //Vertical grid lines
                 for (int i = 1; i < this.chunkGridRequestInfo.getWidth(); i++) {
                     g.drawLine(i * this.chunkRenderSize + outerPaddingX, 0, i * this.chunkRenderSize + outerPaddingX, getHeight());
@@ -284,7 +300,7 @@ public class ChunkGridWindow extends JFrame {
 
             //Draw padding border
             var clipArea = new Area(new Rectangle(0, 0, getWidth(), getHeight()));
-            clipArea.subtract(new Area(new Rectangle(outerPaddingX, outerPaddingY, getWidth() - 1 - outerPaddingX * 2, getHeight() - 1 - outerPaddingY * 2)));
+            clipArea.subtract(new Area(new Rectangle(outerPaddingX, outerPaddingY, getWidth() - outerPaddingX * 2, getHeight() - outerPaddingY * 2)));
             g.setClip(clipArea);
             g.fillRect(0, 0, getWidth(), getHeight());
         }

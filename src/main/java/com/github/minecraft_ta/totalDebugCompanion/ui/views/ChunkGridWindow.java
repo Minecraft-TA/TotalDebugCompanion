@@ -177,7 +177,11 @@ public class ChunkGridWindow extends JFrame {
                 new Color(165, 65, 150),
                 new Color(150, 50, 133),
                 new Color(65, 115, 165),
-                new Color(50, 100, 150)
+                new Color(50, 100, 150),
+                new Color(27, 115, 3),
+                new Color(23, 110, 0),
+                new Color(165, 165, 7),
+                new Color(155, 150, 0)
         };
 
         private int chunkRenderSize = 20;

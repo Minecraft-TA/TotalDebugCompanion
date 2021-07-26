@@ -22,6 +22,13 @@ public class ChunkGridWindow extends JFrame {
     private static final ChunkGridWindow INSTANCE = new ChunkGridWindow();
 
     private final ChunkGridPanel chunkGridPanel = new ChunkGridPanel();
+    private final TextFieldWithInlineLabel chunkXTextField;
+    private final TextFieldWithInlineLabel chunkZTextField;
+    private final TextFieldWithInlineLabel xTextField;
+    private final TextFieldWithInlineLabel zTextField;
+    private final TextFieldWithInlineLabel dimensionTextField;
+
+    private final AtomicBoolean textFieldUpdateLock = new AtomicBoolean();
 
     public ChunkGridWindow() {
         setTitle("Chunk Grid");
@@ -30,93 +37,82 @@ public class ChunkGridWindow extends JFrame {
 
         //Bottom control bar
         var bottomPanel = Box.createHorizontalBox();
-        var chunkXTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkX() + "", "CX", "ChunkX");
-        var chunkZTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkZ() + "", "CZ", "ChunkZ");
-        var xTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "X", null);
-        var zTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "Z", null);
-        var dimensionTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getDimension() + "", "Dim", null);
+        this.chunkXTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkX() + "", "CX", "ChunkX");
+        this.chunkZTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkZ() + "", "CZ", "ChunkZ");
+        this.xTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "X", null);
+        this.zTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "Z", null);
+        this.dimensionTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getDimension() + "", "Dim", null);
 
-        var updateLock = new AtomicBoolean();
-        var updateChunkGridCoordinates = (TriConsumer<Integer, Integer, Boolean>) (x, z, useOffset) -> {
-            if (updateLock.get())
+        var updateChunkGridCoordinatesAndTextFields = (TriConsumer<Integer, Integer, Boolean>) (minChunkX, minChunkZ, keepOffset) -> {
+            if (this.textFieldUpdateLock.get())
                 return;
             var info = getChunkGridRequestInfo();
-            if (info.getMinChunkX() == x && info.getMinChunkZ() == z)
+            if (info.getMinChunkX() == minChunkX && info.getMinChunkZ() == minChunkZ)
                 return;
-            updateLock.set(true);
-            info.moveTo(x, z);
-
-            SwingUtilities.invokeLater(() -> {
-                UIUtils.setTextAndKeepCaret(chunkXTextField, x + "");
-                UIUtils.setTextAndKeepCaret(chunkZTextField, z + "");
-                var xOffset = useOffset ? TextUtils.asIntOrDefault(xTextField.getText(), info.getMinChunkX()) - (x << 4) : 0;
-                UIUtils.setTextAndKeepCaret(xTextField, ((x << 4) + xOffset) + "");
-                var zOffset = useOffset ? TextUtils.asIntOrDefault(zTextField.getText(), info.getMinChunkZ()) - (z << 4) : 0;
-                UIUtils.setTextAndKeepCaret(zTextField, ((z << 4) + zOffset) + "");
-                updateLock.set(false);
-            });
+            info.moveTo(minChunkX, minChunkZ);
+            updateCoordinateTextFields(keepOffset);
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(info));
         };
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ChunkGridRequestInfoUpdateMessage.class, (m) -> {
             var requestInfo = m.getChunkGridRequestInfo();
             getChunkGridRequestInfo().setDimension(requestInfo.getDimension());
-            dimensionTextField.setText(requestInfo.getDimension() + "");
-            updateChunkGridCoordinates.accept(requestInfo.getMinChunkX(), requestInfo.getMinChunkZ(), false);
+            this.dimensionTextField.setText(requestInfo.getDimension() + "");
+            updateChunkGridCoordinatesAndTextFields.accept(requestInfo.getMinChunkX(), requestInfo.getMinChunkZ(), false);
         });
 
         //ChunkX TextField
-        UIUtils.setIntegerTextFieldEnabled(chunkXTextField);
-        chunkXTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            updateChunkGridCoordinates.accept(
-                    TextUtils.asIntOrDefault(chunkXTextField.getText(), getChunkGridRequestInfo().getMinChunkX()),
+        UIUtils.setIntegerTextFieldEnabled(this.chunkXTextField);
+        this.chunkXTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            updateChunkGridCoordinatesAndTextFields.accept(
+                    TextUtils.asIntOrDefault(this.chunkXTextField.getText(), getChunkGridRequestInfo().getMinChunkX()),
                     getChunkGridRequestInfo().getMinChunkZ(),
                     false
             );
         });
         //ChunkZ TextField
-        UIUtils.setIntegerTextFieldEnabled(chunkZTextField);
-        chunkZTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            updateChunkGridCoordinates.accept(
+        UIUtils.setIntegerTextFieldEnabled(this.chunkZTextField);
+        this.chunkZTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            updateChunkGridCoordinatesAndTextFields.accept(
                     getChunkGridRequestInfo().getMinChunkX(),
-                    TextUtils.asIntOrDefault(chunkZTextField.getText(), getChunkGridRequestInfo().getMinChunkZ()),
+                    TextUtils.asIntOrDefault(this.chunkZTextField.getText(), getChunkGridRequestInfo().getMinChunkZ()),
                     false
             );
         });
         //X TextField
-        UIUtils.setIntegerTextFieldEnabled(xTextField);
-        xTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            updateChunkGridCoordinates.accept(
-                    TextUtils.asIntOrDefault(xTextField.getText(), getChunkGridRequestInfo().getMinChunkX() << 4) >> 4,
+        UIUtils.setIntegerTextFieldEnabled(this.xTextField);
+        this.xTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            updateChunkGridCoordinatesAndTextFields.accept(
+                    TextUtils.asIntOrDefault(this.xTextField.getText(), getChunkGridRequestInfo().getMinChunkX() << 4) >> 4,
                     getChunkGridRequestInfo().getMinChunkZ(),
                     true
             );
         });
         //Z TextField
-        UIUtils.setIntegerTextFieldEnabled(zTextField);
-        zTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            updateChunkGridCoordinates.accept(
+        UIUtils.setIntegerTextFieldEnabled(this.zTextField);
+        this.zTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            updateChunkGridCoordinatesAndTextFields.accept(
                     getChunkGridRequestInfo().getMinChunkX(),
-                    TextUtils.asIntOrDefault(zTextField.getText(), getChunkGridRequestInfo().getMinChunkZ() << 4) >> 4,
+                    TextUtils.asIntOrDefault(this.zTextField.getText(), getChunkGridRequestInfo().getMinChunkZ() << 4) >> 4,
                     true
             );
         });
         //Dimension TextField
-        UIUtils.setIntegerTextFieldEnabled(dimensionTextField);
-        dimensionTextField.setPreferredSize(new Dimension(42, (int) dimensionTextField.getPreferredSize().getHeight()));
-        dimensionTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            getChunkGridRequestInfo().setDimension(TextUtils.asIntOrDefault(dimensionTextField.getText(), 0));
+        UIUtils.setIntegerTextFieldEnabled(this.dimensionTextField);
+        this.dimensionTextField.setPreferredSize(new Dimension(42, (int) this.dimensionTextField.getPreferredSize().getHeight()));
+        this.dimensionTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            getChunkGridRequestInfo().setDimension(TextUtils.asIntOrDefault(this.dimensionTextField.getText(), 0));
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(getChunkGridRequestInfo()));
         });
         var centerOnPlayerButton = new FlatIconButton(new FlatSVGIcon("icons/target.svg"), false);
         centerOnPlayerButton.setToolTipText("Center on player");
         centerOnPlayerButton.addActionListener(e -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestCenterOnPlayerMessage()));
 
-        bottomPanel.add(chunkXTextField);
-        bottomPanel.add(chunkZTextField);
-        bottomPanel.add(xTextField);
-        bottomPanel.add(zTextField);
-        bottomPanel.add(dimensionTextField);
+        bottomPanel.add(this.chunkXTextField);
+        bottomPanel.add(this.chunkZTextField);
+        bottomPanel.add(this.xTextField);
+        bottomPanel.add(this.zTextField);
+        bottomPanel.add(this.dimensionTextField);
         bottomPanel.add(centerOnPlayerButton);
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -129,6 +125,26 @@ public class ChunkGridWindow extends JFrame {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false))));
 
         pack();
+    }
+
+    private void updateCoordinateTextFields(boolean keepOffset) {
+        if (this.textFieldUpdateLock.get())
+            return;
+        var info = getChunkGridRequestInfo();
+        this.textFieldUpdateLock.set(true);
+
+        var minChunkX = info.getMinChunkX();
+        var minChunkZ = info.getMinChunkZ();
+
+        SwingUtilities.invokeLater(() -> {
+            UIUtils.setTextAndKeepCaret(this.chunkXTextField, minChunkX + "");
+            UIUtils.setTextAndKeepCaret(this.chunkZTextField, minChunkZ + "");
+            var xOffset = keepOffset ? TextUtils.asIntOrDefault(this.xTextField.getText(), minChunkX << 4) - (minChunkX << 4) : 0;
+            UIUtils.setTextAndKeepCaret(this.xTextField, ((minChunkX << 4) + xOffset) + "");
+            var zOffset = keepOffset ? TextUtils.asIntOrDefault(this.zTextField.getText(), minChunkZ << 4) - (minChunkZ << 4) : 0;
+            UIUtils.setTextAndKeepCaret(this.zTextField, ((minChunkZ << 4) + zOffset) + "");
+            this.textFieldUpdateLock.set(false);
+        });
     }
 
     public ChunkGridRequestInfo getChunkGridRequestInfo() {
@@ -153,7 +169,7 @@ public class ChunkGridWindow extends JFrame {
         CHECKER_BOARD
     }
 
-    private static class ChunkGridPanel extends JPanel {
+    private class ChunkGridPanel extends JPanel {
 
         private static final Color[] COLORS = new Color[]{
                 new Color(40, 40, 40),
@@ -200,8 +216,8 @@ public class ChunkGridWindow extends JFrame {
                     if (!SwingUtilities.isRightMouseButton(e))
                         return;
 
-                    int cellX = e.getX() / chunkRenderSize;
-                    int cellY = e.getY() / chunkRenderSize;
+                    int cellX = e.getX() / ChunkGridPanel.this.chunkRenderSize;
+                    int cellY = e.getY() / ChunkGridPanel.this.chunkRenderSize;
 
                     if ((this.prevCellX == -1 || this.prevCellY == -1) ||
                         (this.prevCellX == cellX && this.prevCellY == cellY)) {
@@ -213,19 +229,22 @@ public class ChunkGridWindow extends JFrame {
                     int xDiff = this.prevCellX - cellX;
                     int zDiff = this.prevCellY - cellY;
 
-                    chunkGridRequestInfo.addToAll(xDiff, zDiff, xDiff, zDiff);
+                    ChunkGridPanel.this.chunkGridRequestInfo.addToAll(xDiff, zDiff, xDiff, zDiff);
 
                     this.prevCellX = cellX;
                     this.prevCellY = cellY;
-                    CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(chunkGridRequestInfo));
+                    CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(ChunkGridPanel.this.chunkGridRequestInfo));
+
+                    updateCoordinateTextFields(false);
                 }
 
                 @Override
                 public void mouseWheelMoved(MouseWheelEvent e) {
                     int wheelRotation = e.getWheelRotation();
 
-                    chunkRenderSize = Math.max(1, chunkRenderSize - wheelRotation);
+                    ChunkGridPanel.this.chunkRenderSize = Math.max(1, ChunkGridPanel.this.chunkRenderSize - wheelRotation);
                     updateGridSize();
+                    updateCoordinateTextFields(false);
                 }
 
                 @Override
@@ -279,7 +298,7 @@ public class ChunkGridWindow extends JFrame {
 
                     int renderX = x - this.chunkGridRequestInfo.getMinChunkX();
                     int renderZ = z - this.chunkGridRequestInfo.getMinChunkZ();
-                    g.fillRect(chunkRenderSize * renderX + outerPaddingX, this.chunkRenderSize * renderZ + outerPaddingY, this.chunkRenderSize, this.chunkRenderSize);
+                    g.fillRect(this.chunkRenderSize * renderX + outerPaddingX, this.chunkRenderSize * renderZ + outerPaddingY, this.chunkRenderSize, this.chunkRenderSize);
                 }
             }
 

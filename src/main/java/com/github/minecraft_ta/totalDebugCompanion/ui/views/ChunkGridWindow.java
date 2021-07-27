@@ -235,7 +235,7 @@ public class ChunkGridWindow extends JFrame {
 
     private class ChunkGridPanel extends JPanel {
 
-        private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/close.svg");
+        private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/overlayMode.svg");
 
         private static final Color[] COLORS = new Color[]{
                 new Color(40, 40, 40),
@@ -321,7 +321,7 @@ public class ChunkGridWindow extends JFrame {
                 public void mousePressed(MouseEvent e) {
                     requestFocus();
 
-                    if (!SwingUtilities.isLeftMouseButton(e) || e.getPoint().distance(getWidth() - 12, 12) > 8)
+                    if (!SwingUtilities.isLeftMouseButton(e) || !new Rectangle(getWidth() - 22, 2, 20, 20).contains(e.getPoint()))
                         return;
 
                     ChunkGridWindow.this.toggleOverlayMode();
@@ -444,13 +444,12 @@ public class ChunkGridWindow extends JFrame {
                         mouseLocation.y - getLocationOnScreen().y
                 );
 
-                if (relativeMouseLocation.distance(getWidth() - 12, 12) <= 8) {
+                if (new Rectangle(getWidth() - 22, 2, 20, 20).contains(relativeMouseLocation)) {
                     FlatUIUtils.setRenderingHints(g);
-                    g.setColor(new Color(50, 50, 50));
-                    g.fillOval(getWidth() - 20, 4, 16, 16);
+                    g.setColor(new Color(80, 80, 80));
+                    g.fillRoundRect(getWidth() - 22, 2, 20, 20, 5, 5);
                 }
 
-                CLOSE_ICON.setColorFilter(new FlatSVGIcon.ColorFilter(c -> Color.RED));
                 CLOSE_ICON.paintIcon(this, g, getWidth() - 20, 4);
             }
         }

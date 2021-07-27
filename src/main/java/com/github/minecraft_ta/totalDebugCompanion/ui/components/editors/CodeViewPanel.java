@@ -42,7 +42,7 @@ public class CodeViewPanel extends Box {
         super(BoxLayout.Y_AXIS);
 
         this.editorPane.setEditable(false);
-        this.editorPane.addMouseListener(new MouseListener() {
+        this.editorPane.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int offset = editorPane.viewToModel2D(e.getPoint());
@@ -63,17 +63,6 @@ public class CodeViewPanel extends Box {
                         new CodeViewClickMessage(codeView.getPath().getFileName().toString(), line, column)
                 );
             }
-
-            //@formatter:off
-            @Override
-            public void mousePressed(MouseEvent e) {}
-            @Override
-            public void mouseReleased(MouseEvent e) {}
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-            @Override
-            public void mouseExited(MouseEvent e) {}
-            //@formatter:on
         });
 
         this.lineNumbers.setEditable(false);

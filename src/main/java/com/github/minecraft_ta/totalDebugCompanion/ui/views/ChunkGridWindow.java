@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
@@ -27,8 +28,12 @@ public class ChunkGridWindow extends JFrame {
     private final TextFieldWithInlineLabel xTextField;
     private final TextFieldWithInlineLabel zTextField;
     private final TextFieldWithInlineLabel dimensionTextField;
-
     private final AtomicBoolean textFieldUpdateLock = new AtomicBoolean();
+
+    private final Box topSettingsPanel;
+    private final Box bottomInputPanel;
+
+    private boolean overlayModeEnabled;
 
     public ChunkGridWindow() {
         setTitle("Chunk Grid");
@@ -36,7 +41,7 @@ public class ChunkGridWindow extends JFrame {
         add(this.chunkGridPanel, BorderLayout.CENTER);
 
         //Bottom control bar
-        var bottomPanel = Box.createHorizontalBox();
+        this.bottomInputPanel = Box.createHorizontalBox();
         this.chunkXTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkX() + "", "CX", "ChunkX");
         this.chunkZTextField = new TextFieldWithInlineLabel(getChunkGridRequestInfo().getMinChunkZ() + "", "CZ", "ChunkZ");
         this.xTextField = new TextFieldWithInlineLabel((getChunkGridRequestInfo().getMinChunkX() << 4) + "", "X", null);
@@ -108,13 +113,38 @@ public class ChunkGridWindow extends JFrame {
         centerOnPlayerButton.setToolTipText("Center on player");
         centerOnPlayerButton.addActionListener(e -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestCenterOnPlayerMessage()));
 
-        bottomPanel.add(this.chunkXTextField);
-        bottomPanel.add(this.chunkZTextField);
-        bottomPanel.add(this.xTextField);
-        bottomPanel.add(this.zTextField);
-        bottomPanel.add(this.dimensionTextField);
-        bottomPanel.add(centerOnPlayerButton);
-        add(bottomPanel, BorderLayout.SOUTH);
+        this.bottomInputPanel.add(this.chunkXTextField);
+        this.bottomInputPanel.add(this.chunkZTextField);
+        this.bottomInputPanel.add(this.xTextField);
+        this.bottomInputPanel.add(this.zTextField);
+        this.bottomInputPanel.add(this.dimensionTextField);
+        this.bottomInputPanel.add(centerOnPlayerButton);
+        add(this.bottomInputPanel, BorderLayout.SOUTH);
+
+        //Top control bar
+        this.topSettingsPanel = Box.createHorizontalBox();
+        var gridStyleComboBox = new JComboBox<>(GridStyle.values());
+        gridStyleComboBox.setSelectedItem(this.chunkGridPanel.gridStyle);
+        gridStyleComboBox.addActionListener(e -> this.chunkGridPanel.gridStyle = (GridStyle) gridStyleComboBox.getSelectedItem());
+        var followPlayerCheckBox = new JCheckBox("Follow player");
+        followPlayerCheckBox.addItemListener(e -> {
+            this.chunkXTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+            this.chunkZTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+            this.xTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+            this.zTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+            this.dimensionTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+            centerOnPlayerButton.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+        });
+        var overlayModeButton = new FlatIconButton(new FlatSVGIcon("icons/overlayMode.svg"), false);
+        overlayModeButton.addActionListener(e -> {
+            toggleOverlayMode();
+        });
+
+        this.topSettingsPanel.add(gridStyleComboBox);
+        this.topSettingsPanel.add(followPlayerCheckBox);
+        this.topSettingsPanel.add(Box.createHorizontalGlue());
+        this.topSettingsPanel.add(overlayModeButton);
+        add(this.topSettingsPanel, BorderLayout.NORTH);
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -125,6 +155,29 @@ public class ChunkGridWindow extends JFrame {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false))));
 
         pack();
+    }
+
+    private void toggleOverlayMode() {
+        this.overlayModeEnabled = !this.overlayModeEnabled;
+
+        var size = this.chunkGridPanel.getSize();
+        dispose();
+        remove(this.chunkGridPanel);
+        setLayout(new BorderLayout());
+        this.chunkGridPanel.setPreferredSize(size);
+        add(this.chunkGridPanel, BorderLayout.CENTER);
+        if (this.overlayModeEnabled) {
+            setUndecorated(true);
+            remove(this.bottomInputPanel);
+            remove(this.topSettingsPanel);
+        } else {
+            setUndecorated(false);
+            add(this.bottomInputPanel, BorderLayout.SOUTH);
+            add(this.topSettingsPanel, BorderLayout.NORTH);
+        }
+        pack();
+        setVisible(true);
+        setAlwaysOnTop(this.overlayModeEnabled);
     }
 
     private void updateCoordinateTextFields(boolean keepOffset) {
@@ -164,12 +217,25 @@ public class ChunkGridWindow extends JFrame {
     }
 
     private enum GridStyle {
-        NONE,
-        LINES,
-        CHECKER_BOARD
+        NONE("None"),
+        LINES("Grid lines"),
+        CHECKER_BOARD("Checker board");
+
+        private final String displayName;
+
+        GridStyle(String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String toString() {
+            return this.displayName;
+        }
     }
 
     private class ChunkGridPanel extends JPanel {
+
+        private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/close.svg");
 
         private static final Color[] COLORS = new Color[]{
                 new Color(40, 40, 40),
@@ -201,7 +267,7 @@ public class ChunkGridWindow extends JFrame {
                 }
             });
 
-            var mouseAdapter = new MouseAdapter() {
+            var panZoomMouseAdapter = new MouseAdapter() {
 
                 private int prevCellX = -1;
                 private int prevCellY = -1;
@@ -254,12 +320,53 @@ public class ChunkGridWindow extends JFrame {
                 @Override
                 public void mousePressed(MouseEvent e) {
                     requestFocus();
+
+                    if (!SwingUtilities.isLeftMouseButton(e) || e.getPoint().distance(getWidth() - 12, 12) > 8)
+                        return;
+
+                    ChunkGridWindow.this.toggleOverlayMode();
                 }
             };
 
-            addMouseWheelListener(mouseAdapter);
-            addMouseListener(mouseAdapter);
-            addMouseMotionListener(mouseAdapter);
+            addMouseWheelListener(panZoomMouseAdapter);
+            addMouseListener(panZoomMouseAdapter);
+            addMouseMotionListener(panZoomMouseAdapter);
+
+            var windowMoveMouseAdapter = new MouseAdapter() {
+
+                private boolean dragging;
+                private int windowXOffset;
+                private int windowYOffset;
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!SwingUtilities.isMiddleMouseButton(e))
+                        return;
+
+                    this.dragging = true;
+                    this.windowXOffset = e.getXOnScreen() - ChunkGridWindow.this.getX();
+                    this.windowYOffset = e.getYOnScreen() - ChunkGridWindow.this.getY();
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (!SwingUtilities.isMiddleMouseButton(e) || !this.dragging)
+                        return;
+
+                    ChunkGridWindow.this.setLocation(e.getXOnScreen() - this.windowXOffset, e.getYOnScreen() - this.windowYOffset);
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (!SwingUtilities.isMiddleMouseButton(e))
+                        return;
+
+                    this.dragging = false;
+                }
+            };
+
+            addMouseListener(windowMoveMouseAdapter);
+            addMouseMotionListener(windowMoveMouseAdapter);
 
             CompanionApp.SERVER.getMessageBus().listenAlways(ChunkGridDataMessage.class, (m) -> {
                 if (!isVisible())
@@ -326,6 +433,26 @@ public class ChunkGridWindow extends JFrame {
             clipArea.subtract(new Area(new Rectangle(outerPaddingX, outerPaddingY, getWidth() - outerPaddingX * 2, getHeight() - outerPaddingY * 2)));
             g.setClip(clipArea);
             g.fillRect(0, 0, getWidth(), getHeight());
+
+            //Draw overlay mode exit button
+            if (ChunkGridWindow.this.overlayModeEnabled) {
+                g.setClip(0, 0, getWidth(), getHeight());
+
+                var mouseLocation = MouseInfo.getPointerInfo().getLocation();
+                var relativeMouseLocation = new Point(
+                        mouseLocation.x - getLocationOnScreen().x,
+                        mouseLocation.y - getLocationOnScreen().y
+                );
+
+                if (relativeMouseLocation.distance(getWidth() - 12, 12) <= 8) {
+                    FlatUIUtils.setRenderingHints(g);
+                    g.setColor(new Color(50, 50, 50));
+                    g.fillOval(getWidth() - 20, 4, 16, 16);
+                }
+
+                CLOSE_ICON.setColorFilter(new FlatSVGIcon.ColorFilter(c -> Color.RED));
+                CLOSE_ICON.paintIcon(this, g, getWidth() - 20, 4);
+            }
         }
     }
 }

@@ -210,6 +210,9 @@ public class ChunkGridWindow extends JFrame {
             return;
         }
 
+        if (!CompanionApp.SERVER.isClientConnected())
+            return;
+
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(true));
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(INSTANCE.getChunkGridRequestInfo()));
         INSTANCE.setVisible(true);

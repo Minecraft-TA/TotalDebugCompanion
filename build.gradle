@@ -16,9 +16,9 @@ repositories {
 dependencies {
     implementation("com.github.tth05:SCNet:master-SNAPSHOT")
 
-    implementation("com.formdev:flatlaf:1.2")
-    implementation("com.formdev:flatlaf-intellij-themes:1.2")
-    implementation("com.formdev:flatlaf-extras:1.2")
+    implementation('com.formdev:flatlaf:1.4')
+    implementation('com.formdev:flatlaf-intellij-themes:1.4')
+    implementation('com.formdev:flatlaf-extras:1.4')
     implementation("com.github.javaparser:javaparser-core:3.22.0")
 }
 

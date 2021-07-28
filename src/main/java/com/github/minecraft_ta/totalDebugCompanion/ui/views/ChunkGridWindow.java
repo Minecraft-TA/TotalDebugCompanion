@@ -14,6 +14,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -232,7 +233,8 @@ public class ChunkGridWindow extends JFrame {
     private enum GridStyle {
         NONE("None"),
         LINES("Grid lines"),
-        CHECKER_BOARD("Checker board");
+        CHECKER_BOARD("Checker board"),
+        GRADIENT("Gradient");
 
         private final String displayName;
 
@@ -402,10 +404,12 @@ public class ChunkGridWindow extends JFrame {
         }
 
         @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
             if (this.stateMap == null)
                 return;
+
+            var g = ((Graphics2D) graphics);
 
             int outerPaddingX = (getWidth() - (this.chunkRenderSize * this.chunkGridRequestInfo.getWidth())) / 2;
             int outerPaddingY = (getHeight() - (this.chunkRenderSize * this.chunkGridRequestInfo.getHeight())) / 2;
@@ -418,18 +422,34 @@ public class ChunkGridWindow extends JFrame {
                     if (b == 0 && this.gridStyle != GridStyle.CHECKER_BOARD)
                         continue;
 
-                    g.setColor(COLORS[this.gridStyle == GridStyle.CHECKER_BOARD && (x % 2 == 0) == (z % 2 == 0) ? (b * 2) + 1 : (b * 2)]);
+                    int renderX = this.chunkRenderSize * (x - this.chunkGridRequestInfo.getMinChunkX()) + outerPaddingX;
+                    int renderZ = this.chunkRenderSize * (z - this.chunkGridRequestInfo.getMinChunkZ()) + outerPaddingY;
 
-                    int renderX = x - this.chunkGridRequestInfo.getMinChunkX();
-                    int renderZ = z - this.chunkGridRequestInfo.getMinChunkZ();
-                    g.fillRect(this.chunkRenderSize * renderX + outerPaddingX, this.chunkRenderSize * renderZ + outerPaddingY, this.chunkRenderSize, this.chunkRenderSize);
+                    var oldG = g;
+                    g = (Graphics2D) g.create();
+
+                    if (this.gridStyle == GridStyle.GRADIENT) {
+                        g.setPaint(new GradientPaint(0, 0, COLORS[b * 2 + 1], this.chunkRenderSize, this.chunkRenderSize, COLORS[b * 2]));
+                        g.setTransform(AffineTransform.getTranslateInstance(
+                                renderX,
+                                renderZ
+                        ));
+                        renderX = 0;
+                        renderZ = 0;
+                    } else {
+                        g.setColor(COLORS[this.gridStyle == GridStyle.CHECKER_BOARD && (x % 2 == 0) == (z % 2 == 0) ? (b * 2) + 1 : (b * 2)]);
+                    }
+
+                    g.fillRect(renderX, renderZ, this.chunkRenderSize, this.chunkRenderSize);
+                    g.dispose();
+                    g = oldG;
                 }
             }
 
             g.setColor(Color.BLACK);
 
             if (this.gridStyle == GridStyle.LINES) {
-                ((Graphics2D) g).setStroke(new BasicStroke(1f));
+                g.setStroke(new BasicStroke(1f));
                 //Vertical grid lines
                 for (int i = 1; i < this.chunkGridRequestInfo.getWidth(); i++) {
                     g.drawLine(i * this.chunkRenderSize + outerPaddingX, 0, i * this.chunkRenderSize + outerPaddingX, getHeight());

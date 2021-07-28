@@ -6,7 +6,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.RequestCenterOnPlayerMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.UpdateFollowPlayerStateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.TextFieldWithInlineLabel;
 import com.github.minecraft_ta.totalDebugCompanion.util.*;
@@ -111,7 +111,9 @@ public class ChunkGridWindow extends JFrame {
         });
         var centerOnPlayerButton = new FlatIconButton(new FlatSVGIcon("icons/target.svg"), false);
         centerOnPlayerButton.setToolTipText("Center on player");
-        centerOnPlayerButton.addActionListener(e -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestCenterOnPlayerMessage()));
+        centerOnPlayerButton.addActionListener(e -> {
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new UpdateFollowPlayerStateMessage(UpdateFollowPlayerStateMessage.STATE_ONCE));
+        });
 
         this.bottomInputPanel.add(this.chunkXTextField);
         this.bottomInputPanel.add(this.chunkZTextField);
@@ -124,6 +126,8 @@ public class ChunkGridWindow extends JFrame {
         //Top control bar
         this.topSettingsPanel = Box.createHorizontalBox();
         var gridStyleComboBox = new JComboBox<>(GridStyle.values());
+        gridStyleComboBox.setPreferredSize(new Dimension(200, gridStyleComboBox.getPreferredSize().height));
+        gridStyleComboBox.setMaximumSize(new Dimension(250, gridStyleComboBox.getPreferredSize().height));
         gridStyleComboBox.setSelectedItem(this.chunkGridPanel.gridStyle);
         gridStyleComboBox.addActionListener(e -> this.chunkGridPanel.gridStyle = (GridStyle) gridStyleComboBox.getSelectedItem());
         var followPlayerCheckBox = new JCheckBox("Follow player");
@@ -134,12 +138,17 @@ public class ChunkGridWindow extends JFrame {
             this.zTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
             this.dimensionTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
             centerOnPlayerButton.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
+
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new UpdateFollowPlayerStateMessage(
+                    e.getStateChange() == ItemEvent.DESELECTED ? UpdateFollowPlayerStateMessage.STATE_NONE : UpdateFollowPlayerStateMessage.STATE_FOLLOW
+            ));
         });
         var overlayModeButton = new FlatIconButton(new FlatSVGIcon("icons/overlayMode.svg"), false);
         overlayModeButton.addActionListener(e -> {
             toggleOverlayMode();
         });
 
+        this.topSettingsPanel.add(new JLabel(" Grid style: "));
         this.topSettingsPanel.add(gridStyleComboBox);
         this.topSettingsPanel.add(followPlayerCheckBox);
         this.topSettingsPanel.add(Box.createHorizontalGlue());
@@ -215,6 +224,7 @@ public class ChunkGridWindow extends JFrame {
 
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(true));
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(INSTANCE.getChunkGridRequestInfo()));
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new UpdateFollowPlayerStateMessage(UpdateFollowPlayerStateMessage.STATE_ONCE));
         INSTANCE.setVisible(true);
         UIUtils.centerJFrame(INSTANCE);
     }

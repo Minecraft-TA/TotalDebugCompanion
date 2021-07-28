@@ -4,7 +4,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.RequestCenterOnPlayerMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.UpdateFollowPlayerStateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
@@ -59,7 +59,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) 5, ReceiveDataStateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 6, ChunkGridDataMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 7, ChunkGridRequestInfoUpdateMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 8, RequestCenterOnPlayerMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) 8, UpdateFollowPlayerStateMessage.class);
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));

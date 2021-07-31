@@ -34,7 +34,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           body: |
             Changes in this Release
-            - Switched to java swing
+            - New chunk grid tool
           draft: false
           prerelease: false
       - name: Upload zip to release

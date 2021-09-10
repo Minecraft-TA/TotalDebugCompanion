@@ -23,7 +23,7 @@ public class CodeUtils {
         StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#6897BB"));
         StyleConstants.setForeground(STRING_LITERAL_ATTRIBUTES, Color.decode("#98C379"));
         StyleConstants.setForeground(OPERATOR_ATTRIBUTES, Color.decode("#A1C17E"));
-        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#A1C17E"));
+        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#778899"));
         StyleConstants.setForeground(COMMENT_ATTRIBUTES, Color.decode("#59626F"));
     }
 

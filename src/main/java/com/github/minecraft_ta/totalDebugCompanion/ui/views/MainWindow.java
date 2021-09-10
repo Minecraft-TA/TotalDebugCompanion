@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeViewHeader;
@@ -31,7 +33,16 @@ public class MainWindow extends JFrame {
             }
         });
 
+        var scriptMenu = new JMenu("Script");
+        scriptMenu.add(new AbstractAction("New Script", new FlatSVGIcon("icons/script.svg")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                editorTabs.openEditorTab(new ScriptView());
+            }
+        });
+
         menuBar.add(toolsMenu);
+        menuBar.add(scriptMenu);
 
         setJMenuBar(menuBar);
         setDefaultCloseOperation(EXIT_ON_CLOSE);

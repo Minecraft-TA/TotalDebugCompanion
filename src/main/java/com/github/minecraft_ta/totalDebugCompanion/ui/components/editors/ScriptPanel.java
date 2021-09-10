@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
@@ -16,6 +18,9 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         var headerBar = Box.createHorizontalBox();
         var runButton = new JButton("Run");
+        runButton.addActionListener(e -> {
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.editorPane.getText()));
+        });
 
         headerBar.add(runButton);
         setHeaderComponent(headerBar);

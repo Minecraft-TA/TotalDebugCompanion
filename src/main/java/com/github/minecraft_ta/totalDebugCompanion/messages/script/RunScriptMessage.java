@@ -7,6 +7,10 @@ public class RunScriptMessage extends AbstractMessageOutgoing {
 
     private String scriptText;
 
+    public RunScriptMessage(String scriptText) {
+        this.scriptText = scriptText;
+    }
+
     @Override
     public void write(ByteBufferOutputStream messageStream) {
         messageStream.writeString(this.scriptText);

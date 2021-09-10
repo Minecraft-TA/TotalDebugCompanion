@@ -6,7 +6,6 @@ import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
 public class SearchHeaderBar extends JPanel {
@@ -49,8 +48,8 @@ public class SearchHeaderBar extends JPanel {
         });
         add(regexButton);
         add(createSeparator());
-        add(createFlatButton("Previous", new FlatSVGIcon("icons/previousOccurence.svg"), (e) -> searchManager.focusPreviousMatch()));
-        add(createFlatButton("Next", new FlatSVGIcon("icons/nextOccurence.svg"), (e) -> searchManager.focusNextMatch()));
+        add(createFlatButton("Previous", new FlatSVGIcon("icons/previousOccurence.svg"), searchManager::focusPreviousMatch));
+        add(createFlatButton("Next", new FlatSVGIcon("icons/nextOccurence.svg"), searchManager::focusNextMatch));
 
         JLabel indexLabel = new JLabel("");
         searchManager.addFocusedIndexChangedListener(i -> {
@@ -83,9 +82,10 @@ public class SearchHeaderBar extends JPanel {
         return button;
     }
 
-    private JButton createFlatButton(String tooltip, FlatSVGIcon icon, Consumer<MouseEvent> clickListener) {
+    private JButton createFlatButton(String tooltip, FlatSVGIcon icon, Runnable clickListener) {
         var button = new FlatIconButton(icon, false);
         button.setToolTipText(tooltip);
+        button.addActionListener((e) -> clickListener.run());
         return button;
     }
 }

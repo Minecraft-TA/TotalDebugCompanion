@@ -1,7 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.search;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -182,8 +183,8 @@ public class SearchManager {
             //Add focus highlighting at new position
             var matchPos = this.highlights.get(this.focusedMatchIndex);
             this.focusedMatchReference = textPane.getHighlighter().addHighlight(matchPos.start, matchPos.end, FOCUSED_HIGHLIGHT_PAINTER);
-        } catch (BadLocationException ignored) {
-            ignored.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -206,8 +207,8 @@ public class SearchManager {
 
     private static final class HighlightInfo {
 
-        private int start;
-        private int end;
+        private final int start;
+        private final int end;
 
         private Object highlightReference;
 

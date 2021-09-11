@@ -31,17 +31,14 @@ public class FlatIconButton extends JButton {
                 if (!toggleable)
                     return;
 
-                state = !state;
+                setToggled(!state);
                 toggleListeners.forEach(l -> l.accept(state));
 
                 if (state) {
                     setContentAreaFilled(true);
-                    setBackground(HOVER_COLOR);
-                    icon.setColorFilter(new FlatSVGIcon.ColorFilter((c) -> new Color(74, 136, 199)));
-                } else {
-                    setBackground(HOVER_COLOR);
-                    icon.setColorFilter(null);
                 }
+
+                setBackground(HOVER_COLOR);
             }
 
             @Override
@@ -57,6 +54,20 @@ public class FlatIconButton extends JButton {
                 setContentAreaFilled(false);
             }
         });
+    }
+
+    public void setToggled(boolean b) {
+        this.state = b;
+
+        if (state) {
+            ((FlatSVGIcon) getIcon()).setColorFilter(new FlatSVGIcon.ColorFilter((c) -> new Color(74, 136, 199)));
+        } else {
+            ((FlatSVGIcon) getIcon()).setColorFilter(null);
+        }
+    }
+
+    public boolean isToggled() {
+        return this.state;
     }
 
     public void addToggleListener(Consumer<Boolean> listener) {

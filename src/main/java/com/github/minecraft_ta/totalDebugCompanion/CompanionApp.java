@@ -9,6 +9,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewCli
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -62,6 +63,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) 7, ChunkGridRequestInfoUpdateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 8, UpdateFollowPlayerStateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) 9, RunScriptMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) 10, ScriptStatusMessage.class);
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));

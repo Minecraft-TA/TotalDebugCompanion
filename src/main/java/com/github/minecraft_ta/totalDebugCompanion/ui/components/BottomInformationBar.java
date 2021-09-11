@@ -5,12 +5,15 @@ import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import javax.swing.*;
 import java.awt.*;
 
-public class FontSizeSliderBar extends JPanel {
+public class BottomInformationBar extends JPanel {
 
-    public FontSizeSliderBar() {
+    private final JLabel infoLabel = new JLabel();
+
+    public BottomInformationBar() {
         super();
         setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
+        add(this.infoLabel);
         add(Box.createHorizontalGlue());
         add(new JLabel("Font size: "));
 
@@ -23,5 +26,18 @@ public class FontSizeSliderBar extends JPanel {
         add(slider);
 
         setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY));
+    }
+
+    public void setInfoText(String text) {
+        this.infoLabel.setText(text);
+    }
+
+    public void setInfoText(String text, Color color) {
+        this.infoLabel.setText(text);
+        this.infoLabel.setForeground(color);
+    }
+
+    public void clearInfoText() {
+        setInfoText("", new Color(187, 187, 187));
     }
 }

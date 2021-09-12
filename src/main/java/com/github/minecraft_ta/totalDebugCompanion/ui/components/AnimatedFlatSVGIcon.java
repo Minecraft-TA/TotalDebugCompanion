@@ -31,7 +31,6 @@ public class AnimatedFlatSVGIcon implements Icon {
         this.icons = icons.toArray(new FlatSVGIcon[0]);
 
         this.timer = new Timer(100, e -> {
-            System.out.println("timer");
             if (this.component == null) {
                 this.timer.stop();
             } else {

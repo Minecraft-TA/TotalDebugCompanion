@@ -28,7 +28,18 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             if (m.getScriptId() != this.scriptId)
                 return;
 
-            System.out.println(m.getMessage());
+            if (m.getType() == ScriptStatusMessage.Type.RUN_COMPLETED) {
+                this.bottomInformationBar.setSuccessInfoText("Run completed!");
+                System.out.println("Output: \n" + m.getMessage());
+            } else if (m.getType() == ScriptStatusMessage.Type.COMPILATION_FAILED) {
+                this.bottomInformationBar.setFailureInfoText("Compilation failed!");
+                System.out.println("Error: \n" + m.getMessage());
+            } else if (m.getType() == ScriptStatusMessage.Type.RUN_EXCEPTION) {
+                this.bottomInformationBar.setFailureInfoText("Run failed!");
+                System.out.println("Error: \n" + m.getMessage());
+            } else {
+                this.bottomInformationBar.setProcessInfoText("Running...");
+            }
         });
 
         var headerBar = Box.createHorizontalBox();
@@ -37,12 +48,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         var runExecutor = (Consumer<Boolean>) (server) -> {
             if (!CompanionApp.SERVER.isClientConnected()) {
-                this.bottomInformationBar.setInfoText("Not connected to game client!", new Color(255, 103, 103));
+                this.bottomInformationBar.setFailureInfoText("Not connected to game client!");
                 return;
             }
 
-            this.bottomInformationBar.clearInfoText();
-            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId++, this.editorPane.getText(), server));
+            this.bottomInformationBar.setProcessInfoText("Compiling...");
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, this.editorPane.getText(), server));
         };
         var runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
         runButton.addActionListener(e -> runExecutor.accept(false));

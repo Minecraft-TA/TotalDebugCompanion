@@ -27,8 +27,9 @@ public class ScriptStatusMessage extends AbstractMessageIncoming {
         messageStream.writeString(this.message);
     }
 
-    public static enum Type {
+    public enum Type {
         COMPILATION_FAILED,
+        COMPILATION_COMPLETED,
         RUN_EXCEPTION,
         RUN_COMPLETED;
     }

@@ -64,6 +64,14 @@ public class UIUtils {
         return box;
     }
 
+    public static String getText(JTextComponent c) {
+        try {
+            return c.getDocument().getText(0, c.getDocument().getLength());
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void focusWindow(JFrame frame) {
         frame.setVisible(true);
         int state = frame.getExtendedState();

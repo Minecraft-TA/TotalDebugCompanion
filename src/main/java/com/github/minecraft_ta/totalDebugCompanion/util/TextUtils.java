@@ -9,4 +9,15 @@ public class TextUtils {
             return defaultValue;
         }
     }
+
+    public static int countNewLines(String s) {
+        int count = 0;
+
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '\n')
+                count++;
+        }
+
+        return count;
+    }
 }

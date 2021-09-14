@@ -1,6 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -25,7 +27,7 @@ public class FileUtils {
 
                         var valid = key.reset();
 
-                        if(!valid) {
+                        if (!valid) {
                             System.err.println("Directory no longer accessible " + directory);
                             System.exit(0);
                         }
@@ -48,5 +50,13 @@ public class FileUtils {
         }
 
         return it1.hasNext();
+    }
+
+    public static URI toURI(String s) {
+        try {
+            return new URI(s);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }

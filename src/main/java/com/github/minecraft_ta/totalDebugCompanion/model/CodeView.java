@@ -3,7 +3,6 @@ package com.github.minecraft_ta.totalDebugCompanion.model;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.StringUtils;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.CodeViewPanel;
-import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +28,7 @@ public class CodeView implements IEditorPanel {
                 code = StringUtils.removeTrailing(code, "\n");
 
                 codeViewPanel.setCode(code);
-                CodeUtils.highlightJavaCode(code, codeViewPanel.getEditorPane());
+//                CodeUtils.highlightJavaCode(code, codeViewPanel.getEditorPane());
                 focusLine(focusLine);
             } catch (IOException e) {
                 e.printStackTrace();

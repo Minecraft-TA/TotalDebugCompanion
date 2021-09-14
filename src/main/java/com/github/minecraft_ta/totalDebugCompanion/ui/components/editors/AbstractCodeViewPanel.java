@@ -5,10 +5,11 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.BottomInformati
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
+import javax.swing.text.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class AbstractCodeViewPanel extends JPanel {
 
@@ -16,6 +17,7 @@ public class AbstractCodeViewPanel extends JPanel {
     static {
         try {
             JETBRAINS_MONO_FONT = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(CodeViewPanel.class.getResourceAsStream("/font/jetbrainsmono_regular.ttf"), "Unable to load font"));
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(JETBRAINS_MONO_FONT);
         } catch (FontFormatException | IOException e) {
             e.printStackTrace();
         }
@@ -33,7 +35,7 @@ public class AbstractCodeViewPanel extends JPanel {
             return getUI().getPreferredSize(this);
         }
     };
-    protected final JScrollPane lineNumbersScrollPane = new JScrollPane(); //TODO: remove this mess and custom paint the line numbers
+    protected final JScrollPane lineNumbersScrollPane = new JScrollPane();
     protected final JTextArea lineNumbers = new JTextArea();
     protected final BottomInformationBar bottomInformationBar = new BottomInformationBar();
 
@@ -57,7 +59,8 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorScrollPane.setBorder(BorderFactory.createEmptyBorder());
         this.editorScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> this.lineNumbersScrollPane.getVerticalScrollBar().setValue(e.getValue()));
 
-        add(this.lineNumbersScrollPane, BorderLayout.WEST);
+        //TODO: better line numbers
+//        add(this.lineNumbersScrollPane, BorderLayout.WEST);
         add(this.editorScrollPane, BorderLayout.CENTER);
         add(this.bottomInformationBar, BorderLayout.SOUTH);
 
@@ -147,8 +150,19 @@ public class AbstractCodeViewPanel extends JPanel {
     }
 
     private void updateFonts() {
-        this.editorPane.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize")));
-        this.lineNumbers.setFont(this.editorPane.getFont());
+        this.lineNumbers.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize")));
+
+        var set = new SimpleAttributeSet();
+        StyleConstants.setFontFamily(set, JETBRAINS_MONO_FONT.getFamily());
+        StyleConstants.setFontSize(set, GlobalConfig.getInstance().<Float>getValue("fontSize").intValue());
+
+        var tabWidth = this.lineNumbers.getFontMetrics(this.lineNumbers.getFont()).stringWidth("    ");
+        StyleConstants.setTabSet(set,
+                new TabSet(IntStream.range(1, 12)
+                        .map(i -> i * tabWidth)
+                        .mapToObj(i -> new TabStop(i, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE)).toArray(TabStop[]::new))
+        );
+        this.editorPane.getStyledDocument().setParagraphAttributes(0, this.editorPane.getStyledDocument().getLength(), set, false);
     }
 
     private void updateScrollBars() {

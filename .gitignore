@@ -2,3 +2,5 @@
 build
 out
 .gradle
+workspace
+jdt-language-server-latest

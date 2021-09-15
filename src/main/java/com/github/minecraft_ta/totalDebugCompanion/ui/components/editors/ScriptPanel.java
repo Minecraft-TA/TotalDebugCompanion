@@ -357,15 +357,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         return;
 
                     items.sort(Comparator.comparing(i -> Optional.ofNullable(i.getSortText()).orElse(i.getLabel())));
-                    var model = (DefaultListModel<CompletionItem>) completionList.getModel();
-                    model.removeAllElements();
-                    model.addAll(items);
-                    completionList.setSelectedIndex(0);
-
                     try {
                         var cursorRect = this.editorPane.modelToView2D(this.editorPane.getCaretPosition());
-                        completionPopupScrollPane.getVerticalScrollBar().setValue(0);
                         SwingUtilities.invokeLater(() -> {
+                            completionPopupScrollPane.getVerticalScrollBar().setValue(0);
+
+                            var model = (DefaultListModel<CompletionItem>) completionList.getModel();
+                            model.removeAllElements();
+                            model.addAll(items);
+                            completionList.setSelectedIndex(0);
                             completionPopupMenu.show(this.editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
                             this.editorPane.requestFocus();
                         });

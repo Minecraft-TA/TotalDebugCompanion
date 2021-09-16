@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.BottomInformationBar;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.LineNumberTextPane;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -24,43 +25,17 @@ public class AbstractCodeViewPanel extends JPanel {
     }
 
     protected final JScrollPane editorScrollPane = new JScrollPane();
-    protected final JTextPane editorPane = new JTextPane() {
-        @Override
-        public boolean getScrollableTracksViewportWidth() {
-            return getUI().getPreferredSize(this).width <= getParent().getSize().width;
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            return getUI().getPreferredSize(this);
-        }
-    };
-    protected final JScrollPane lineNumbersScrollPane = new JScrollPane();
-    protected final JTextArea lineNumbers = new JTextArea();
+    protected final LineNumberTextPane editorPane = new LineNumberTextPane();
     protected final BottomInformationBar bottomInformationBar = new BottomInformationBar();
 
-    protected int lineCount;
     protected JComponent headerComponent;
 
     public AbstractCodeViewPanel() {
         super(new BorderLayout());
 
-        this.lineNumbers.setEditable(false);
-        this.lineNumbers.setForeground(Color.GRAY);
-        this.lineNumbers.setHighlighter(null);
-
-        this.lineNumbersScrollPane.setViewportView(this.lineNumbers);
-        this.lineNumbersScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        this.lineNumbersScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        this.lineNumbersScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        this.lineNumbersScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> this.lineNumbersScrollPane.getVerticalScrollBar().setValue(this.editorScrollPane.getVerticalScrollBar().getValue()));
-
         this.editorScrollPane.setViewportView(this.editorPane);
         this.editorScrollPane.setBorder(BorderFactory.createEmptyBorder());
-        this.editorScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> this.lineNumbersScrollPane.getVerticalScrollBar().setValue(e.getValue()));
 
-        //TODO: better line numbers
-//        add(this.lineNumbersScrollPane, BorderLayout.WEST);
         add(this.editorScrollPane, BorderLayout.CENTER);
         add(this.bottomInformationBar, BorderLayout.SOUTH);
 
@@ -73,7 +48,7 @@ public class AbstractCodeViewPanel extends JPanel {
 
     public void focusLine(int line) {
         var verticalScrollBar = this.editorScrollPane.getVerticalScrollBar();
-        verticalScrollBar.setValue((line - 1) * (verticalScrollBar.getMaximum() / this.lineCount));
+        verticalScrollBar.setValue((line - 1) * (verticalScrollBar.getMaximum() / this.editorPane.getDocument().getDefaultRootElement().getElementCount()));
     }
 
     public void focusRange(int offsetStart, int offsetEnd) {
@@ -128,35 +103,15 @@ public class AbstractCodeViewPanel extends JPanel {
         this.headerComponent = null;
     }
 
-    protected void updateLineNumbers() {
-        this.lineCount = this.editorPane.getDocument().getDefaultRootElement().getElementCount();
-        int lineNumberLength = (this.lineCount + "").length();
-
-        var lineNumberTextBuilder = new StringBuilder();
-        for (int i = 0; i < this.lineCount; i++) {
-            lineNumberTextBuilder.append(String.format("%" + lineNumberLength + "d", i + 1));
-
-            if (i != this.lineCount - 1)
-                lineNumberTextBuilder.append("\n");
-        }
-
-        this.lineNumbers.setText(lineNumberTextBuilder.toString());
-        //Adjust max width, otherwise it will take up too much space
-        int charsWidth = UIUtils.getFontWidth(this.lineNumbers, "9".repeat(lineNumberLength));
-        this.lineNumbers.setColumns(lineNumberLength);
-        this.lineNumbers.setMaximumSize(new Dimension(charsWidth, Integer.MAX_VALUE));
-
-        this.lineNumbersScrollPane.getVerticalScrollBar().setValue(this.editorScrollPane.getVerticalScrollBar().getValue());
-    }
-
     private void updateFonts() {
-        this.lineNumbers.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize")));
+        var newFont = JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"));
+        this.editorPane.setFont(newFont);
 
         var set = new SimpleAttributeSet();
         StyleConstants.setFontFamily(set, JETBRAINS_MONO_FONT.getFamily());
         StyleConstants.setFontSize(set, GlobalConfig.getInstance().<Float>getValue("fontSize").intValue());
 
-        var tabWidth = this.lineNumbers.getFontMetrics(this.lineNumbers.getFont()).stringWidth("    ");
+        var tabWidth = this.editorPane.getFontMetrics(newFont).stringWidth("    ");
         StyleConstants.setTabSet(set,
                 new TabSet(IntStream.range(1, 12)
                         .map(i -> i * tabWidth)

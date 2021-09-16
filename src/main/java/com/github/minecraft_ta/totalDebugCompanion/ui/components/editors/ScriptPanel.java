@@ -110,6 +110,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         var textArea = this.editorPane;
         textArea.setText(scriptView.getSourceText());
+        CompanionApp.LSP.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(scriptView.getURI(), "java", 0, UIUtils.getText(textArea))));
 
         textArea.setBackground(new Color(60, 63, 65));
         textArea.getDocument().addDocumentListener((DocumentChangeListener) e -> {
@@ -216,8 +217,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         CodeUtils.highlightJavaCode(this.editorPane);
                         CodeUtils.highlightSemanticJavaCode(res.getData(), this.editorPane);
                     });
-
-            updateLineNumbers();
         });
     }
 
@@ -257,7 +256,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 if (!fullSync)
                     sendChanges(new TextDocumentContentChangeEvent(new Range(pos1, pos2), length, ""));
                 else
-                    sendChanges(new TextDocumentContentChangeEvent(fb.getDocument().getText(0, fb.getDocument().getLength())));
+                    sendChanges(new TextDocumentContentChangeEvent(UIUtils.getText(editorPane)));
             }
 
             private void sendChanges(TextDocumentContentChangeEvent... changes) {
@@ -333,26 +332,24 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         return;
                     }
 
-                    items.removeIf(item ->
-                            {
-                                if (item.getTextEdit() == null)
-                                    return false;
+                    items.removeIf(item -> {
+                        if (item.getTextEdit() == null)
+                            return false;
 
-                                try {
-                                    //Exclude weird broken items?
-                                    return (item.getInsertText() != null && item.getInsertText().isBlank()) ||
+//                                try {
+                        //Exclude weird broken items?
+                        return (item.getInsertText() != null && item.getInsertText().isBlank()) /*||
                                            //Exclude completions that don't to anything
                                            this.editorPane.getDocument().getText(
                                                    lineElement.getStartOffset(),
                                                    caretPosition - lineElement.getStartOffset()
-                                           ).endsWith(item.getTextEdit().getLeft().getNewText());
-                                } catch (BadLocationException e) {
+                                           ).endsWith(item.getTextEdit().getLeft().getNewText())*/;
+                               /* } catch (BadLocationException e) {
                                     e.printStackTrace();
-                                }
+                                }*/
 
-                                return false;
-                            }
-                    );
+//                                return false;
+                    });
                     if (items.isEmpty())
                         return;
 

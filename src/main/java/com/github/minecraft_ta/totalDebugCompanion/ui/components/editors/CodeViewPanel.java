@@ -79,8 +79,6 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
 
     public void setCode(String code) {
         this.editorPane.setText(code);
-
-        this.updateLineNumbers();
     }
 
     public JTextPane getEditorPane() {

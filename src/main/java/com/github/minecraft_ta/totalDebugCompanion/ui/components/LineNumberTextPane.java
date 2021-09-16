@@ -26,7 +26,7 @@ public class LineNumberTextPane extends JTextPane {
                 lineNumberLength = 3;
             var charsWidth = fontMetrics.stringWidth("9".repeat(lineNumberLength));
 
-            setBorder(BorderFactory.createEmptyBorder(0, charsWidth + 8, 0, 0));
+            setBorder(BorderFactory.createEmptyBorder(0, charsWidth + 14, 0, 0));
             this.lineCount = newLineCount;
         });
     }
@@ -50,15 +50,16 @@ public class LineNumberTextPane extends JTextPane {
 
         var fontMetrics = getFontMetrics(currentFont);
         var charHeight = fontMetrics.getHeight();
-        var maxCharWidth = fontMetrics.stringWidth(this.lineCount + "");
+        var maxCharWidth = fontMetrics.stringWidth((this.lineCount < 999 ? "999" : this.lineCount) + "");
         var baseY = fontMetrics.getHeight() - fontMetrics.getDescent();
 
         FlatUIUtils.setRenderingHints(g);
         g.setFont(currentFont);
+        g.setColor(Color.GRAY);
         for (int i = 0; i < this.lineCount; i++) {
             var x = 4;
             var y = baseY + i * charHeight;
-            if (!g.getClip().getBounds2D().contains(x, y))
+            if (!g.getClip().getBounds2D().contains(x, y - 10))
                 continue;
 
             var label = (i + 1) + "";

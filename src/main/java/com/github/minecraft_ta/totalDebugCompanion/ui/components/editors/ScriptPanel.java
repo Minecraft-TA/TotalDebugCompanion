@@ -248,7 +248,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                 //Trigger auto-completion
                 var c = string.charAt(string.length() - 1);
-                if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n")) {
+                if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n") || string.length() > 1) {
                     completionPopupMenu.setVisible(false);
                     return;
                 }
@@ -326,10 +326,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 CompanionApp.LSP.formatting(new DocumentFormattingParams(new TextDocumentIdentifier(scriptView.getURI()), new FormattingOptions(4, false)))
                         .thenAccept(res -> {
                             Collections.reverse(res);
-                            for (TextEdit edit : res) {
-                                applyTextEdit(edit);
-                            }
-                            bottomInformationBar.setDefaultInfoText("Formatted %d lines"
+                            res.forEach(ScriptPanel.this::applyTextEdit);
+                            bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
                                     .formatted(Stream.concat(
                                                     res.stream().map(t -> t.getRange().getEnd().getLine()),
                                                     res.stream().map(t -> t.getRange().getStart().getLine()))
@@ -337,7 +335,26 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         });
             }
         });
+        this.editorPane.getActionMap().put("deleteLine", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var offset = editorPane.getCaretPosition();
+                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
+                var line = defaultRootElement.getElementIndex(offset);
+                var element = defaultRootElement.getElement(line);
+                var inLineCaretPos = offset - element.getStartOffset();
+
+                try {
+                    editorPane.getDocument().remove(Math.max(element.getStartOffset() - 1, 0), Math.min(element.getEndOffset() - element.getStartOffset(), editorPane.getDocument().getLength()));
+                    element = defaultRootElement.getElement(Math.min(defaultRootElement.getElementCount() - 1, line));
+                    editorPane.setCaretPosition(Math.min(element.getStartOffset() + inLineCaretPos, element.getEndOffset() - 1));
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
 
         this.completionList.addKeyListener(new KeyAdapter() {
             @Override

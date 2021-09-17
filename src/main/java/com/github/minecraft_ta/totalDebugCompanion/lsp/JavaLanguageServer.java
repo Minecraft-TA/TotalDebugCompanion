@@ -96,6 +96,10 @@ public class JavaLanguageServer {
         return this.server.getTextDocumentService().formatting(params);
     }
 
+    public CompletableFuture<List<? extends TextEdit>> onTypeFormatting(DocumentOnTypeFormattingParams params) {
+        return this.server.getTextDocumentService().onTypeFormatting(params);
+    }
+
     private Path getLauncherJarPath() {
         var pluginDir = Paths.get(".", "jdt-language-server-latest", "plugins");
         if (!Files.exists(pluginDir) || !Files.isDirectory(pluginDir))
@@ -126,7 +130,7 @@ public class JavaLanguageServer {
 //        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());
         textDocumentClientCapabilities.setFormatting(new FormattingCapabilities());
 //        textDocumentClientCapabilities.setHover(new HoverCapabilities());
-//        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
+        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
 //        textDocumentClientCapabilities.setRangeFormatting(new RangeFormattingCapabilities());
 //        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
 //        textDocumentClientCapabilities.setRename(new RenameCapabilities());

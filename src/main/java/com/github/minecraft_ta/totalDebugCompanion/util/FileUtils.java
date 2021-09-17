@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 
@@ -57,6 +58,20 @@ public class FileUtils {
             return new URI(s);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static void createIfNotExists(Path path, boolean dir) {
+        if (Files.exists(path))
+            return;
+
+        try {
+            if (dir)
+                Files.createDirectories(path);
+            else
+                Files.createFile(path);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -14,6 +14,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMess
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.Server;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -48,7 +49,7 @@ public class CompanionApp {
     public static final JavaLanguageServer LSP = new JavaLanguageServer();
     private static Path ROOT_PATH;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length != 1) {
             System.out.println("Missing argument");
             return;
@@ -76,8 +77,7 @@ public class CompanionApp {
         CompletableFuture<Void> future;
         if (!LSP.isSetup()) {
             var basePath = Paths.get(".", "jdt-language-server-latest");
-            if (!Files.exists(basePath))
-                Files.createDirectory(basePath);
+            FileUtils.createIfNotExists(basePath, true);
 
             future = HttpClient.newHttpClient().sendAsync(
                     HttpRequest.newBuilder()
@@ -90,8 +90,7 @@ public class CompanionApp {
                     for (ArchiveEntry entry = stream.getNextEntry(); entry != null; entry = stream.getNextEntry()) {
                         Path toPath = basePath.resolve(entry.getName());
                         if (entry.isDirectory()) { //create directory
-                            if (!Files.exists(toPath))
-                                Files.createDirectory(toPath);
+                            FileUtils.createIfNotExists(toPath, true);
                         } else { //transfer file to file system
                             try (FileChannel fileChannel = FileChannel.open(toPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
                                 fileChannel.transferFrom(Channels.newChannel(stream), 0, Long.MAX_VALUE);
@@ -113,50 +112,13 @@ public class CompanionApp {
                 e.printStackTrace();
                 System.exit(1);
                 return null;
-            }).thenRun(() -> {
-                //Generate workspace
-                LSP.start();
-                LSP.stop();
             });
         } else {
             future = CompletableFuture.completedFuture(null);
         }
 
         future.thenRun(() -> {
-            //Add classpath entries
-            var classPathFile = Paths.get(".", "workspace", "jdt.ls-java-project", ".classpath");
-
-            var lock = new CompletableFuture<String>();
-            SERVER.getMessageBus().listenOnce(ClassPathMessage.class, (m) -> {
-                lock.complete(m.getClassPath());
-            });
-
-            var listener = (Runnable) () -> SERVER.getMessageProcessor().enqueueMessage(new ClassPathMessage());
-            SERVER.addOnConnectionListener(listener);
-
-            var classPathString = lock.orTimeout(3, TimeUnit.SECONDS).join();
-
-            SERVER.removeOnConnectionListener(listener);
-            try {
-                //language=XML
-                Files.writeString(classPathFile, """
-                        <?xml version="1.0" encoding="UTF-8"?>
-                        <classpath>
-                        	<classpathentry kind="src" path="src"/>
-                        	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-                        	<classpathentry kind="output" path="bin"/>
-                        	%s
-                        </classpath>
-                        """
-                        //language=None
-                        .formatted(Arrays.stream(classPathString.split(";"))
-                                .filter(s -> !s.contains("scala")) //Filter this trash
-                                .map(s -> "<classpathentry kind=\"lib\" path=\"" + Paths.get(s) + "\"/>")
-                                .collect(Collectors.joining("\n")))
-                );
-            } catch (IOException e) {
-                throw new CompletionException(e);
-            }
+            setupEclipseProject();
 
             //Start application
             LSP.start();
@@ -181,6 +143,84 @@ public class CompanionApp {
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
 
         UIUtils.centerJFrame(mainWindow);
+    }
+
+    private static void setupEclipseProject() {
+        var projectDir = Paths.get(".", "workspace", "custom-project");
+        FileUtils.createIfNotExists(projectDir, true);
+
+        //Add classpath entries
+        var classPathFile = projectDir.resolve(".classpath");
+
+        var lock = new CompletableFuture<String>();
+        SERVER.getMessageBus().listenOnce(ClassPathMessage.class, (m) -> {
+            lock.complete(m.getClassPath());
+        });
+
+        var listener = (Runnable) () -> SERVER.getMessageProcessor().enqueueMessage(new ClassPathMessage());
+        SERVER.addOnConnectionListener(listener);
+
+        var classPathString = lock.orTimeout(3, TimeUnit.SECONDS).join();
+
+        SERVER.removeOnConnectionListener(listener);
+        try {
+            //language=XML
+            Files.writeString(classPathFile, """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <classpath>
+                        <classpathentry kind="src" path="src"/>
+                        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+                        <classpathentry kind="output" path="bin"/>
+                        %s
+                    </classpath>
+                    """
+                    //language=None
+                    .formatted(Arrays.stream(classPathString.split(";"))
+                            .filter(s -> !s.contains("scala")) //Filter this trash
+                            .map(s -> "<classpathentry kind=\"lib\" path=\"" + Paths.get(s) + "\"/>")
+                            .distinct()
+                            .collect(Collectors.joining("\n")))
+            );
+
+            //Create .project file
+            Files.writeString(projectDir.resolve(".project"), """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <projectDescription>
+                        <name>custom-project</name>
+                        <comment></comment>
+                        <projects>
+                        </projects>
+                        <buildSpec>
+                            <buildCommand>
+                                <name>org.eclipse.jdt.core.javabuilder</name>
+                                <arguments>
+                                </arguments>
+                            </buildCommand>
+                        </buildSpec>
+                        <natures>
+                            <nature>org.eclipse.jdt.core.javanature</nature>
+                        </natures>
+                    </projectDescription>
+                    """);
+
+            //Create .settings file
+            FileUtils.createIfNotExists(projectDir.resolve(".settings"), true);
+            Files.writeString(projectDir.resolve(".settings").resolve("org.eclipse.jdt.core.prefs"), """
+                    eclipse.preferences.version=1
+                    org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode=enabled
+                    org.eclipse.jdt.core.compiler.codegen.targetPlatform=8
+                    org.eclipse.jdt.core.compiler.codegen.unusedLocal=preserve
+                    org.eclipse.jdt.core.compiler.compliance=8
+                    org.eclipse.jdt.core.compiler.problem.assertIdentifier=error
+                    org.eclipse.jdt.core.compiler.problem.enumIdentifier=error
+                    org.eclipse.jdt.core.compiler.source=8
+                    """);
+
+            //Create src dir
+            FileUtils.createIfNotExists(projectDir.resolve("src"), true);
+        } catch (IOException e) {
+            throw new CompletionException(e);
+        }
     }
 
     public static Path getRootPath() {

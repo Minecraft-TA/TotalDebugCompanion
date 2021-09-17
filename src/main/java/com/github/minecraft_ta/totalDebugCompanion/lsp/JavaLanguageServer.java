@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 public class JavaLanguageServer {
 
-    public static final Path SRC_DIR = Paths.get(".", "workspace", "jdt.ls-java-project", "src");
+    public static final Path SRC_DIR = Paths.get(".", "workspace", "custom-project", "src");
 
     private LanguageServer server;
     private LSPServerProcess process;

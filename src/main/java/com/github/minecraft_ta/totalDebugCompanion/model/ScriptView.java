@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.model;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.ScriptPanel;
+import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,8 +19,7 @@ public class ScriptView implements IEditorPanel {
     public ScriptView() {
         this.path = JavaLanguageServer.SRC_DIR.resolve("Script.java");
         try {
-            if (!Files.exists(this.path))
-                Files.createFile(this.path);
+            FileUtils.createIfNotExists(this.path, false);
 
             this.text = Files.readString(this.path);
         } catch (IOException e) {

@@ -79,6 +79,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         completionPopupMenu.add(completionPopupScrollPane);
     }
 
+    private boolean didTypeBeforeCaretMove;
+
     public ScriptPanel(ScriptView scriptView) {
         super();
         this.scriptView = scriptView;
@@ -231,7 +233,16 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                 sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
 
+                didTypeBeforeCaretMove = true;
                 super.insertString(fb, offset, string, attr);
+
+                //Trigger auto-completion
+                var c = string.charAt(string.length() - 1);
+                if ((!Character.isLetter(c) && c != '.') || string.contains("\n")) {
+                    completionPopupMenu.setVisible(false);
+                    return;
+                }
+                handleAutoCompletion();
             }
 
             @Override
@@ -270,17 +281,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
 
         this.editorPane.getCaret().addChangeListener(e -> {
-            var document = this.editorPane.getDocument();
-            try {
-                var c = document.getText(Math.max(this.editorPane.getCaretPosition() - 1, 0), 1).charAt(0);
-                if (!Character.isLetter(c) && c != '.') {
-                    completionPopupMenu.setVisible(false);
-                    return;
-                }
-                handleAutoCompletion();
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
+            if (!didTypeBeforeCaretMove)
+                completionPopupMenu.setVisible(false);
+
+            didTypeBeforeCaretMove = false;
         });
 
         this.editorPane.addKeyListener(new KeyAdapter() {

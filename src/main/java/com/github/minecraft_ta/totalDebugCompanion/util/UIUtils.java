@@ -2,7 +2,9 @@ package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import javax.swing.text.*;
+import javax.swing.undo.UndoableEdit;
 import java.awt.*;
 
 public class UIUtils {
@@ -68,6 +70,16 @@ public class UIUtils {
         try {
             return c.getDocument().getText(0, c.getDocument().getLength());
         } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
+        try {
+            var field = edit.getClass().getSuperclass().getDeclaredField("type");
+            field.setAccessible(true);
+            return (DocumentEvent.EventType) field.get(edit);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }

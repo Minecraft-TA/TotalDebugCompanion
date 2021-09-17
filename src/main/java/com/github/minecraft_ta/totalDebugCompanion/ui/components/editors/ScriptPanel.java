@@ -17,6 +17,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.*;
+import javax.swing.undo.UndoManager;
 import java.awt.Color;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -297,6 +298,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             didTypeBeforeCaretMove = false;
         });
 
+        var undoManager = new UndoManager();
+        this.editorPane.getDocument().addUndoableEditListener(e -> {
+            if (UIUtils.getDocumentEventTypeFromEdit(e.getEdit()) == DocumentEvent.EventType.CHANGE)
+                return;
+            undoManager.addEdit(e.getEdit());
+        });
+
         this.editorPane.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -326,7 +334,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 CompanionApp.LSP.formatting(new DocumentFormattingParams(new TextDocumentIdentifier(scriptView.getURI()), new FormattingOptions(4, false)))
                         .thenAccept(res -> {
                             Collections.reverse(res);
-                            res.forEach(ScriptPanel.this::applyTextEdit);
+                            SwingUtilities.invokeLater(() -> res.forEach(ScriptPanel.this::applyTextEdit));
                             bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
                                     .formatted(Stream.concat(
                                                     res.stream().map(t -> t.getRange().getEnd().getLine()),
@@ -353,8 +361,26 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 }
             }
         });
+        this.editorPane.getActionMap().put("undo", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!undoManager.canUndo())
+                    return;
+                undoManager.undo();
+            }
+        });
+        this.editorPane.getActionMap().put("redo", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!undoManager.canRedo())
+                    return;
+//                undoManager.redo(); //TODO: redo freezes App for 10 seconds when document is empty
+            }
+        });
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
 
         this.completionList.addKeyListener(new KeyAdapter() {
             @Override

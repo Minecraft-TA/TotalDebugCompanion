@@ -22,10 +22,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
 
@@ -231,6 +233,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 var line = defaultRootElement.getElementIndex(offset);
                 var pos = new Position(line, (offset - defaultRootElement.getElement(line).getStartOffset()));
 
+                //Add tab indentation
+                if (string.equals("\n")) {
+                    var lineContent = editorPane.getDocument().getText(defaultRootElement.getElement(line).getStartOffset(), defaultRootElement.getElement(line).getEndOffset() - defaultRootElement.getElement(line).getStartOffset());
+                    var tabs = 0;
+                    for (; tabs < lineContent.length(); tabs++) if (lineContent.charAt(tabs) != '\t') break;
+                    string = string + "\t".repeat(tabs);
+                }
+
                 sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
 
                 didTypeBeforeCaretMove = true;
@@ -238,7 +248,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                 //Trigger auto-completion
                 var c = string.charAt(string.length() - 1);
-                if ((!Character.isLetter(c) && c != '.') || string.contains("\n")) {
+                if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n")) {
                     completionPopupMenu.setVisible(false);
                     return;
                 }
@@ -309,6 +319,25 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 }
             }
         });
+
+        this.editorPane.getActionMap().put("formatFile", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CompanionApp.LSP.formatting(new DocumentFormattingParams(new TextDocumentIdentifier(scriptView.getURI()), new FormattingOptions(4, false)))
+                        .thenAccept(res -> {
+                            Collections.reverse(res);
+                            for (TextEdit edit : res) {
+                                applyTextEdit(edit);
+                            }
+                            bottomInformationBar.setDefaultInfoText("Formatted %d lines"
+                                    .formatted(Stream.concat(
+                                                    res.stream().map(t -> t.getRange().getEnd().getLine()),
+                                                    res.stream().map(t -> t.getRange().getStart().getLine()))
+                                            .distinct().count()));
+                        });
+            }
+        });
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
 
         this.completionList.addKeyListener(new KeyAdapter() {
             @Override
@@ -388,23 +417,23 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             return;
         }
 
-        var applyTextEdit = (Consumer<TextEdit>) (edit) -> {
-            try {
-                var range = edit.getRange();
-                var offset1 = posToOffset(editorPane, range.getStart());
-                var offset2 = posToOffset(editorPane, range.getEnd());
-                editorPane.getDocument().remove(offset1, offset2 - offset1);
-                editorPane.getDocument().insertString(offset1, edit.getNewText(), null);
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
-        };
-
-        applyTextEdit.accept(textEdit.getLeft());
+        applyTextEdit(textEdit.getLeft());
         if (item.getAdditionalTextEdits() != null)
-            item.getAdditionalTextEdits().forEach(applyTextEdit);
+            item.getAdditionalTextEdits().forEach(this::applyTextEdit);
 
         completionPopupMenu.setVisible(false);
+    }
+
+    private void applyTextEdit(TextEdit edit) {
+        try {
+            var range = edit.getRange();
+            var offset1 = posToOffset(this.editorPane, range.getStart());
+            var offset2 = posToOffset(this.editorPane, range.getEnd());
+            this.editorPane.getDocument().remove(offset1, offset2 - offset1);
+            this.editorPane.getDocument().insertString(offset1, edit.getNewText(), null);
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private int posToOffset(JTextComponent c, Position pos) {

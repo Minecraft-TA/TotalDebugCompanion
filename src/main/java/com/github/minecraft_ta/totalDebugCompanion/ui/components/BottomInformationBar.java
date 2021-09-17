@@ -29,32 +29,33 @@ public class BottomInformationBar extends JPanel {
         setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY));
     }
 
-    public void setInfoText(String text) {
-        this.infoLabel.setText(text);
-    }
-
-    public void setInfoText(String text, Color color) {
+    public void setDefaultInfoText(String text, Color color) {
         this.infoLabel.setText(text);
         this.infoLabel.setForeground(color);
     }
 
+    public void setDefaultInfoText(String text) {
+        this.infoLabel.setIcon(new FlatSVGIcon("icons/information.svg"));
+        this.infoLabel.setText(text);
+    }
+
     public void setProcessInfoText(String text) {
         this.infoLabel.setIcon(new AnimatedFlatSVGIcon("icons/process"));
-        setInfoText(text);
+        this.infoLabel.setText(text);
     }
 
     public void setSuccessInfoText(String text) {
         this.infoLabel.setIcon(new FlatSVGIcon("icons/success.svg"));
-        setInfoText(text);
+        this.infoLabel.setText(text);
     }
 
     public void setFailureInfoText(String text) {
         this.infoLabel.setIcon(new FlatSVGIcon("icons/error.svg"));
-        setInfoText(text);
+        this.infoLabel.setText(text);
     }
 
     public void clearInfoText() {
         this.infoLabel.setIcon(null);
-        setInfoText("", new Color(187, 187, 187));
+        setDefaultInfoText("", new Color(187, 187, 187));
     }
 }

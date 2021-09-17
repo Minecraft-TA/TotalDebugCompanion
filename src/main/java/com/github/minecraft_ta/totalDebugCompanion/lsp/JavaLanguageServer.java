@@ -26,10 +26,7 @@ public class JavaLanguageServer {
     private final Map<String, Integer> fileVersionMap = new HashMap<>();
 
     public JavaLanguageServer() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (this.process != null)
-                process.kill();
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
     public boolean isSetup() {
@@ -93,6 +90,10 @@ public class JavaLanguageServer {
 
     public CompletableFuture<SemanticTokens> semanticsTokenFull(SemanticTokensParams params) {
         return this.server.getTextDocumentService().semanticTokensFull(params);
+    }
+
+    public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
+        return this.server.getTextDocumentService().formatting(params);
     }
 
     private Path getLauncherJarPath() {

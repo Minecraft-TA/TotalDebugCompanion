@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
+import com.github.minecraft_ta.totalDebugCompanion.messages.ReadyMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
@@ -62,17 +63,19 @@ public class CompanionApp {
             return;
         }
 
-        SERVER.getMessageProcessor().registerMessage((short) 1, OpenFileMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 2, OpenSearchResultsMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 3, DecompileAndOpenRequestMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 4, CodeViewClickMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 5, ReceiveDataStateMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 6, ChunkGridDataMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 7, ChunkGridRequestInfoUpdateMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 8, UpdateFollowPlayerStateMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 9, RunScriptMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 10, ScriptStatusMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) 11, ClassPathMessage.class);
+        int id = 1;
+        SERVER.getMessageProcessor().registerMessage((short) id++, ReadyMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, OpenFileMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, OpenSearchResultsMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, DecompileAndOpenRequestMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, CodeViewClickMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ReceiveDataStateMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridDataMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridRequestInfoUpdateMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, UpdateFollowPlayerStateMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, RunScriptMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ScriptStatusMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ClassPathMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();
@@ -150,6 +153,8 @@ public class CompanionApp {
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
+
+        SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
         UIUtils.centerJFrame(mainWindow);
     }

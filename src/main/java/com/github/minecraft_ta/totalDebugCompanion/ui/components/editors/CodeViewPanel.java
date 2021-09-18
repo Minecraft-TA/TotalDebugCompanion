@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewCli
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.SearchHeaderBar;
+import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -79,6 +80,7 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
 
     public void setCode(String code) {
         this.editorPane.setText(code);
+        CodeUtils.highlightJavaCode(this.editorPane);
     }
 
     public JTextPane getEditorPane() {

@@ -68,9 +68,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         });
         completionList.setFont(JETBRAINS_MONO_FONT.deriveFont(14f));
-        completionList.setSelectionBackground(new
-
-                Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
+        completionList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
     }
     private final JScrollPane completionPopupScrollPane = new JScrollPane(completionList);
     {
@@ -369,14 +367,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 undoManager.undo();
             }
         });
-        this.editorPane.getActionMap().put("redo", new AbstractAction() {
+        /*this.editorPane.getActionMap().put("redo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!undoManager.canRedo())
                     return;
-//                undoManager.redo(); //TODO: redo freezes App for 10 seconds when document is empty
+//              undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
             }
-        });
+        });*/
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");

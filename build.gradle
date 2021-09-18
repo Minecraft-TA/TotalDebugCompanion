@@ -30,10 +30,14 @@ shadowJar {
 runtime {
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     modules = [
+            'java.sql',
             'java.desktop',
+            'java.compiler',
             'java.logging',
             'java.prefs',
+            'java.net.http',
             'java.xml',
+            'jdk.unsupported',
             'java.datatransfer'
     ]
 }

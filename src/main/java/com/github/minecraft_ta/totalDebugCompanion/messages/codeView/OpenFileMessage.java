@@ -2,8 +2,8 @@ package com.github.minecraft_ta.totalDebugCompanion.messages.codeView;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.message.AbstractMessageIncoming;
@@ -31,6 +31,7 @@ public class OpenFileMessage extends AbstractMessageIncoming {
         System.out.printf("Opening %s at line %d%n", message.path, message.row);
 
         EditorTabs editorTabs = window.getEditorTabs();
+        editorTabs.getEditorTabLock().lock();
         editorTabs.getEditors().stream()
                 .filter(e -> e instanceof CodeView)
                 .map(e -> (CodeView) e)
@@ -39,9 +40,10 @@ public class OpenFileMessage extends AbstractMessageIncoming {
                     editorTabs.setSelectedIndex(editorTabs.getEditors().indexOf(c));
                     c.focusLine(message.row);
                 }, () -> {
-                    editorTabs.openEditorTab(new CodeView(message.path, message.row));
+                    editorTabs.openEditorTab(new CodeView(message.path, message.row)).join();
                 });
 
         UIUtils.focusWindow(window);
+        editorTabs.getEditorTabLock().unlock();
     }
 }

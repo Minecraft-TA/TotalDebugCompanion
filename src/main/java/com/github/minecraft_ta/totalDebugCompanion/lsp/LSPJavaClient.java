@@ -21,7 +21,7 @@ public class LSPJavaClient implements LanguageClient {
     @Override
     public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
         //diagnostics.getDiagnostics().stream().filter(d -> !d.getMessage().contains("non-project")).toList()
-//        System.out.println("publishDiagnostics diagnostics = " + diagnostics); //TODO: show in editor
+        System.out.println("publishDiagnostics diagnostics = " + diagnostics); //TODO: show in editor
     }
 
     @Override

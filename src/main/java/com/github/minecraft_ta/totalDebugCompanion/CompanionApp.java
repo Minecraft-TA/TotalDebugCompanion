@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 public class CompanionApp {
 
     public static final Server SERVER = new Server();
-    public static final JavaLanguageServer LSP = new JavaLanguageServer();
+    public static JavaLanguageServer LSP;
     private static Path ROOT_PATH;
 
     public static void main(String[] args) {
@@ -57,11 +57,13 @@ public class CompanionApp {
             return;
         }
 
-        ROOT_PATH = Paths.get(args[0]);
+        ROOT_PATH = Paths.get(args[0]).toAbsolutePath().normalize();
         if (!Files.exists(ROOT_PATH)) {
             System.out.println("Path does not exist");
             return;
         }
+
+        LSP = new JavaLanguageServer();
 
         int id = 1;
         SERVER.getMessageProcessor().registerMessage((short) id++, ReadyMessage.class);
@@ -82,7 +84,7 @@ public class CompanionApp {
 
         CompletableFuture<Void> future;
         if (!LSP.isSetup()) {
-            var basePath = Paths.get(".", "jdt-language-server-latest");
+            var basePath = ROOT_PATH.resolve("jdt-language-server-latest");
             FileUtils.createIfNotExists(basePath, true);
 
             future = HttpClient.newHttpClient().sendAsync(
@@ -153,6 +155,7 @@ public class CompanionApp {
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
+        SERVER.addOnConnectionListener(() -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
@@ -160,7 +163,7 @@ public class CompanionApp {
     }
 
     private static void setupEclipseProject() {
-        var projectDir = Paths.get(".", "workspace", "custom-project");
+        var projectDir = ROOT_PATH.resolve("workspace").resolve("custom-project");
         FileUtils.createIfNotExists(projectDir, true);
 
         //Add classpath entries

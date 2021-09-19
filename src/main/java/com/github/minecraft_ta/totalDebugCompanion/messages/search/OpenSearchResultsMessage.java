@@ -29,10 +29,13 @@ public class OpenSearchResultsMessage extends AbstractMessageIncoming {
     }
 
     public static void handle(OpenSearchResultsMessage message, MainWindow window) {
-        window.getEditorTabs().openEditorTab(new SearchResultView(
+        var editorTabs = window.getEditorTabs();
+        editorTabs.getEditorTabLock().lock();
+        editorTabs.openEditorTab(new SearchResultView(
                 message.query, message.results, message.methodSearch, message.classesCount, message.time
-        ));
+        )).join();
 
         UIUtils.focusWindow(window);
+        editorTabs.getEditorTabLock().unlock();
     }
 }

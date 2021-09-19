@@ -372,7 +372,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             public void actionPerformed(ActionEvent e) {
                 if (!undoManager.canRedo())
                     return;
-//              undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
+                undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
             }
         });*/
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");

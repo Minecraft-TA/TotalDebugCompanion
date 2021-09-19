@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.lsp;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +26,7 @@ public class LSPServerProcess {
                     launcherPath.toAbsolutePath().normalize().toString(),
                     "-configuration",
                     launcherPath.getParent().getParent().resolve("config_win").toAbsolutePath().normalize().toString(),
-                    "-data").redirectError(ProcessBuilder.Redirect.INHERIT).start();
+                    "-data").redirectError(ProcessBuilder.Redirect.INHERIT).directory(CompanionApp.getRootPath().toFile()).start();
         } catch (IOException e) {
             e.printStackTrace();
         }

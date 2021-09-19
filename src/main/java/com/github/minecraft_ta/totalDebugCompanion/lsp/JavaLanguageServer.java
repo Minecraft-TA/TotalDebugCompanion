@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.lsp;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import org.eclipse.lsp4j.*;
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class JavaLanguageServer {
 
-    public static final Path SRC_DIR = Paths.get(".", "workspace", "custom-project", "src");
+    public static final Path SRC_DIR = CompanionApp.getRootPath().resolve("workspace").resolve("custom-project").resolve("src");
 
     private LanguageServer server;
     private LSPServerProcess process;
@@ -51,6 +52,7 @@ public class JavaLanguageServer {
         this.server.initialize(getInitParams()).thenApply(res -> {
             this.server.initialized(new InitializedParams());
             CodeUtils.setTokenLegend(res.getCapabilities().getSemanticTokensProvider().getLegend());
+            System.out.println(res.getCapabilities().getExecuteCommandProvider());
             return res;
         }).exceptionally((e) -> {
             e.printStackTrace();
@@ -59,11 +61,15 @@ public class JavaLanguageServer {
     }
 
     public void stop() {
-        this.server.shutdown().join();
-        this.server.exit();
-        var result = this.process.awaitTermination(1000, TimeUnit.SECONDS);
-        if (!result)
-            this.process.kill();
+        if (this.server != null) {
+            this.server.shutdown().join();
+            this.server.exit();
+        }
+        if (this.process != null) {
+            var result = this.process.awaitTermination(1000, TimeUnit.SECONDS);
+            if (!result)
+                this.process.kill();
+        }
     }
 
     public void didOpen(DidOpenTextDocumentParams params) {
@@ -84,6 +90,10 @@ public class JavaLanguageServer {
         this.server.getTextDocumentService().didClose(params);
     }
 
+    public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
+        return this.server.getWorkspaceService().executeCommand(params);
+    }
+
     public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
         return this.server.getTextDocumentService().completion(params);
     }
@@ -101,7 +111,7 @@ public class JavaLanguageServer {
     }
 
     private Path getLauncherJarPath() {
-        var pluginDir = Paths.get(".", "jdt-language-server-latest", "plugins");
+        var pluginDir = CompanionApp.getRootPath().resolve("jdt-language-server-latest").resolve("plugins");
         if (!Files.exists(pluginDir) || !Files.isDirectory(pluginDir))
             return null;
 
@@ -115,9 +125,11 @@ public class JavaLanguageServer {
 
     private InitializeParams getInitParams() {
         InitializeParams initParams = new InitializeParams();
-        initParams.setWorkspaceFolders(null);
+        initParams.setRootUri(CompanionApp.getRootPath().resolve("workspace").toUri().toString());
+        initParams.setWorkspaceFolders(List.of(new WorkspaceFolder(CompanionApp.getRootPath().resolve("workspace").resolve("custom-project").toUri().toString())));
         WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
 //        workspaceClientCapabilities.setSymbol(new SymbolCapabilities()); //Workspace search
+        workspaceClientCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
         workspaceClientCapabilities.setWorkspaceFolders(true);
         workspaceClientCapabilities.setConfiguration(true);
 
@@ -139,8 +151,7 @@ public class JavaLanguageServer {
         textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(false, false, false));
         initParams.setCapabilities(new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
 //        initParams.setInitializationOptions(null);
-//        initParams.setInitializationOptions(
-//                serverDefinition.getInitializationOptions(URI.create(initParams.getRootUri())));
+//        initParams.setInitializationOptions(this.server.getInitializationOptions(URI.create(initParams.getRootUri())));
 
         return initParams;
     }

@@ -6,10 +6,10 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.CodeVie
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 public class CodeView implements IEditorPanel {
 
@@ -27,12 +27,17 @@ public class CodeView implements IEditorPanel {
                 String code = Files.readString(this.path);
                 code = StringUtils.removeTrailing(code, "\n");
 
-                codeViewPanel.setCode(code);
-//                CodeUtils.highlightJavaCode(code, codeViewPanel.getEditorPane());
-                focusLine(focusLine);
-            } catch (IOException e) {
-                e.printStackTrace();
+                String finalCode = code;
+                SwingUtilities.invokeLater(() -> {
+                    codeViewPanel.setCode(finalCode);
+                    focusLine(focusLine);
+                });
+            } catch (Exception e) {
+                throw new CompletionException(e);
             }
+        }).exceptionally(e -> {
+            e.printStackTrace();
+            return null;
         });
     }
 

@@ -8,10 +8,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class EditorTabs extends JTabbedPane {
 
     private final List<IEditorPanel> editors = new ArrayList<>();
+    private final ReentrantLock lock = new ReentrantLock();
 
     public EditorTabs() {
         super();
@@ -20,7 +23,7 @@ public class EditorTabs extends JTabbedPane {
 
     /**
      * Allow closing with middle mouse button.
-     *
+     * <p>
      * We do this here to prevent selecting the tab when closing it. {@link #addMouseListener(MouseListener)} gets
      * called too late
      */
@@ -46,15 +49,25 @@ public class EditorTabs extends JTabbedPane {
         editors.remove(index);
     }
 
-    public void openEditorTab(IEditorPanel editorPanel) {
-        Component component = editorPanel.getComponent();
-        addTab(editorPanel.getTitle(), component);
-        int index = indexOfComponent(component);
-        setToolTipTextAt(index, editorPanel.getTooltip());
-        setTabComponentAt(index, new LabelWithButtonTabComponent(this, editorPanel.getIcon()));
-        setSelectedIndex(index);
+    public CompletableFuture<Void> openEditorTab(IEditorPanel editorPanel) {
+        var future = new CompletableFuture<Void>();
+        SwingUtilities.invokeLater(() -> {
+            Component component = editorPanel.getComponent();
+            addTab(editorPanel.getTitle(), component);
+            int index = indexOfComponent(component);
+            setToolTipTextAt(index, editorPanel.getTooltip());
+            setTabComponentAt(index, new LabelWithButtonTabComponent(this, editorPanel.getIcon()));
+            setSelectedIndex(index);
 
-        editors.add(editorPanel);
+            editors.add(editorPanel);
+            future.complete(null);
+        });
+
+        return future;
+    }
+
+    public ReentrantLock getEditorTabLock() {
+        return this.lock;
     }
 
     public List<IEditorPanel> getEditors() {

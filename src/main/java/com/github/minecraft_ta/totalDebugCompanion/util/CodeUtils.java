@@ -17,23 +17,21 @@ public class CodeUtils {
     private static final SimpleAttributeSet KEYWORD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet LITERAL_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet STRING_LITERAL_ATTRIBUTES = new SimpleAttributeSet();
-    private static final SimpleAttributeSet OPERATOR_ATTRIBUTES = new SimpleAttributeSet();
-    private static final SimpleAttributeSet SEPARATOR_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet COMMENT_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet METHOD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet TYPE_ATTRIBUTES = new SimpleAttributeSet();
+    private static final SimpleAttributeSet PROPERTY_ATTRIBUTES = new SimpleAttributeSet();
 
     private static SemanticTokensLegend tokenLegend;
 
     static {
-        StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#CC7832"));
-        StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#6897BB"));
+        StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#C679DD"));
+        StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#D19A66"));
         StyleConstants.setForeground(STRING_LITERAL_ATTRIBUTES, Color.decode("#98C379"));
-        StyleConstants.setForeground(OPERATOR_ATTRIBUTES, Color.decode("#A1C17E"));
-        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#778899"));
         StyleConstants.setForeground(COMMENT_ATTRIBUTES, Color.decode("#59626F"));
-        StyleConstants.setForeground(METHOD_ATTRIBUTES, new Color(150, 130, 200));
-        StyleConstants.setForeground(TYPE_ATTRIBUTES, new Color(194, 163, 101));
+        StyleConstants.setForeground(METHOD_ATTRIBUTES, Color.decode("#61AEEF"));
+        StyleConstants.setForeground(TYPE_ATTRIBUTES, Color.decode("#E5C17C"));
+        StyleConstants.setForeground(PROPERTY_ATTRIBUTES, Color.decode("#E06C75"));
     }
 
     public static void highlightJavaCode(JTextPane component) {
@@ -73,13 +71,19 @@ public class CodeUtils {
             var tokenLength = data.get(i + 2);
             var tokenType = tokenLegend.getTokenTypes().get(data.get(i + 3));
             //Token modifiers are ignored for now
+            var tokenModifiers = data.get(i + 4);
+            /*var tokenModifierList = IntStream.range(0, 12)
+                    .map(shift -> ((tokenModifiers >> shift) & 0b1) == 1 ? shift : -1)
+                    .filter(shift -> shift != -1)
+                    .mapToObj(index -> tokenLegend.getTokenModifiers().get(index)).toList();*/
 
             var colors = switch (tokenType) {
                 case "method" -> METHOD_ATTRIBUTES;
                 case "class" -> TYPE_ATTRIBUTES;
-//                case "namespace" -> KEYWORD_ATTRIBUTES;
+                case "property" -> PROPERTY_ATTRIBUTES;
+                case "namespace", "modifier", "parameter" -> null;
                 default -> {
-                    System.out.println("unknown " + tokenType);
+                    System.out.println("Unknown highlight token" + tokenType);
                     yield null;
                 }
             };
@@ -94,22 +98,16 @@ public class CodeUtils {
     }
 
     private static SimpleAttributeSet getColorCode(JavaToken token) {
-        switch (token.getCategory()) {
-            case KEYWORD:
-                return KEYWORD_ATTRIBUTES;
-            case LITERAL:
+        return switch (token.getCategory()) {
+            case KEYWORD -> KEYWORD_ATTRIBUTES;
+            case LITERAL -> {
                 if (token.getKind() == JavaToken.Kind.STRING_LITERAL.getKind())
-                    return STRING_LITERAL_ATTRIBUTES;
-                return LITERAL_ATTRIBUTES;
-            case OPERATOR:
-                return OPERATOR_ATTRIBUTES;
-            case SEPARATOR:
-                return SEPARATOR_ATTRIBUTES;
-            case COMMENT:
-                return COMMENT_ATTRIBUTES;
-        }
-
-        return null;
+                    yield STRING_LITERAL_ATTRIBUTES;
+                yield LITERAL_ATTRIBUTES;
+            }
+            case COMMENT -> COMMENT_ATTRIBUTES;
+            default -> null;
+        };
     }
 
     public static void setTokenLegend(SemanticTokensLegend legend) {

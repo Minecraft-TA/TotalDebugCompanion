@@ -19,8 +19,10 @@ import java.awt.geom.Rectangle2D;
 public class CodeViewPanel extends AbstractCodeViewPanel {
 
     private final SearchManager searchManager = new SearchManager(editorPane);
+    private final CodeView codeView;
 
     public CodeViewPanel(CodeView codeView) {
+        this.codeView = codeView;
         this.editorPane.setEditable(false);
         this.editorPane.addMouseListener(new MouseAdapter() {
             @Override

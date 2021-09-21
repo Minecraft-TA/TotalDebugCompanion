@@ -36,15 +36,11 @@ public class MainWindow extends JFrame {
                     var button = f.get(divider);
                     var method = button.getClass().getSuperclass().getDeclaredMethod("setArrowWidth", int.class);
                     method.invoke(button, 10);
-                } catch (Throwable ignored) {
-                    ignored.printStackTrace();
-                }
+                } catch (Throwable ignored) {}
             };
             setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("leftButton"));
             setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("rightButton"));
-        } catch (Throwable ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Throwable ignored) {}
 
         getContentPane().add(root);
 

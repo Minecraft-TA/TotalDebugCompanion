@@ -17,6 +17,7 @@ public class CodeUtils {
     private static final SimpleAttributeSet KEYWORD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet LITERAL_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet STRING_LITERAL_ATTRIBUTES = new SimpleAttributeSet();
+    private static final SimpleAttributeSet SEPARATOR_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet COMMENT_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet METHOD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet TYPE_ATTRIBUTES = new SimpleAttributeSet();
@@ -28,13 +29,14 @@ public class CodeUtils {
         StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#C679DD"));
         StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#D19A66"));
         StyleConstants.setForeground(STRING_LITERAL_ATTRIBUTES, Color.decode("#98C379"));
+        StyleConstants.setForeground(SEPARATOR_ATTRIBUTES, Color.decode("#778899"));
         StyleConstants.setForeground(COMMENT_ATTRIBUTES, Color.decode("#59626F"));
         StyleConstants.setForeground(METHOD_ATTRIBUTES, Color.decode("#61AEEF"));
         StyleConstants.setForeground(TYPE_ATTRIBUTES, Color.decode("#E5C17C"));
         StyleConstants.setForeground(PROPERTY_ATTRIBUTES, Color.decode("#E06C75"));
     }
 
-    public static void highlightJavaCode(JTextPane component) {
+    private static void highlightWithJavaParser(JTextPane component, boolean simple) {
         String code = UIUtils.getText(component);
 
         TokenRange globalTokenRange;
@@ -47,7 +49,7 @@ public class CodeUtils {
 
         for (JavaToken javaToken : globalTokenRange) {
             Range range = javaToken.getRange().get();
-            var attributes = getColorCode(javaToken);
+            var attributes = simple ? getSimpleColorCode(javaToken) : getColorCode(javaToken);
 
             if (attributes != null) {
                 var rootElement = component.getDocument().getDefaultRootElement();
@@ -58,7 +60,15 @@ public class CodeUtils {
         }
     }
 
-    public static void highlightSemanticJavaCode(List<Integer> data, JTextPane component) {
+    public static void highlightJavaCodeSimple(JTextPane component) {
+        highlightWithJavaParser(component, true);
+    }
+
+    public static void highlightJavaCodeAdvanced(JTextPane component) {
+        highlightWithJavaParser(component, false);
+    }
+
+    public static void highlightJavaCodeSemanticTokens(List<Integer> data, JTextPane component) {
         int line = 0;
         int column = 0;
         for (int i = 0; i < data.size(); i += 5) {
@@ -98,6 +108,21 @@ public class CodeUtils {
     }
 
     private static SimpleAttributeSet getColorCode(JavaToken token) {
+        return switch (token.getCategory()) {
+            case KEYWORD -> KEYWORD_ATTRIBUTES;
+            case LITERAL -> {
+                if (token.getKind() == JavaToken.Kind.STRING_LITERAL.getKind())
+                    yield STRING_LITERAL_ATTRIBUTES;
+                yield LITERAL_ATTRIBUTES;
+            }
+            case COMMENT -> COMMENT_ATTRIBUTES;
+            case OPERATOR -> METHOD_ATTRIBUTES;
+            case SEPARATOR -> SEPARATOR_ATTRIBUTES;
+            default -> null;
+        };
+    }
+
+    private static SimpleAttributeSet getSimpleColorCode(JavaToken token) {
         return switch (token.getCategory()) {
             case KEYWORD -> KEYWORD_ATTRIBUTES;
             case LITERAL -> {

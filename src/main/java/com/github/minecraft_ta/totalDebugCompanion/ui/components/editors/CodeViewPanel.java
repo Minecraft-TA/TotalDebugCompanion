@@ -82,7 +82,7 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
 
     public void setCode(String code) {
         this.editorPane.setText(code);
-        CodeUtils.highlightJavaCode(this.editorPane);
+        CodeUtils.highlightJavaCodeAdvanced(this.editorPane);
     }
 
     public JTextPane getEditorPane() {

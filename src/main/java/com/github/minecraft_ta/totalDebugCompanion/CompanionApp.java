@@ -142,6 +142,7 @@ public class CompanionApp {
     }
 
     private static void startUI() {
+        UIManager.put("SplitPaneDivider.style", "plain");
         UIManager.put("Component.focusColor", new ColorUIResource(new Color(0, 0, 0, 0)));
         UIManager.put("TabbedPane.tabInsets", new Insets(0, 10, 0, 10));
         UIManager.put("TabbedPane.tabHeight", 25);

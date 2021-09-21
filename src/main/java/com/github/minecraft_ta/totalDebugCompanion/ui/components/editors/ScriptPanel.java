@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
@@ -130,8 +131,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         });
 
-        //HACK: make divider invisible
-        UIManager.put("SplitPaneDivider.style", "plain");
         var centerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -145,13 +144,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         };
 
-        var closeButton = new FlatIconButton(new FlatSVGIcon("icons/close.svg"), false);
+        var closeButton = new CloseButton();
         closeButton.addActionListener(e -> centerSplitPane.setBottomComponent(null));
 
-        var logPanelHeader = Box.createHorizontalBox();
+        var logPanelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        logPanelHeader.setMaximumSize(new Dimension(10000, 30));
         logPanelHeader.add(closeButton);
         logPanelHeader.add(new JLabel("Script Log"));
-        logPanelHeader.add(Box.createHorizontalGlue());
 
         var logPanelTextPane = new JTextPane() {
             @Override

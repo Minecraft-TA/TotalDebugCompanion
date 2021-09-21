@@ -111,7 +111,7 @@ public class FileTreeView extends JScrollPane {
         FileUtils.startNewDirectoryWatcher(CompanionApp.getRootPath(), () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
 
         setViewportView(tree);
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 3));
     }
 
     private void showPopupMenu(JTree tree, int x, int y) {

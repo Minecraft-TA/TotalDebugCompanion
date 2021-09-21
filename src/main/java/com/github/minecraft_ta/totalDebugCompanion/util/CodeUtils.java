@@ -7,10 +7,14 @@ import com.github.javaparser.TokenRange;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 
 import javax.swing.*;
+import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CodeUtils {
 
@@ -24,8 +28,20 @@ public class CodeUtils {
     private static final SimpleAttributeSet PROPERTY_ATTRIBUTES = new SimpleAttributeSet();
 
     private static SemanticTokensLegend tokenLegend;
+    private static final Map<Integer, MutableAttributeSet> colorToAttributeSetMap = new HashMap<>();
 
     static {
+        colorToAttributeSetMap.put(21, KEYWORD_ATTRIBUTES);
+        colorToAttributeSetMap.put(25, TYPE_ATTRIBUTES);
+        colorToAttributeSetMap.put(28, STRING_LITERAL_ATTRIBUTES);
+//        colorToAttributeSetMap.put(32, PACKAGE_ATTRIBUTES);
+        colorToAttributeSetMap.put(136, PROPERTY_ATTRIBUTES);
+        colorToAttributeSetMap.put(162, METHOD_ATTRIBUTES);
+        colorToAttributeSetMap.put(166, TYPE_ATTRIBUTES);
+        colorToAttributeSetMap.put(197, LITERAL_ATTRIBUTES);
+//        colorToAttributeSetMap.put(242, SEPARATOR_ATTRIBUTES);
+//        colorToAttributeSetMap.put(249, LABEL_ATTRIBUTES);
+
         StyleConstants.setForeground(KEYWORD_ATTRIBUTES, Color.decode("#C679DD"));
         StyleConstants.setForeground(LITERAL_ATTRIBUTES, Color.decode("#D19A66"));
         StyleConstants.setForeground(STRING_LITERAL_ATTRIBUTES, Color.decode("#98C379"));
@@ -36,7 +52,62 @@ public class CodeUtils {
         StyleConstants.setForeground(PROPERTY_ATTRIBUTES, Color.decode("#E06C75"));
     }
 
-    private static void highlightWithJavaParser(JTextPane component, boolean simple) {
+    public static void highlightAndSetJavaCodeAnsi(JTextPane component, String ansiText) {
+        var newString = new StringBuilder((int) (ansiText.length() * 0.75));
+        var highlights = new ArrayList<HighlightData>();
+
+        int currentBlockStartOffset = 0;
+        boolean inBlock = false;
+        MutableAttributeSet currentColor = null;
+        //Parse ansi escape codes
+        for (int i = 0; i < ansiText.length(); ) {
+            char c = ansiText.charAt(i);
+
+            if (!inBlock && c == '\u001b') { //Start
+                // i + 1 == '[' //Prefix
+                // i + 2 == '0' //Style
+                // i + 3.. == (';38;5;[number]m' || 'm')
+
+                if (ansiText.charAt(i + 3) == 'm') {
+                    i += 4;
+                } else {
+                    i += 9; //Skip '[0;38;5'
+                    var colorString = new StringBuilder();
+                    for (int j = i; j < i + 3; j++) { //Color is max 3 chars long
+                        char colorChar = ansiText.charAt(j);
+                        if (colorChar == 'm')
+                            break;
+                        colorString.append(colorChar);
+                    }
+
+                    var colorId = Integer.parseInt(colorString.toString());
+                    currentColor = colorToAttributeSetMap.get(colorId);
+
+                    i += (colorString.length() - 1) + 2; //Jump after 'm'
+                }
+
+                currentBlockStartOffset = newString.length();
+                inBlock = true;
+            } else if (inBlock && c == '\u001b') { //End
+                i += 3; //Skip '[m'
+
+                if (currentColor != null)
+                    highlights.add(new HighlightData(currentBlockStartOffset, newString.length(), currentColor));
+                currentColor = null;
+                inBlock = false;
+            } else {
+                newString.append(c);
+                i++;
+            }
+        }
+
+        component.setText(newString.toString());
+        for (HighlightData highlight : highlights) {
+            component.getStyledDocument().setCharacterAttributes(highlight.offsetStart, highlight.offsetEnd - highlight.offsetStart, highlight.attributeSet, true);
+        }
+    }
+
+    public static void highlightJavaCodeJavaParser(JTextPane component) {
         String code = UIUtils.getText(component);
 
         TokenRange globalTokenRange;
@@ -49,7 +120,7 @@ public class CodeUtils {
 
         for (JavaToken javaToken : globalTokenRange) {
             Range range = javaToken.getRange().get();
-            var attributes = simple ? getSimpleColorCode(javaToken) : getColorCode(javaToken);
+            var attributes = getColorCode(javaToken);
 
             if (attributes != null) {
                 var rootElement = component.getDocument().getDefaultRootElement();
@@ -58,14 +129,6 @@ public class CodeUtils {
                 component.getStyledDocument().setCharacterAttributes(element.getStartOffset() + range.begin.column - 1, range.end.column - range.begin.column + 1, attributes, true);
             }
         }
-    }
-
-    public static void highlightJavaCodeSimple(JTextPane component) {
-        highlightWithJavaParser(component, true);
-    }
-
-    public static void highlightJavaCodeAdvanced(JTextPane component) {
-        highlightWithJavaParser(component, false);
     }
 
     public static void highlightJavaCodeSemanticTokens(List<Integer> data, JTextPane component) {
@@ -116,21 +179,6 @@ public class CodeUtils {
                 yield LITERAL_ATTRIBUTES;
             }
             case COMMENT -> COMMENT_ATTRIBUTES;
-            case OPERATOR -> METHOD_ATTRIBUTES;
-            case SEPARATOR -> SEPARATOR_ATTRIBUTES;
-            default -> null;
-        };
-    }
-
-    private static SimpleAttributeSet getSimpleColorCode(JavaToken token) {
-        return switch (token.getCategory()) {
-            case KEYWORD -> KEYWORD_ATTRIBUTES;
-            case LITERAL -> {
-                if (token.getKind() == JavaToken.Kind.STRING_LITERAL.getKind())
-                    yield STRING_LITERAL_ATTRIBUTES;
-                yield LITERAL_ATTRIBUTES;
-            }
-            case COMMENT -> COMMENT_ATTRIBUTES;
             default -> null;
         };
     }
@@ -138,4 +186,6 @@ public class CodeUtils {
     public static void setTokenLegend(SemanticTokensLegend legend) {
         tokenLegend = legend;
     }
+
+    record HighlightData(int offsetStart, int offsetEnd, MutableAttributeSet attributeSet) {}
 }

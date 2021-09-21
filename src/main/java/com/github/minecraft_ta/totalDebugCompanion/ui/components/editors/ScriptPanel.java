@@ -216,7 +216,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     .thenAccept(res -> {
                         var styledDocument = this.editorPane.getStyledDocument();
                         styledDocument.setCharacterAttributes(0, styledDocument.getLength(), new SimpleAttributeSet(), true);
-                        CodeUtils.highlightJavaCodeSimple(this.editorPane);
+                        CodeUtils.highlightJavaCodeJavaParser(this.editorPane);
                         CodeUtils.highlightJavaCodeSemanticTokens(res.getData(), this.editorPane);
                     });
         });

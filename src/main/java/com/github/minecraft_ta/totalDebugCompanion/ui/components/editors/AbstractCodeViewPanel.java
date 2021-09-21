@@ -47,8 +47,10 @@ public class AbstractCodeViewPanel extends JPanel {
     }
 
     public void focusLine(int line) {
-        var verticalScrollBar = this.editorScrollPane.getVerticalScrollBar();
-        verticalScrollBar.setValue((line - 1) * (verticalScrollBar.getMaximum() / this.editorPane.getDocument().getDefaultRootElement().getElementCount()));
+        SwingUtilities.invokeLater(() -> {
+            var verticalScrollBar = this.editorScrollPane.getVerticalScrollBar();
+            verticalScrollBar.setValue((int) ((line - 1) * ((double) verticalScrollBar.getMaximum() / this.editorPane.getDocument().getDefaultRootElement().getElementCount())));
+        });
     }
 
     public void focusRange(int offsetStart, int offsetEnd) {

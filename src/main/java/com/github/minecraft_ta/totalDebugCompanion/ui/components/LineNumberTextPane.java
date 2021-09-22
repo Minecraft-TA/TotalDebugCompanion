@@ -6,6 +6,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class LineNumberTextPane extends JTextPane {
 
@@ -13,13 +14,7 @@ public class LineNumberTextPane extends JTextPane {
     private int lineCount;
 
     public LineNumberTextPane() {
-        getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            if (e.getType() == DocumentEvent.EventType.CHANGE)
-                return;
-            var newLineCount = e.getDocument().getDefaultRootElement().getElementCount();
-            if (newLineCount == this.lineCount)
-                return;
-
+        var setLineCount = (Consumer<Integer>) (newLineCount) -> {
             var fontMetrics = getFontMetrics(currentFont);
             var lineNumberLength = (this.lineCount + "").length();
             if (lineNumberLength < 3)
@@ -27,8 +22,18 @@ public class LineNumberTextPane extends JTextPane {
             var charsWidth = fontMetrics.stringWidth("9".repeat(lineNumberLength));
 
             setBorder(BorderFactory.createEmptyBorder(0, charsWidth + 14, 0, 0));
-            this.lineCount = newLineCount;
+            this.lineCount = Math.max(newLineCount, 1);
+        };
+        getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            if (e.getType() == DocumentEvent.EventType.CHANGE)
+                return;
+            var newLineCount = e.getDocument().getDefaultRootElement().getElementCount();
+            if (newLineCount == this.lineCount)
+                return;
+
+            setLineCount.accept(newLineCount);
         });
+        setLineCount.accept(1);
     }
 
     //Disables line wrapping

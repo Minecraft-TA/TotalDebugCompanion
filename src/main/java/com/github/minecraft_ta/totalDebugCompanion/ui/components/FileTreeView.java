@@ -2,16 +2,15 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
+import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -20,6 +19,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -33,9 +33,10 @@ public class FileTreeView extends JScrollPane {
 
         var tree = new JTree();
         tree.setShowsRootHandles(true);
+        tree.setRootVisible(false);
         tree.setBorder(BorderFactory.createEmptyBorder());
 
-        tree.setModel(new DefaultTreeModel(new LazyTreeNode(new TreeItem(CompanionApp.getRootPath()))));
+        tree.setModel(new DefaultTreeModel(new LazyTreeNode(new TreeItem(Paths.get(".\\Hidden root"), true))));
         tree.addTreeWillExpandListener(new TreeWillExpandListener() {
             @Override
             public void treeWillExpand(TreeExpansionEvent event) {
@@ -45,7 +46,7 @@ public class FileTreeView extends JScrollPane {
                 if (!(lastComponent instanceof LazyTreeNode treeNode))
                     return;
 
-                if (!(treeNode.getUserObject() instanceof TreeItem))
+                if (!(treeNode.getUserObject() instanceof TreeItem item) || !Files.exists(item.path))
                     return;
 
                 loadItemsForNode(tree, treeNode);
@@ -89,7 +90,10 @@ public class FileTreeView extends JScrollPane {
                 if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
                     return;
 
-                tabs.openEditorTab(new CodeView(treeItem.path, 1));
+                if (((TreeItem) ((LazyTreeNode) node.getParent()).getUserObject()).fileName.equals("src"))
+                    tabs.openEditorTab(new ScriptView(treeItem.fileName.replace(".java", "")));
+                else
+                    tabs.openEditorTab(new CodeView(treeItem.path, 1));
             }
         });
 
@@ -106,9 +110,13 @@ public class FileTreeView extends JScrollPane {
         });
 
         //Expand root by default
-        tree.collapseRow(0);
-        tree.expandRow(0);
-        FileUtils.startNewDirectoryWatcher(CompanionApp.getRootPath(), () -> loadItemsForNode(tree, ((LazyTreeNode) tree.getModel().getRoot())));
+        ((LazyTreeNode) tree.getModel().getRoot()).add(new LazyTreeNode(new TreeItem(JavaLanguageServer.SRC_DIR)));
+        ((LazyTreeNode) tree.getModel().getRoot()).add(new LazyTreeNode(new TreeItem(CompanionApp.getRootPath().resolve("decompiled-files"))));
+        ((DefaultTreeModel) tree.getModel()).nodeStructureChanged((TreeNode) tree.getModel().getRoot());
+
+        //Watch the two root directories
+        FileUtils.startNewDirectoryWatcher(JavaLanguageServer.SRC_DIR, () -> loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) tree.getModel().getRoot()).getChildAt(0)));
+        FileUtils.startNewDirectoryWatcher(CompanionApp.getRootPath().resolve("decompiled-files"), () -> loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) tree.getModel().getRoot()).getChildAt(1)));
 
         setViewportView(tree);
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 3));
@@ -169,9 +177,9 @@ public class FileTreeView extends JScrollPane {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    }
 
-                    loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) node).getParent());
+                        loadItemsForNode(tree, (LazyTreeNode) ((LazyTreeNode) node).getParent());
+                    }
                 });
 
         if (rows == null || rows.length == 0)
@@ -186,12 +194,18 @@ public class FileTreeView extends JScrollPane {
 
         private final Path path;
         private final boolean isDirectory;
+        private final boolean isHiddenRoot;
         private final String fileName;
 
         private TreeItem(Path path) {
+            this(path, false);
+        }
+
+        private TreeItem(Path path, boolean isHiddenRoot) {
             this.path = path;
-            this.isDirectory = Files.isDirectory(path);
+            this.isDirectory = !Files.exists(path) || Files.isDirectory(path);
             this.fileName = path.getFileName().toString();
+            this.isHiddenRoot = isHiddenRoot;
         }
     }
 
@@ -200,7 +214,7 @@ public class FileTreeView extends JScrollPane {
         public LazyTreeNode(TreeItem treeItem) {
             super(treeItem);
 
-            if (treeItem.isDirectory)
+            if (treeItem.isDirectory && !treeItem.isHiddenRoot)
                 add(new DefaultMutableTreeNode("Loading..."));
         }
     }

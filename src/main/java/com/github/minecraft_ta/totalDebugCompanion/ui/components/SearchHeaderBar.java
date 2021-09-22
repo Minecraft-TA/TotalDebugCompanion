@@ -14,20 +14,7 @@ public class SearchHeaderBar extends JPanel {
         super();
         setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-        var textField = new JTextField() {
-
-            private final Icon searchIcon = new FlatSVGIcon("icons/search.svg");
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                var graphics = g.create();
-                var insets = getBorder().getBorderInsets(this);
-                searchIcon.paintIcon(this, graphics, 5, insets.top);
-                graphics.dispose();
-            }
-        };
-        textField.setBorder(BorderFactory.createEmptyBorder(5, 25, 5, 5));
+        var textField = new FlatIconTextField(new FlatSVGIcon("icons/search.svg"));
         textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
         textField.setMaximumSize(textField.getPreferredSize());
         textField.getDocument().addDocumentListener((DocumentChangeListener) e -> {

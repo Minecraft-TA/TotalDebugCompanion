@@ -16,8 +16,8 @@ public class ScriptView implements IEditorPanel {
     private final String text;
     private final Path path;
 
-    public ScriptView() {
-        this.path = JavaLanguageServer.SRC_DIR.resolve("Script.java");
+    public ScriptView(String scriptName) {
+        this.path = JavaLanguageServer.SRC_DIR.resolve(scriptName + ".java");
         try {
             FileUtils.createIfNotExists(this.path, false);
 

@@ -8,8 +8,8 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusM
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeCompletionList;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -39,20 +39,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final int scriptId = SCRIPT_ID++;
     private final ScriptView scriptView;
 
-    private final JList<CompletionItem> completionList = new CodeCompletionList();
-    {
-        completionList.setFont(JETBRAINS_MONO_FONT.deriveFont(14f));
-        completionList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
-    }
-    private final JScrollPane completionPopupScrollPane = new JScrollPane(completionList);
-    {
-        completionPopupScrollPane.setPreferredSize(new Dimension(450, 200));
-        completionPopupScrollPane.setBorder(BorderFactory.createEmptyBorder());
-    }
-    private final JPopupMenu completionPopupMenu = new JPopupMenu();
-    {
-        completionPopupMenu.add(completionPopupScrollPane);
-    }
+    private final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
 
     private final FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
     private final FlatIconButton runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
@@ -215,7 +202,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     @Override
     protected void updateFonts() {
         super.updateFonts();
-        SwingUtilities.invokeLater(() -> completionList.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"))));
+        SwingUtilities.invokeLater(() -> this.codeCompletionPopup.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"))));
     }
 
     private void updateHighlighting() {
@@ -255,7 +242,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 //Trigger auto-completion
                 var c = string.charAt(string.length() - 1);
                 if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n") || string.length() > 1) {
-                    completionPopupMenu.setVisible(false);
+                    codeCompletionPopup.setVisible(false);
                     return;
                 }
                 handleAutoCompletion();
@@ -298,7 +285,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         this.editorPane.getCaret().addChangeListener(e -> {
             if (!didTypeBeforeCaretMove)
-                completionPopupMenu.setVisible(false);
+                codeCompletionPopup.setVisible(false);
 
             didTypeBeforeCaretMove = false;
         });
@@ -313,21 +300,21 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (!completionPopupMenu.isVisible() || completionList.hasFocus())
+                if (!codeCompletionPopup.isVisible())
                     return;
 
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     e.consume();
                     doAutoCompletion();
                 } else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    var selectedIndex = completionList.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
-                    if (selectedIndex > completionList.getModel().getSize() - 1)
+                    var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
+                    if (selectedIndex > codeCompletionPopup.getModel().getSize() - 1)
                         selectedIndex = 0;
                     else if (selectedIndex < 0)
-                        selectedIndex = completionList.getModel().getSize() - 1;
+                        selectedIndex = codeCompletionPopup.getModel().getSize() - 1;
 
-                    completionList.setSelectedIndex(selectedIndex);
-                    completionList.scrollRectToVisible(completionList.getCellBounds(selectedIndex, selectedIndex));
+                    codeCompletionPopup.setSelectedIndex(selectedIndex);
+                    codeCompletionPopup.scrollRectToVisible(codeCompletionPopup.getCellBounds(selectedIndex, selectedIndex));
                     e.consume();
                 }
             }
@@ -387,15 +374,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
 
-        this.completionList.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() != KeyEvent.VK_ENTER)
-                    return;
-
-                doAutoCompletion();
-            }
-        });
+        this.codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
     }
 
     private void handleAutoCompletion() {
@@ -409,7 +388,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 .thenAccept(res -> {
                     var items = res.getRight().getItems();
                     if (items == null || items.isEmpty() || this.editorPane.getCaretPosition() != caretPosition) {
-                        completionPopupMenu.setVisible(false);
+                        codeCompletionPopup.setVisible(false);
                         return;
                     }
 
@@ -427,13 +406,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     try {
                         var cursorRect = this.editorPane.modelToView2D(this.editorPane.getCaretPosition());
                         SwingUtilities.invokeLater(() -> {
-                            completionPopupScrollPane.getVerticalScrollBar().setValue(0);
-
-                            var model = (DefaultListModel<CompletionItem>) completionList.getModel();
-                            model.removeAllElements();
-                            model.addAll(items);
-                            completionList.setSelectedIndex(0);
-                            completionPopupMenu.show(this.editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
+                            codeCompletionPopup.setItems(items);
+                            codeCompletionPopup.show(this.editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
                             this.editorPane.requestFocus();
                         });
                     } catch (BadLocationException e) {
@@ -443,10 +417,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void doAutoCompletion() {
-        if (this.completionList.getSelectedIndex() == -1)
+        if (this.codeCompletionPopup.getSelectedIndex() == -1)
             return;
 
-        var item = completionList.getSelectedValue();
+        var item = codeCompletionPopup.getSelectedValue();
 
         var textEdit = item.getTextEdit();
         if (textEdit.isRight()) {
@@ -458,7 +432,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         if (item.getAdditionalTextEdits() != null)
             item.getAdditionalTextEdits().forEach(this::applyTextEdit);
 
-        completionPopupMenu.setVisible(false);
+        codeCompletionPopup.setVisible(false);
     }
 
     private void applyTextEdit(TextEdit edit) {

@@ -1,7 +1,8 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.AnimatedFlatSVGIcon;
 
 import javax.swing.*;
 import java.awt.*;

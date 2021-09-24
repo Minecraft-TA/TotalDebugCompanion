@@ -1,8 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.BottomInformationBar;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.LineNumberTextPane;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.BottomInformationBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -105,7 +105,7 @@ public class AbstractCodeViewPanel extends JPanel {
         this.headerComponent = null;
     }
 
-    private void updateFonts() {
+    protected void updateFonts() {
         var newFont = JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"));
         this.editorPane.setFont(newFont);
 

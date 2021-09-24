@@ -2,10 +2,13 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.CodeCompletionList;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
@@ -28,7 +31,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
@@ -37,37 +39,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final int scriptId = SCRIPT_ID++;
     private final ScriptView scriptView;
 
-    private final JList<CompletionItem> completionList = new JList<>(new DefaultListModel<>());
+    private final JList<CompletionItem> completionList = new CodeCompletionList();
     {
-        completionList.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                var item = (CompletionItem) value;
-                var label = item.getLabel();
-                var dividerIndex = label.indexOf('-');
-                if (dividerIndex == -1)
-                    dividerIndex = label.indexOf(':');
-
-                var renderText = dividerIndex == -1 ? label : """
-                        <html><span style='color: rgb(187, 187, 187)'>%s</span>  <span style='color: rgb(150, 150, 150)'>%s</span></html>
-                        """.formatted(label.substring(0, dividerIndex - 1), label.substring(dividerIndex + 2));
-                var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
-
-                setIcon(switch (item.getKind()) {
-                    case Method -> new FlatSVGIcon("icons/method.svg");
-                    case Class -> new FlatSVGIcon("icons/class.svg");
-                    case Constant -> new FlatSVGIcon("icons/constant.svg");
-                    case Field -> new FlatSVGIcon("icons/property.svg");
-                    case Variable -> new FlatSVGIcon("icons/variable.svg");
-                    case Interface -> new FlatSVGIcon("icons/interface.svg");
-                    case Enum -> new FlatSVGIcon("icons/enum.svg");
-                    case Constructor -> new FlatSVGIcon("icons/constructor.svg");
-                    default -> null;
-                });
-
-                return component;
-            }
-        });
         completionList.setFont(JETBRAINS_MONO_FONT.deriveFont(14f));
         completionList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
     }
@@ -81,6 +54,54 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         completionPopupMenu.add(completionPopupScrollPane);
     }
 
+    private final FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
+    private final FlatIconButton runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
+    private final FlatIconButton stopButton = new FlatIconButton(new FlatSVGIcon("icons/stop.svg"), false);
+    {
+        runButton.setToolTipText("Run on client");
+        runServerButton.setToolTipText("Run on server");
+        stopButton.setToolTipText("Stop execution");
+        stopButton.setEnabled(false);
+    }
+    private final JComboBox<RunScriptMessage.ExecutionEnvironment> executionEnvironmentComboBox = new JComboBox<>(RunScriptMessage.ExecutionEnvironment.values());
+    {
+        executionEnvironmentComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                var c = (JLabel) super.getListCellRendererComponent(list, ((RunScriptMessage.ExecutionEnvironment) value).getLabel(), index, isSelected, cellHasFocus);
+                c.setIcon(((RunScriptMessage.ExecutionEnvironment) value).getIcon());
+                return c;
+            }
+        });
+        executionEnvironmentComboBox.setMaximumSize(new Dimension(360, executionEnvironmentComboBox.getPreferredSize().height));
+    }
+
+    private final JPanel logPanelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    private final JSplitPane centerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (getBottomComponent() == null)
+                return;
+            g.setColor(Color.GRAY);
+
+            var divider = getComponent(0);
+            g.fillRect(divider.getX(), divider.getY(), getWidth(), 1);
+        }
+    };
+    private final JTextPane logPanelTextPane = new JTextPane() {
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return getUI().getPreferredSize(this).width <= getParent().getSize().width;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return getUI().getPreferredSize(this);
+        }
+    };
+    private final JScrollPane logPanelScrollPane = new JScrollPane(logPanelTextPane);
+
     private boolean didTypeBeforeCaretMove;
 
     public ScriptPanel(ScriptView scriptView) {
@@ -91,25 +112,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.setBackground(Color.GRAY);
         headerBar.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY), BorderFactory.createEmptyBorder(5, 0, 5, 0)));
 
-        var runExecutor = (Consumer<Boolean>) (server) -> {
-            if (!CompanionApp.SERVER.isClientConnected()) {
-                this.bottomInformationBar.setFailureInfoText("Not connected to game client!");
-                return;
-            }
-
-            this.bottomInformationBar.setProcessInfoText("Compiling...");
-            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, this.editorPane.getText(), server));
-        };
-        var runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
-        runButton.addActionListener(e -> runExecutor.accept(false));
-        runButton.setToolTipText("Run on client");
-
-        var runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
-        runServerButton.addActionListener(e -> runExecutor.accept(true));
-        runServerButton.setToolTipText("Run on server");
+        runButton.addActionListener(e -> runScript(false));
+        runServerButton.addActionListener(e -> runScript(true));
+        stopButton.addActionListener(e -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(this.scriptId)));
 
         headerBar.add(runButton);
         headerBar.add(runServerButton);
+        headerBar.add(stopButton);
+        headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
         var textArea = this.editorPane;
@@ -131,54 +141,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         });
 
-        var centerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (getBottomComponent() == null)
-                    return;
-                g.setColor(Color.GRAY);
-
-                var divider = getComponent(0);
-                g.fillRect(divider.getX(), divider.getY(), getWidth(), 1);
-            }
-        };
-
-        var closeButton = new CloseButton();
-        closeButton.addActionListener(e -> centerSplitPane.setBottomComponent(null));
-
-        var logPanelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        logPanelHeader.setMaximumSize(new Dimension(10000, 30));
-        logPanelHeader.add(closeButton);
-        logPanelHeader.add(new JLabel("Script Log"));
-
-        var logPanelTextPane = new JTextPane() {
-            @Override
-            public boolean getScrollableTracksViewportWidth() {
-                return getUI().getPreferredSize(this).width <= getParent().getSize().width;
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return getUI().getPreferredSize(this);
-            }
-        };
-
-        SimpleAttributeSet spacingAttributeSet = new SimpleAttributeSet();
-        StyleConstants.setSpaceAbove(spacingAttributeSet, 2);
-        StyleConstants.setSpaceBelow(spacingAttributeSet, 2);
-        logPanelTextPane.setParagraphAttributes(spacingAttributeSet, false);
-        logPanelTextPane.setEditable(false);
-        logPanelTextPane.setFont(JETBRAINS_MONO_FONT.deriveFont(12f));
-        logPanelTextPane.setBackground(new Color(69, 73, 74));
-        logPanelTextPane.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
-
-        centerSplitPane.setTopComponent(((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.CENTER));
-        var logPanelScrollPane = new JScrollPane(logPanelTextPane);
-        logPanelScrollPane.setBorder(BorderFactory.createEmptyBorder());
-
-        add(centerSplitPane, BorderLayout.CENTER);
-
+        setupLogPanel();
+        setupLSP();
         updateHighlighting();
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, (m) -> {
@@ -195,19 +159,63 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
             if (m.getType() == ScriptStatusMessage.Type.RUN_COMPLETED) {
                 this.bottomInformationBar.setSuccessInfoText("Run completed!");
-                System.out.println("Output: \n" + m.getMessage());
             } else if (m.getType() == ScriptStatusMessage.Type.COMPILATION_FAILED) {
                 this.bottomInformationBar.setFailureInfoText("Compilation failed!");
-                System.out.println("Error: \n" + m.getMessage());
             } else if (m.getType() == ScriptStatusMessage.Type.RUN_EXCEPTION) {
                 this.bottomInformationBar.setFailureInfoText("Run failed!");
-                System.out.println("Error: \n" + m.getMessage());
             } else {
                 this.bottomInformationBar.setProcessInfoText("Running...");
             }
-        });
 
-        setupLSP();
+            if (m.getType() != ScriptStatusMessage.Type.COMPILATION_COMPLETED)
+                setRunButtonsState(true);
+        });
+    }
+
+    private void runScript(boolean server) {
+        if (!CompanionApp.SERVER.isClientConnected()) {
+            this.bottomInformationBar.setFailureInfoText("Not connected to game client!");
+            return;
+        }
+
+        setRunButtonsState(false);
+        this.bottomInformationBar.setProcessInfoText("Compiling...");
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, this.editorPane.getText(), server, (RunScriptMessage.ExecutionEnvironment) this.executionEnvironmentComboBox.getSelectedItem()));
+    }
+
+    private void setRunButtonsState(boolean state) {
+        this.runButton.setEnabled(state);
+        this.runServerButton.setEnabled(state);
+        this.stopButton.setEnabled(!state);
+    }
+
+    private void setupLogPanel() {
+        var closeButton = new CloseButton();
+        closeButton.addActionListener(e -> centerSplitPane.setBottomComponent(null));
+
+        logPanelHeader.setMaximumSize(new Dimension(10000, 30));
+        logPanelHeader.add(closeButton);
+        logPanelHeader.add(new JLabel("Script Log"));
+
+        SimpleAttributeSet spacingAttributeSet = new SimpleAttributeSet();
+        StyleConstants.setSpaceAbove(spacingAttributeSet, 2);
+        StyleConstants.setSpaceBelow(spacingAttributeSet, 2);
+        logPanelTextPane.setParagraphAttributes(spacingAttributeSet, false);
+        logPanelTextPane.setEditable(false);
+        logPanelTextPane.setFont(JETBRAINS_MONO_FONT.deriveFont(12f));
+        logPanelTextPane.setBackground(new Color(69, 73, 74));
+        logPanelTextPane.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+
+        centerSplitPane.setTopComponent(((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.CENTER));
+        logPanelScrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        add(centerSplitPane, BorderLayout.CENTER);
+    }
+
+    @Override
+    protected void updateFonts() {
+        super.updateFonts();
+        SwingUtilities.invokeLater(() -> completionList.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"))));
     }
 
     private void updateHighlighting() {
@@ -409,19 +417,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         if (item.getTextEdit() == null)
                             return false;
 
-//                                try {
                         //Exclude weird broken items?
-                        return (item.getInsertText() != null && item.getInsertText().isBlank()) /*||
-                                           //Exclude completions that don't to anything
-                                           this.editorPane.getDocument().getText(
-                                                   lineElement.getStartOffset(),
-                                                   caretPosition - lineElement.getStartOffset()
-                                           ).endsWith(item.getTextEdit().getLeft().getNewText())*/;
-                               /* } catch (BadLocationException e) {
-                                    e.printStackTrace();
-                                }*/
-
-//                                return false;
+                        return (item.getInsertText() != null && item.getInsertText().isBlank());
                     });
                     if (items.isEmpty())
                         return;

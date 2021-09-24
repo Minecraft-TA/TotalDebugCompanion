@@ -1,7 +1,9 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;

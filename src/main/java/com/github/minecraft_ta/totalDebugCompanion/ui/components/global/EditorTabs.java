@@ -1,6 +1,7 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
 import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.LabelWithButtonTabComponent;
 
 import javax.swing.*;
 import java.awt.*;

@@ -3,8 +3,8 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;

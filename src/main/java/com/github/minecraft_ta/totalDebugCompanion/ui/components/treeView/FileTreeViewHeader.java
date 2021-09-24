@@ -1,4 +1,4 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 
 import javax.swing.*;
 import java.awt.*;

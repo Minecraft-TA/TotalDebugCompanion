@@ -13,6 +13,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMes
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ClassPathMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.DownloadProgressWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
@@ -78,6 +79,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, RunScriptMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ScriptStatusMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ClassPathMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, StopScriptMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();

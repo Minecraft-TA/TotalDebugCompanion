@@ -4,7 +4,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.SearchHeaderBar;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SearchHeaderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 
 import javax.swing.*;

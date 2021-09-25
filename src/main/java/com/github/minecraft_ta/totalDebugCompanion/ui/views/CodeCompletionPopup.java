@@ -6,8 +6,7 @@ import org.eclipse.lsp4j.CompletionItem;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,7 +76,32 @@ public class CodeCompletionPopup extends JFrame {
     public void show(Component invoker, int x, int y) {
         var base = invoker.getLocationOnScreen();
         setLocation(base.x + x, base.y + y);
+        setFocusableWindowState(false);
         setVisible(true);
+        setFocusableWindowState(true);
+
+        //Detect focus lost
+        invoker.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                setVisible(false);
+                invoker.removeFocusListener(this);
+            }
+        });
+        //Detect window move and resize
+        invoker.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+            @Override
+            public void ancestorMoved(HierarchyEvent e) {
+                setVisible(false);
+                invoker.removeHierarchyBoundsListener(this);
+            }
+
+            @Override
+            public void ancestorResized(HierarchyEvent e) {
+                setVisible(false);
+                invoker.removeHierarchyBoundsListener(this);
+            }
+        });
     }
 
     public void scrollRectToVisible(Rectangle cellBounds) {

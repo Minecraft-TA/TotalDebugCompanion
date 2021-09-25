@@ -21,8 +21,8 @@ public class GlobalConfig {
         pcs.addPropertyChangeListener(property, listener);
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        pcs.removePropertyChangeListener(listener);
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(propertyName, listener);
     }
 
     public void setValue(String property, Object value) {

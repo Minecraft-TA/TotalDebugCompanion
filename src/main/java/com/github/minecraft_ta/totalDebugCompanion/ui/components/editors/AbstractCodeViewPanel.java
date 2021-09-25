@@ -8,6 +8,8 @@ import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -42,8 +44,17 @@ public class AbstractCodeViewPanel extends JPanel {
         //Scrolling and fonts
         updateFonts();
         updateScrollBars();
-        GlobalConfig.getInstance().addPropertyChangeListener("scrollMul", event -> updateScrollBars());
-        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", event -> updateFonts());
+
+        PropertyChangeListener scrollListener = event -> updateScrollBars();
+        PropertyChangeListener fontSizeListener = event -> updateFonts();
+        GlobalConfig.getInstance().addPropertyChangeListener("scrollMul", scrollListener);
+        GlobalConfig.getInstance().addPropertyChangeListener("fontSize", fontSizeListener);
+        addHierarchyListener(e -> {
+            if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
+                GlobalConfig.getInstance().removePropertyChangeListener("scrollMul", scrollListener);
+                GlobalConfig.getInstance().removePropertyChangeListener("fontSize", fontSizeListener);
+            }
+        });
     }
 
     public void focusLine(int line) {

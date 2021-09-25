@@ -408,7 +408,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         SwingUtilities.invokeLater(() -> {
                             codeCompletionPopup.setItems(items);
                             codeCompletionPopup.show(this.editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
-                            this.editorPane.requestFocus();
                         });
                     } catch (BadLocationException e) {
                         e.printStackTrace();

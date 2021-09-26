@@ -114,6 +114,10 @@ public class JavaLanguageServer {
         return this.server.getWorkspaceService().symbol(params);
     }
 
+    public int getDocumentVersion(String uri) {
+        return this.fileVersionMap.get(uri);
+    }
+
     private Path getLauncherJarPath() {
         var pluginDir = CompanionApp.getRootPath().resolve("jdt-language-server-latest").resolve("plugins");
         if (!Files.exists(pluginDir) || !Files.isDirectory(pluginDir))

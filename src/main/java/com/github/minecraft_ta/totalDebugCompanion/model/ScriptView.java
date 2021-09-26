@@ -35,6 +35,10 @@ public class ScriptView implements IEditorPanel {
         return this.path.toUri().toString();
     }
 
+    public Path getPath() {
+        return path;
+    }
+
     @Override
     public String getTitle() {
         return "Script";

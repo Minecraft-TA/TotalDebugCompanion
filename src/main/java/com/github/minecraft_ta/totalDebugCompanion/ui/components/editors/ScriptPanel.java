@@ -24,14 +24,14 @@ import javax.swing.text.*;
 import javax.swing.undo.UndoManager;
 import java.awt.Color;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
@@ -91,6 +91,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final JScrollPane logPanelScrollPane = new JScrollPane(logPanelTextPane);
 
     private boolean didTypeBeforeCaretMove;
+    private int lastSavedVersion = -1;
 
     public ScriptPanel(ScriptView scriptView) {
         super();
@@ -222,6 +223,19 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
                 CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
+                saveScript();
+            }
+        });
+
+        this.editorPane.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                CompletableFuture.runAsync(() -> {
+                    try {Thread.sleep(2000);} catch (InterruptedException ignored) {}
+                    //Save if we still don't have focus
+                    if (!editorPane.hasFocus())
+                        saveScript();
+                });
             }
         });
 
@@ -446,6 +460,19 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             item.getAdditionalTextEdits().forEach(this::applyTextEdit);
 
         codeCompletionPopup.setVisible(false);
+    }
+
+    private void saveScript() {
+        try {
+            if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()))
+                return;
+            this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());
+            Files.writeString(this.scriptView.getPath(), UIUtils.getText(this.editorPane));
+            System.out.println("Successfully saved script " + this.scriptView.getPath());
+        } catch (IOException ex) {
+            System.err.println("Failed to save script " + this.scriptView.getPath());
+            ex.printStackTrace();
+        }
     }
 
     private void applyTextEdit(TextEdit edit) {

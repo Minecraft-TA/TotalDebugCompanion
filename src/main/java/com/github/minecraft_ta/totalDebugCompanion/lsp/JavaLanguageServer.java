@@ -110,6 +110,10 @@ public class JavaLanguageServer {
         return this.server.getTextDocumentService().onTypeFormatting(params);
     }
 
+    public CompletableFuture<List<? extends SymbolInformation>> symbols(WorkspaceSymbolParams params) {
+        return this.server.getWorkspaceService().symbol(params);
+    }
+
     private Path getLauncherJarPath() {
         var pluginDir = CompanionApp.getRootPath().resolve("jdt-language-server-latest").resolve("plugins");
         if (!Files.exists(pluginDir) || !Files.isDirectory(pluginDir))
@@ -125,10 +129,21 @@ public class JavaLanguageServer {
 
     private InitializeParams getInitParams() {
         InitializeParams initParams = new InitializeParams();
+        var extendedClientCapabilities = new HashMap<String, Object>();
+        extendedClientCapabilities.put("classFileContentsSupport", true);
+        var settings = new HashMap<String, Object>();
+        settings.put("java.symbols.includeSourceMethodDeclarations", true);
+        var initializationOptions = new HashMap<String, Object>();
+        initializationOptions.put("extendedClientCapabilities", extendedClientCapabilities);
+        initializationOptions.put("settings", settings);
+        initParams.setInitializationOptions(initializationOptions);
+
         initParams.setRootUri(CompanionApp.getRootPath().resolve("workspace").toUri().toString());
         initParams.setWorkspaceFolders(List.of(new WorkspaceFolder(CompanionApp.getRootPath().resolve("workspace").resolve("custom-project").toUri().toString())));
         WorkspaceClientCapabilities workspaceClientCapabilities = new WorkspaceClientCapabilities();
-//        workspaceClientCapabilities.setSymbol(new SymbolCapabilities()); //Workspace search
+        var symbolCapabilities = new SymbolCapabilities();
+        symbolCapabilities.setSymbolKind(new SymbolKindCapabilities(List.of(SymbolKind.values())));
+        workspaceClientCapabilities.setSymbol(symbolCapabilities); //Workspace search
         workspaceClientCapabilities.setExecuteCommand(new ExecuteCommandCapabilities());
         workspaceClientCapabilities.setWorkspaceFolders(true);
         workspaceClientCapabilities.setConfiguration(true);
@@ -147,11 +162,9 @@ public class JavaLanguageServer {
 //        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
 //        textDocumentClientCapabilities.setRename(new RenameCapabilities());
         textDocumentClientCapabilities.setSemanticTokens(new SemanticTokensCapabilities(false));
-//        textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
+        textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
         textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(false, false, false));
         initParams.setCapabilities(new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
-//        initParams.setInitializationOptions(null);
-//        initParams.setInitializationOptions(this.server.getInitializationOptions(URI.create(initParams.getRootUri())));
 
         return initParams;
     }

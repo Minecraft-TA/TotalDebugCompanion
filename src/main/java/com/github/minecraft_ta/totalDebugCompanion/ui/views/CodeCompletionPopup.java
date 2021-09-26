@@ -48,10 +48,11 @@ public class CodeCompletionPopup extends JFrame {
         completionItemList.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() != KeyEvent.VK_ENTER)
-                    return;
-
-                enterKeyListeners.forEach(Runnable::run);
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    setVisible(false);
+                } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    enterKeyListeners.forEach(Runnable::run);
+                }
             }
         });
     }

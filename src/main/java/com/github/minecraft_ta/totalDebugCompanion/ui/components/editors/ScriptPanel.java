@@ -25,6 +25,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.Color;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -218,6 +219,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void setupLSP() {
+        addHierarchyListener(e -> {
+            if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
+                CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
+            }
+        });
+
         //Document synchronization
         ((AbstractDocument) this.editorPane.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
@@ -369,10 +376,17 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
             }
         });*/
+        this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                codeCompletionPopup.setVisible(false);
+            }
+        });
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
         this.codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
     }

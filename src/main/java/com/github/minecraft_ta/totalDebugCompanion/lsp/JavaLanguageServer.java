@@ -25,6 +25,7 @@ public class JavaLanguageServer {
     private LanguageServer server;
     private LSPServerProcess process;
     private final Map<String, Integer> fileVersionMap = new HashMap<>();
+    private final BaseScript baseScript = new BaseScript(SRC_DIR.resolve("BaseScript.java"));
 
     public JavaLanguageServer() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
@@ -114,8 +115,12 @@ public class JavaLanguageServer {
         return this.server.getWorkspaceService().symbol(params);
     }
 
+    public BaseScript getBaseScript() {
+        return this.baseScript;
+    }
+
     public int getDocumentVersion(String uri) {
-        return this.fileVersionMap.get(uri);
+        return this.fileVersionMap.getOrDefault(uri, -1);
     }
 
     private Path getLauncherJarPath() {

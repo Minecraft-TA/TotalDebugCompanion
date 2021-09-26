@@ -241,6 +241,8 @@ public class CompanionApp {
 
             //Create src dir
             FileUtils.createIfNotExists(projectDir.resolve("src"), true);
+
+            CompanionApp.LSP.getBaseScript().writeToFileIfNotExists();
         } catch (IOException e) {
             throw new CompletionException(e);
         }

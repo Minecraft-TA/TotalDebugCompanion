@@ -169,7 +169,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         setRunButtonsState(false);
         this.bottomInformationBar.setProcessInfoText("Compiling...");
-        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, this.editorPane.getText(), server, (RunScriptMessage.ExecutionEnvironment) this.executionEnvironmentComboBox.getSelectedItem()));
+        String fullScript = CompanionApp.LSP.getBaseScript().mergeWithNormalScript(UIUtils.getText(this.editorPane));
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, fullScript, server, (RunScriptMessage.ExecutionEnvironment) this.executionEnvironmentComboBox.getSelectedItem()));
     }
 
     private void setRunButtonsState(boolean state) {
@@ -380,6 +381,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 if (!undoManager.canUndo())
                     return;
                 undoManager.undo();
+                updateHighlighting();
             }
         });
         /*this.editorPane.getActionMap().put("redo", new AbstractAction() {

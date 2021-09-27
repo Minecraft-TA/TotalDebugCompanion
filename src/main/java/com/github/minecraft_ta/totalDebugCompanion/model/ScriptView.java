@@ -20,7 +20,7 @@ public class ScriptView implements IEditorPanel {
         try {
             if (!Files.exists(this.path)) {
                 this.text = """
-                        class %s extends BaseScript {
+                        public class %s extends BaseScript {
                         \t@Override
                         \tpublic void run() {
                         \t\t
@@ -50,7 +50,7 @@ public class ScriptView implements IEditorPanel {
 
     @Override
     public String getTitle() {
-        return "Script";
+        return this.path.getFileName().toString();
     }
 
     @Override

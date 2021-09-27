@@ -102,14 +102,18 @@ public class AbstractCodeViewPanel extends JPanel {
             return;
 
         synchronized (getTreeLock()) {
-            Component component = getComponent(getComponentCount() - 1);
-            if (this.headerComponent == component) {
-                remove(getComponentCount() - 1);
-                revalidate();
-                repaint();
-                //Adjust scroll bar to keep it in place
-                var verticalScrollBar = editorScrollPane.getVerticalScrollBar();
-                verticalScrollBar.setValue(verticalScrollBar.getValue() - component.getHeight());
+            var i = 0;
+            for (; i < getComponentCount(); i++) {
+                var component = getComponent(i);
+                if (component == this.headerComponent) {
+                    remove(i);
+                    revalidate();
+                    repaint();
+                    //Adjust scroll bar to keep it in place
+                    var verticalScrollBar = editorScrollPane.getVerticalScrollBar();
+                    verticalScrollBar.setValue(verticalScrollBar.getValue() - component.getHeight());
+                    break;
+                }
             }
         }
 

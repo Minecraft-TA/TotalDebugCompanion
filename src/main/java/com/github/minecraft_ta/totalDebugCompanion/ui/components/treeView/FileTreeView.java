@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
+import com.github.minecraft_ta.totalDebugCompanion.model.BaseScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
@@ -91,10 +92,15 @@ public class FileTreeView extends JScrollPane {
                 if (!SwingUtilities.isLeftMouseButton(e) || e.getClickCount() < 2)
                     return;
 
-                if (((TreeItem) ((LazyTreeNode) node.getParent()).getUserObject()).fileName.equals("src"))
-                    tabs.openEditorTab(new ScriptView(treeItem.fileName.replace(".java", "")));
-                else
+                if (((TreeItem) ((LazyTreeNode) node.getParent()).getUserObject()).fileName.equals("src")) {
+                    var name = treeItem.fileName.replace(".java", "");
+                    if (name.equals("BaseScript"))
+                        tabs.openEditorTab(new BaseScriptView(name));
+                    else
+                        tabs.openEditorTab(new ScriptView(name));
+                } else {
                     tabs.openEditorTab(new CodeView(treeItem.path, 1));
+                }
             }
         });
 
@@ -172,7 +178,7 @@ public class FileTreeView extends JScrollPane {
                 .filter(Objects::nonNull)
                 .forEach(node -> {
                     var item = (TreeItem) ((LazyTreeNode) node).getUserObject();
-                    if (!item.isDirectory) {
+                    if (!item.isDirectory && !item.path.toString().endsWith("BaseScript.java")) {
                         try {
                             Files.deleteIfExists(item.path);
                         } catch (IOException e) {

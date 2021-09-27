@@ -47,6 +47,8 @@ public class EditorTabs extends JTabbedPane {
 
     @Override
     public void removeTabAt(int index) {
+        if (!this.editors.get(index).canClose())
+            return;
         super.removeTabAt(index);
         editors.remove(index);
     }

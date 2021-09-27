@@ -30,7 +30,7 @@ public class LabelWithButtonTabComponent extends JPanel {
         button.addActionListener((e) -> {
             int i = this.pane.indexOfTabComponent(this);
             if (i != -1) {
-                this.pane.remove(i);
+                this.pane.removeTabAt(i);
             }
         });
         add(button);

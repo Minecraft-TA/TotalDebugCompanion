@@ -464,9 +464,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         codeCompletionPopup.setVisible(false);
     }
 
+    public boolean canSave() {
+        return true;
+    }
+
     private void saveScript() {
         try {
-            if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()))
+            if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()) || !canSave())
                 return;
             this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());
             Files.writeString(this.scriptView.getPath(), UIUtils.getText(this.editorPane));

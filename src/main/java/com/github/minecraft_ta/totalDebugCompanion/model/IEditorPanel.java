@@ -12,4 +12,8 @@ public interface IEditorPanel {
     Icon getIcon();
 
     Component getComponent();
+
+    default boolean canClose() {
+        return true;
+    }
 }

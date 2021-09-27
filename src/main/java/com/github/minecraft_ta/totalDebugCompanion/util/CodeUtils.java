@@ -152,7 +152,7 @@ public class CodeUtils {
 
             var colors = switch (tokenType) {
                 case "method" -> METHOD_ATTRIBUTES;
-                case "class" -> TYPE_ATTRIBUTES;
+                case "class", "annotation" -> TYPE_ATTRIBUTES;
                 case "property" -> PROPERTY_ATTRIBUTES;
                 case "namespace", "modifier", "parameter" -> null;
                 default -> {

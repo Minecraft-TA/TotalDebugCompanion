@@ -14,6 +14,7 @@ public class ScriptView implements IEditorPanel {
 
     private final String text;
     private final Path path;
+    protected ScriptPanel scriptPanel;
 
     public ScriptView(String scriptName) {
         this.path = JavaLanguageServer.SRC_DIR.resolve(scriptName + ".java");
@@ -34,6 +35,11 @@ public class ScriptView implements IEditorPanel {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean canClose() {
+        return this.scriptPanel.canSave();
     }
 
     public String getSourceText() {
@@ -65,6 +71,8 @@ public class ScriptView implements IEditorPanel {
 
     @Override
     public Component getComponent() {
-        return new ScriptPanel(this);
+        if (this.scriptPanel == null)
+            this.scriptPanel = new ScriptPanel(this);
+        return this.scriptPanel;
     }
 }

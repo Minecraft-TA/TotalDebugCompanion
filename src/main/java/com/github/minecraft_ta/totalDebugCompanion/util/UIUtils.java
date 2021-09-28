@@ -74,6 +74,12 @@ public class UIUtils {
         }
     }
 
+    public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
+        var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
+        offset += pos.getCharacter();
+        return offset;
+    }
+
     public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
         try {
             var field = edit.getClass().getSuperclass().getDeclaredField("type");

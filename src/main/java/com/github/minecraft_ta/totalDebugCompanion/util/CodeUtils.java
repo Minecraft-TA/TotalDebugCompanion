@@ -154,7 +154,7 @@ public class CodeUtils {
                 case "method" -> METHOD_ATTRIBUTES;
                 case "class", "annotation" -> TYPE_ATTRIBUTES;
                 case "property" -> PROPERTY_ATTRIBUTES;
-                case "namespace", "modifier", "parameter" -> null;
+                case "namespace", "modifier", "parameter", "variable" -> null;
                 default -> {
                     System.out.println("Unknown highlight token" + tokenType);
                     yield null;

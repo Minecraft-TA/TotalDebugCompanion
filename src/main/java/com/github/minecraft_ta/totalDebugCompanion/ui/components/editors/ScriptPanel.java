@@ -405,6 +405,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
         this.codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
+
+        this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            if (e.getType() == DocumentEvent.EventType.CHANGE)
+                return;
+
+            CompanionApp.LSP.getDiagnosticsManager().clearAllHighlights(this.scriptView.getURI());
+        });
+        CompanionApp.LSP.getDiagnosticsManager().register(this.scriptView.getURI(), this.editorPane);
     }
 
     private void handleAutoCompletion() {
@@ -484,18 +492,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private void applyTextEdit(TextEdit edit) {
         try {
             var range = edit.getRange();
-            var offset1 = posToOffset(this.editorPane, range.getStart());
-            var offset2 = posToOffset(this.editorPane, range.getEnd());
+            var offset1 = UIUtils.posToOffset(this.editorPane, range.getStart());
+            var offset2 = UIUtils.posToOffset(this.editorPane, range.getEnd());
             this.editorPane.getDocument().remove(offset1, offset2 - offset1);
             this.editorPane.getDocument().insertString(offset1, edit.getNewText(), null);
         } catch (BadLocationException ex) {
             ex.printStackTrace();
         }
-    }
-
-    private int posToOffset(JTextComponent c, Position pos) {
-        var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
-        offset += pos.getCharacter();
-        return offset;
     }
 }

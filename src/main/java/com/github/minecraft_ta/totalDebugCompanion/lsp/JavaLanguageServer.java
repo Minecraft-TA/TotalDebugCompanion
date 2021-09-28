@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.lsp;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.lsp.diagnostics.DiagnosticsManager;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import org.eclipse.lsp4j.*;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +26,10 @@ public class JavaLanguageServer {
 
     private LanguageServer server;
     private LSPServerProcess process;
+
     private final Map<String, Integer> fileVersionMap = new HashMap<>();
     private final BaseScript baseScript = new BaseScript(SRC_DIR.resolve("BaseScript.java"));
+    private final DiagnosticsManager diagnosticsManager = new DiagnosticsManager();
 
     public JavaLanguageServer() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
@@ -44,7 +48,7 @@ public class JavaLanguageServer {
 
         process = new LSPServerProcess();
         process.start(launcherJarPath);
-        var client = new LSPJavaClient();
+        var client = new LSPJavaClient(this);
 
         Launcher<LanguageServer> launcher = Launcher.createLauncher(client, LanguageServer.class, process.getInputStream(), process.getOutputStream());
         this.server = launcher.getRemoteProxy();
@@ -119,6 +123,10 @@ public class JavaLanguageServer {
         return this.baseScript;
     }
 
+    public DiagnosticsManager getDiagnosticsManager() {
+        return diagnosticsManager;
+    }
+
     public int getDocumentVersion(String uri) {
         return this.fileVersionMap.getOrDefault(uri, -1);
     }
@@ -166,12 +174,12 @@ public class JavaLanguageServer {
 //        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());
         textDocumentClientCapabilities.setFormatting(new FormattingCapabilities());
 //        textDocumentClientCapabilities.setHover(new HoverCapabilities());
-        textDocumentClientCapabilities.setOnTypeFormatting(new OnTypeFormattingCapabilities());
 //        textDocumentClientCapabilities.setRangeFormatting(new RangeFormattingCapabilities());
 //        textDocumentClientCapabilities.setReferences(new ReferencesCapabilities());
 //        textDocumentClientCapabilities.setRename(new RenameCapabilities());
         textDocumentClientCapabilities.setSemanticTokens(new SemanticTokensCapabilities(false));
         textDocumentClientCapabilities.setSignatureHelp(new SignatureHelpCapabilities());
+        textDocumentClientCapabilities.setPublishDiagnostics(new PublishDiagnosticsCapabilities(true, new DiagnosticsTagSupport(Arrays.asList(DiagnosticTag.values())), true));
         textDocumentClientCapabilities.setSynchronization(new SynchronizationCapabilities(false, false, false));
         initParams.setCapabilities(new ClientCapabilities(workspaceClientCapabilities, textDocumentClientCapabilities, null));
 

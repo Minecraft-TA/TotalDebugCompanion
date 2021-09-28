@@ -7,6 +7,12 @@ import java.util.concurrent.CompletableFuture;
 
 public class LSPJavaClient implements LanguageClient {
 
+    private final JavaLanguageServer server;
+
+    public LSPJavaClient(JavaLanguageServer server) {
+        this.server = server;
+    }
+
     @Override
     public void telemetryEvent(Object object) {
         System.out.println("telemetryEvent object = " + object);
@@ -20,8 +26,9 @@ public class LSPJavaClient implements LanguageClient {
 
     @Override
     public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
-        //diagnostics.getDiagnostics().stream().filter(d -> !d.getMessage().contains("non-project")).toList()
-        System.out.println("publishDiagnostics diagnostics = " + diagnostics); //TODO: show in editor
+        /*if (this.server.getDocumentVersion(diagnostics.getUri()) != diagnostics.getVersion())
+            return;*/
+        this.server.getDiagnosticsManager().publishDiagnostics(diagnostics.getUri(), diagnostics.getDiagnostics());
     }
 
     @Override

@@ -14,7 +14,7 @@ public class BaseScriptPanel extends ScriptPanel {
     private static final Predicate<String> VALIDATOR;
     static {
         VALIDATOR = Stream.of(
-                "(?s)(\\n|;)abstract\\s+class\\s+BaseScript(.*?)\\{(.*?)public\\s+abstract\\s+void\\s+run\\(\\s*\\)(.*?);(.*?)\\}"
+                "(?s)(\\n|;)abstract\\s+class\\s+BaseScript(.*?)\\{(.*?)public\\s+abstract\\s+void\\s+run\\(\\s*\\)\\s*throws\\s+Throwable\\s*;(.*?)\\}"
         ).map(s -> Pattern.compile(s).asPredicate()).reduce(Predicate::and).get();
     }
 

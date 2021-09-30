@@ -9,7 +9,9 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMes
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.BasePopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -41,6 +43,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final ScriptView scriptView;
 
     private final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
+    private final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
 
     private final FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
     private final FlatIconButton runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
@@ -205,7 +208,11 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     @Override
     protected void updateFonts() {
         super.updateFonts();
-        SwingUtilities.invokeLater(() -> this.codeCompletionPopup.setFont(JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"))));
+        SwingUtilities.invokeLater(() -> {
+            var newFont = JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"));
+            this.codeCompletionPopup.setFont(newFont);
+            this.signatureHelpPopup.setFont(newFont);
+        });
     }
 
     private void updateHighlighting() {
@@ -224,6 +231,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
                 CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
+                CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
                 saveScript();
             }
         });
@@ -306,10 +314,11 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
 
         this.editorPane.getCaret().addChangeListener(e -> {
-            if (!didTypeBeforeCaretMove)
-                codeCompletionPopup.setVisible(false);
+            if (!this.didTypeBeforeCaretMove)
+                this.codeCompletionPopup.setVisible(false);
 
-            didTypeBeforeCaretMove = false;
+            this.didTypeBeforeCaretMove = false;
+            this.signatureHelpPopup.setVisible(false);
         });
 
         var undoManager = new UndoManager();
@@ -392,6 +401,24 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
             }
         });*/
+        this.editorPane.getActionMap().put("showSignatureHelp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CompanionApp.LSP.signatureHelp(new SignatureHelpParams(new TextDocumentIdentifier(scriptView.getURI()), UIUtils.offsetToPosition(editorPane, editorPane.getCaretPosition())))
+                        .thenAccept(res -> {
+                            if (res.getSignatures().isEmpty() || res.getSignatures().stream().allMatch(s -> s.getParameters().isEmpty()) ||
+                                res.getActiveSignature() == null)
+                                return;
+                            try {
+                                var cursorRect = editorPane.modelToView2D(editorPane.getCaretPosition());
+                                SwingUtilities.invokeLater(() -> {
+                                    signatureHelpPopup.apply(res);
+                                    signatureHelpPopup.show(editorPane, (int) cursorRect.getX(), (int) cursorRect.getY() - 5, BasePopup.Alignment.TOP_CENTER);
+                                });
+                            } catch (BadLocationException ignored) {}
+                        });
+            }
+        });
         this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -402,6 +429,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl P"), "showSignatureHelp");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
         this.codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
@@ -416,13 +444,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void handleAutoCompletion() {
-        var offset = this.editorPane.getCaretPosition();
-        var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-        var line = defaultRootElement.getElementIndex(offset);
-        var lineElement = defaultRootElement.getElement(line);
-        var column = (offset - lineElement.getStartOffset());
         final var caretPosition = this.editorPane.getCaretPosition();
-        CompanionApp.LSP.completion(new CompletionParams(new TextDocumentIdentifier(this.scriptView.getURI()), new Position(line, column), new CompletionContext(CompletionTriggerKind.Invoked)))
+        CompanionApp.LSP.completion(new CompletionParams(new TextDocumentIdentifier(this.scriptView.getURI()), UIUtils.offsetToPosition(this.editorPane, caretPosition), new CompletionContext(CompletionTriggerKind.Invoked)))
                 .thenAccept(res -> {
                     var items = res.getRight().getItems();
                     if (items == null || items.isEmpty() || this.editorPane.getCaretPosition() != caretPosition) {

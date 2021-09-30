@@ -42,11 +42,6 @@ public class LineNumberTextPane extends JTextPane {
         return getUI().getPreferredSize(this).width <= getParent().getSize().width;
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-        return getUI().getPreferredSize(this);
-    }
-
     //Render line numbers
     @Override
     protected void paintComponent(Graphics g) {

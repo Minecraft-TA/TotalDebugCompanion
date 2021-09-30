@@ -6,11 +6,12 @@ import org.eclipse.lsp4j.CompletionItem;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeCompletionPopup extends JFrame {
+public class CodeCompletionPopup extends BasePopup {
 
     private final JList<CompletionItem> completionItemList = new JList<>(new DefaultListModel<>());
     {
@@ -66,43 +67,8 @@ public class CodeCompletionPopup extends JFrame {
     private final List<Runnable> enterKeyListeners = new ArrayList<>();
 
     public CodeCompletionPopup() {
-        setLayout(new BorderLayout());
         add(this.scrollPane, BorderLayout.CENTER);
-
-        setUndecorated(true);
-        setAlwaysOnTop(true);
         pack();
-    }
-
-    public void show(Component invoker, int x, int y) {
-        var base = invoker.getLocationOnScreen();
-        setLocation(base.x + x, base.y + y);
-        setFocusableWindowState(false);
-        setVisible(true);
-        setFocusableWindowState(true);
-
-        //Detect focus lost
-        invoker.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                setVisible(false);
-                invoker.removeFocusListener(this);
-            }
-        });
-        //Detect window move and resize
-        invoker.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
-            @Override
-            public void ancestorMoved(HierarchyEvent e) {
-                setVisible(false);
-                invoker.removeHierarchyBoundsListener(this);
-            }
-
-            @Override
-            public void ancestorResized(HierarchyEvent e) {
-                setVisible(false);
-                invoker.removeHierarchyBoundsListener(this);
-            }
-        });
     }
 
     public void scrollRectToVisible(Rectangle cellBounds) {

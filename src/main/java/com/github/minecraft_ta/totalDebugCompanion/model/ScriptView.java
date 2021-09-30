@@ -23,7 +23,7 @@ public class ScriptView implements IEditorPanel {
                 this.text = """
                         public class %s extends BaseScript {
                         \t@Override
-                        \tpublic void run() {
+                        \tpublic void run() throws Throwable {
                         \t\t
                         \t}
                         }

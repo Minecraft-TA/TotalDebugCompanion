@@ -80,6 +80,14 @@ public class UIUtils {
         return offset;
     }
 
+    public static org.eclipse.lsp4j.Position offsetToPosition(JTextComponent c, int offset) {
+        var defaultRootElement = c.getDocument().getDefaultRootElement();
+        var line = defaultRootElement.getElementIndex(offset);
+        var lineElement = defaultRootElement.getElement(line);
+        var column = (offset - lineElement.getStartOffset());
+        return new org.eclipse.lsp4j.Position(line, column);
+    }
+
     public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
         try {
             var field = edit.getClass().getSuperclass().getDeclaredField("type");

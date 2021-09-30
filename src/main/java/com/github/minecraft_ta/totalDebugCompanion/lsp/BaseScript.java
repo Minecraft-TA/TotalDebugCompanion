@@ -64,7 +64,7 @@ public class BaseScript {
                     this.logWriter.append(s.toString());
                 }
                         
-                public abstract void run();
+                public abstract void run() throws Throwable;
             }
             """;
     //language=Java

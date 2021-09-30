@@ -119,6 +119,10 @@ public class JavaLanguageServer {
         return this.server.getWorkspaceService().symbol(params);
     }
 
+    public CompletableFuture<SignatureHelp> signatureHelp(SignatureHelpParams params) {
+        return this.server.getTextDocumentService().signatureHelp(params);
+    }
+
     public BaseScript getBaseScript() {
         return this.baseScript;
     }

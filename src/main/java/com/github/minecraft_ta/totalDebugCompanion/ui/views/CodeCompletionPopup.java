@@ -13,6 +13,15 @@ import java.util.List;
 
 public class CodeCompletionPopup extends BasePopup {
 
+    public static final FlatSVGIcon METHOD_ICON = new FlatSVGIcon("icons/method.svg");
+    public static final FlatSVGIcon CLASS_ICON = new FlatSVGIcon("icons/class.svg");
+    public static final FlatSVGIcon CONSTANT_ICON = new FlatSVGIcon("icons/constant.svg");
+    public static final FlatSVGIcon PROPERTY_ICON = new FlatSVGIcon("icons/property.svg");
+    public static final FlatSVGIcon VARIABLE_ICON = new FlatSVGIcon("icons/variable.svg");
+    public static final FlatSVGIcon INTERFACE_ICON = new FlatSVGIcon("icons/interface.svg");
+    public static final FlatSVGIcon ENUM_ICON = new FlatSVGIcon("icons/enum.svg");
+    public static final FlatSVGIcon CONSTRUCTOR_ICON = new FlatSVGIcon("icons/constructor.svg");
+
     private final JList<CompletionItem> completionItemList = new JList<>(new DefaultListModel<>());
     {
         completionItemList.setCellRenderer(new DefaultListCellRenderer() {
@@ -30,14 +39,14 @@ public class CodeCompletionPopup extends BasePopup {
                 var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
 
                 setIcon(switch (item.getKind()) {
-                    case Method -> new FlatSVGIcon("icons/method.svg");
-                    case Class -> new FlatSVGIcon("icons/class.svg");
-                    case Constant -> new FlatSVGIcon("icons/constant.svg");
-                    case Field -> new FlatSVGIcon("icons/property.svg");
-                    case Variable -> new FlatSVGIcon("icons/variable.svg");
-                    case Interface -> new FlatSVGIcon("icons/interface.svg");
-                    case Enum -> new FlatSVGIcon("icons/enum.svg");
-                    case Constructor -> new FlatSVGIcon("icons/constructor.svg");
+                    case Method -> METHOD_ICON;
+                    case Class -> CLASS_ICON;
+                    case Constant -> CONSTANT_ICON;
+                    case Field -> PROPERTY_ICON;
+                    case Variable -> VARIABLE_ICON;
+                    case Interface -> INTERFACE_ICON;
+                    case Enum -> ENUM_ICON;
+                    case Constructor -> CONSTRUCTOR_ICON;
                     default -> null;
                 });
 

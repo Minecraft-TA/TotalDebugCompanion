@@ -17,6 +17,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -34,6 +35,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
@@ -42,8 +46,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final int scriptId = SCRIPT_ID++;
     private final ScriptView scriptView;
 
-    private final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
-    private final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
+    private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
+    private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
 
     private final FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
     private final FlatIconButton runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
@@ -258,10 +262,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                 //Add tab indentation
                 if (string.equals("\n")) {
-                    var lineContent = editorPane.getDocument().getText(defaultRootElement.getElement(line).getStartOffset(), defaultRootElement.getElement(line).getEndOffset() - defaultRootElement.getElement(line).getStartOffset());
-                    var tabs = 0;
-                    for (; tabs < lineContent.length(); tabs++) if (lineContent.charAt(tabs) != '\t') break;
-                    string = string + "\t".repeat(tabs);
+                    string = string + "\t".repeat(UIUtils.countTabsAtStartOfLine(editorPane, defaultRootElement.getElement(line)));
                 }
 
                 sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
@@ -513,12 +514,44 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void applyTextEdit(TextEdit edit) {
+        applyTextEdit(edit, false);
+    }
+
+    private void applyTextEdit(TextEdit edit, boolean snippet) {
+        var forceSelectionOffset = -1;
+        var forceSelectionLength = -1;
+        var text = new StringBuilder(edit.getNewText());
+        if (snippet) {
+            var highestIndex = -1;
+            var matches = Pattern.compile("(\\$[^{].*?)?\\$\\{(?<index>\\d{1,2}):?(?<variableName>\\w+)?(.*?)}").matcher(text).results().collect(Collectors.toList());
+            Collections.reverse(matches);
+            for (MatchResult match : matches) {
+                var variableName = match.group(3);
+                if (variableName == null)
+                    variableName = "";
+                text.replace(match.start(), match.end(), variableName);
+
+                var index = Integer.parseInt(match.group(2));
+                if (index > highestIndex) {
+                    highestIndex = index;
+                    forceSelectionOffset = match.start();
+                    forceSelectionLength = variableName.length();
+                } else {
+                    forceSelectionOffset -= match.end() - match.start() - variableName.length();
+                }
+            }
+        }
+
         try {
             var range = edit.getRange();
             var offset1 = UIUtils.posToOffset(this.editorPane, range.getStart());
             var offset2 = UIUtils.posToOffset(this.editorPane, range.getEnd());
             this.editorPane.getDocument().remove(offset1, offset2 - offset1);
-            this.editorPane.getDocument().insertString(offset1, edit.getNewText(), null);
+            this.editorPane.getDocument().insertString(offset1, text.toString(), null);
+
+            if (forceSelectionOffset != -1 && forceSelectionLength != -1) {
+                this.editorPane.select(offset1 + forceSelectionOffset, offset1 + forceSelectionOffset + forceSelectionLength);
+            }
         } catch (BadLocationException ex) {
             ex.printStackTrace();
         }

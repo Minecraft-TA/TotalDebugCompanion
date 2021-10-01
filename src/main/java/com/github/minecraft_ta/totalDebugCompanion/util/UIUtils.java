@@ -74,6 +74,17 @@ public class UIUtils {
         }
     }
 
+    public static int countTabsAtStartOfLine(JTextComponent c, Element line) {
+        try {
+            var lineContent = c.getDocument().getText(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+            var tabs = 0;
+            for (; tabs < lineContent.length(); tabs++) if (lineContent.charAt(tabs) != '\t') break;
+            return tabs;
+        } catch (BadLocationException e) {
+            return 0;
+        }
+    }
+
     public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
         var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
         offset += pos.getCharacter();

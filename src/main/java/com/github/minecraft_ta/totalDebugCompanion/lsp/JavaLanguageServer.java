@@ -173,6 +173,7 @@ public class JavaLanguageServer {
 //        textDocumentClientCapabilities.setCodeAction(new CodeActionCapabilities());
         var completionItemCapabilities = new CompletionItemCapabilities(true);
         completionItemCapabilities.setInsertReplaceSupport(true);
+        completionItemCapabilities.setInsertTextModeSupport(new CompletionItemInsertTextModeSupportCapabilities(Arrays.asList(InsertTextMode.values())));
         textDocumentClientCapabilities.setCompletion(new CompletionCapabilities(completionItemCapabilities));
 //        textDocumentClientCapabilities.setDefinition(new DefinitionCapabilities());
 //        textDocumentClientCapabilities.setDocumentHighlight(new DocumentHighlightCapabilities());

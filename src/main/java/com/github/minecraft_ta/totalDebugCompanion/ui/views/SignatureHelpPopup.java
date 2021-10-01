@@ -40,6 +40,13 @@ public class SignatureHelpPopup extends BasePopup {
                 lineLength += label.length();
                 text.append("<span style='color: %s;'>%s</span>".formatted(color, label));
             }
+
+            if (parameters.isEmpty()) {
+                var color = isActiveSignature ? "rgb(187, 187, 187)" : "rgb(127, 127, 127)";
+                text.append("<span style='color: %s;'>&#60;no parameters&#62;</span>".formatted(color));
+                lineLength = "<no parameters>".length();
+            }
+
             text.append("</p>");
 
             if (lineLength > rawMaxLength) rawMaxLength = lineLength;
@@ -50,7 +57,7 @@ public class SignatureHelpPopup extends BasePopup {
         this.label.setText(text.toString());
 
         var fontMetrics = this.label.getFontMetrics(this.label.getFont());
-        this.label.setPreferredSize(new Dimension(fontMetrics.stringWidth("9".repeat(rawMaxLength)) + 4, fontMetrics.getHeight() * lineCount));
+        this.label.setPreferredSize(new Dimension(fontMetrics.stringWidth("9".repeat(rawMaxLength)) + 5, fontMetrics.getHeight() * lineCount + 6));
         pack();
     }
 

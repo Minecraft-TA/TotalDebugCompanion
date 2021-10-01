@@ -214,8 +214,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         super.updateFonts();
         SwingUtilities.invokeLater(() -> {
             var newFont = JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"));
-            this.codeCompletionPopup.setFont(newFont);
-            this.signatureHelpPopup.setFont(newFont);
+            codeCompletionPopup.setFont(newFont);
+            signatureHelpPopup.setFont(newFont);
         });
     }
 
@@ -316,10 +316,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         this.editorPane.getCaret().addChangeListener(e -> {
             if (!this.didTypeBeforeCaretMove)
-                this.codeCompletionPopup.setVisible(false);
+                codeCompletionPopup.setVisible(false);
 
             this.didTypeBeforeCaretMove = false;
-            this.signatureHelpPopup.setVisible(false);
+            signatureHelpPopup.setVisible(false);
         });
 
         var undoManager = new UndoManager();
@@ -433,7 +433,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl P"), "showSignatureHelp");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
-        this.codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
+        codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
 
         this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
@@ -478,18 +478,28 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void doAutoCompletion() {
-        if (this.codeCompletionPopup.getSelectedIndex() == -1)
+        if (codeCompletionPopup.getSelectedIndex() == -1)
             return;
 
         var item = codeCompletionPopup.getSelectedValue();
-
         var textEdit = item.getTextEdit();
+
+        //weird snippets like sysout, dowhile...
+        if (textEdit == null) {
+            var rootElement = this.editorPane.getDocument().getDefaultRootElement();
+            var lineElement = rootElement.getElement(rootElement.getElementIndex(this.editorPane.getCaretPosition()));
+            textEdit = Either.forLeft(new TextEdit(new Range(
+                    UIUtils.offsetToPosition(this.editorPane, lineElement.getStartOffset() + UIUtils.countTabsAtStartOfLine(this.editorPane, lineElement)),
+                    UIUtils.offsetToPosition(this.editorPane, this.editorPane.getCaretPosition())), item.getInsertText()
+            ));
+        }
+
         if (textEdit.isRight()) {
             System.out.println("No insert replace");
             return;
         }
 
-        applyTextEdit(textEdit.getLeft());
+        applyTextEdit(textEdit.getLeft(), item.getInsertTextFormat() == InsertTextFormat.Snippet);
         if (item.getAdditionalTextEdits() != null)
             item.getAdditionalTextEdits().forEach(this::applyTextEdit);
 

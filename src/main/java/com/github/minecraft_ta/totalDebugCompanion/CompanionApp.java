@@ -183,7 +183,7 @@ public class CompanionApp {
         else
             SERVER.addOnConnectionListener(listener);
 
-        var classPathString = lock.orTimeout(3, TimeUnit.SECONDS).join();
+        var classPathString = lock.orTimeout(5, TimeUnit.SECONDS).join();
 
         SERVER.removeOnConnectionListener(listener);
         try {

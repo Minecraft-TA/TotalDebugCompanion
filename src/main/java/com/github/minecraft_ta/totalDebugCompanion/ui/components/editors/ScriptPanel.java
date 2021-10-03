@@ -532,7 +532,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         var forceSelectionLength = -1;
         var text = new StringBuilder(edit.getNewText());
         if (snippet) {
-            var highestIndex = -1;
+            var lowest = 100;
             var matches = Pattern.compile("(\\$[^{].*?)?\\$\\{(?<index>\\d{1,2}):?(?<variableName>\\w+)?(.*?)}").matcher(text).results().collect(Collectors.toList());
             Collections.reverse(matches);
             for (MatchResult match : matches) {
@@ -542,8 +542,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 text.replace(match.start(), match.end(), variableName);
 
                 var index = Integer.parseInt(match.group(2));
-                if (index > highestIndex) {
-                    highestIndex = index;
+                if (index < lowest) {
+                    lowest = index;
                     forceSelectionOffset = match.start();
                     forceSelectionLength = variableName.length();
                 } else {

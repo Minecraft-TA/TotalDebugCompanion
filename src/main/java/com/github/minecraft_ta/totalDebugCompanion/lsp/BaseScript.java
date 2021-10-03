@@ -31,7 +31,7 @@ public class BaseScript {
                 }
                         
                 public void sendToAllPlayers(String message) {
-                    getPlayers().forEach(p -> p.sendMessage(new TextComponentString(message)));
+                    getServerPlayers().forEach(p -> p.sendMessage(new TextComponentString(message)));
                 }
                         
                 public World getServerOverworld() {

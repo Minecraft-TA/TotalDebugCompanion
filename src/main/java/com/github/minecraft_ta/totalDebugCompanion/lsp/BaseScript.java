@@ -22,6 +22,7 @@ public class BaseScript {
             import net.minecraft.world.World;
             import net.minecraft.world.WorldServer;
             import net.minecraftforge.fml.common.FMLCommonHandler;
+            import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
             """;
     private static final String BASE_SCRIPT_TEXT = """
             abstract class BaseScript {
@@ -48,7 +49,7 @@ public class BaseScript {
                         
                 public <T> T getClientInstance() {
                     try {
-                        return (T) Class.forName("net.minecraft.client.Minecraft").getDeclaredMethod("getMinecraft").invoke(null);
+                        return (T) ObfuscationReflectionHelper.findField(Class.forName("net.minecraft.client.Minecraft"), "R").get(null);
                     } catch (Throwable t) {
                         return null;
                     }

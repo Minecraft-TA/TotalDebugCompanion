@@ -25,6 +25,7 @@ public class CodeUtils {
     private static final SimpleAttributeSet COMMENT_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet METHOD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet TYPE_ATTRIBUTES = new SimpleAttributeSet();
+    private static final SimpleAttributeSet ITALIC_TYPE_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet PROPERTY_ATTRIBUTES = new SimpleAttributeSet();
 
     private static SemanticTokensLegend tokenLegend;
@@ -49,6 +50,8 @@ public class CodeUtils {
         StyleConstants.setForeground(COMMENT_ATTRIBUTES, Color.decode("#59626F"));
         StyleConstants.setForeground(METHOD_ATTRIBUTES, Color.decode("#61AEEF"));
         StyleConstants.setForeground(TYPE_ATTRIBUTES, Color.decode("#E5C17C"));
+        StyleConstants.setForeground(ITALIC_TYPE_ATTRIBUTES, StyleConstants.getForeground(TYPE_ATTRIBUTES));
+        StyleConstants.setItalic(ITALIC_TYPE_ATTRIBUTES, true);
         StyleConstants.setForeground(PROPERTY_ATTRIBUTES, Color.decode("#E06C75"));
     }
 
@@ -153,6 +156,7 @@ public class CodeUtils {
             var colors = switch (tokenType) {
                 case "method" -> METHOD_ATTRIBUTES;
                 case "class", "annotation" -> TYPE_ATTRIBUTES;
+                case "interface" -> ITALIC_TYPE_ATTRIBUTES;
                 case "property" -> PROPERTY_ATTRIBUTES;
                 case "namespace", "modifier", "parameter", "variable" -> null;
                 default -> {

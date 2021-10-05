@@ -236,6 +236,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
                 CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
                 CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(this.scriptId));
                 saveScript();
             }
         });

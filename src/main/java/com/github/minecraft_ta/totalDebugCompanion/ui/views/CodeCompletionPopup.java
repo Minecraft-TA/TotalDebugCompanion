@@ -28,7 +28,7 @@ public class CodeCompletionPopup extends BasePopup {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var item = (CompletionItem) value;
-                var label = item.getLabel();
+                var label = item.getLabel().replace("<", "&#60;").replace(">", "&#62;");
                 var dividerIndex = label.indexOf('-');
                 if (dividerIndex == -1)
                     dividerIndex = label.indexOf(':');

@@ -24,6 +24,15 @@ public class SignatureHelpPopup extends BasePopup {
         var lineCount = 0;
 
         var signatures = signatureHelp.getSignatures();
+        {
+            //We remove all "invalid" signatures because the Language Server sometimes decides to send the correct signature
+            // and all other signatures that can be found in the class as well
+            var activeSignatureStart = signatures.get(signatureHelp.getActiveSignature()).getLabel();
+            activeSignatureStart = activeSignatureStart.substring(0, activeSignatureStart.indexOf('('));
+            var finalActiveSignatureStart = activeSignatureStart;
+            signatures.removeIf(s -> !s.getLabel().startsWith(finalActiveSignatureStart));
+        }
+
         for (int i = 0; i < signatures.size(); i++) {
             var signature = signatures.get(i);
             var parameters = signature.getParameters();

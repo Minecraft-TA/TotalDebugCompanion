@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class CodeCompletionPopup extends BasePopup {
@@ -90,6 +91,12 @@ public class CodeCompletionPopup extends BasePopup {
         model.addAll(items);
         this.completionItemList.setSelectedIndex(0);
         this.scrollPane.getVerticalScrollBar().setValue(0);
+
+        var longestItemLength = this.completionItemList.getFontMetrics(this.completionItemList.getFont()).stringWidth(
+                items.stream().max(Comparator.comparingInt(i -> i.getLabel().length())).get().getLabel()
+        );
+        this.scrollPane.setPreferredSize(new Dimension(longestItemLength + 25, Math.min(200, this.completionItemList.getPreferredSize().height)));
+        pack();
     }
 
     public void addKeyEnterListener(Runnable r) {

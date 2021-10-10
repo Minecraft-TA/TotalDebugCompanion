@@ -162,6 +162,8 @@ public class CompanionApp {
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1))));
+
         UIUtils.centerJFrame(mainWindow);
     }
 

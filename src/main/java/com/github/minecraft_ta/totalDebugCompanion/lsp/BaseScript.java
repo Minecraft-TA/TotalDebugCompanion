@@ -51,23 +51,27 @@ public class BaseScript {
                     try {
                         return (T) ObfuscationReflectionHelper.findField(Class.forName("net.minecraft.client.Minecraft"), "R").get(null);
                     } catch (Throwable t) {
-                        return null;
+                        try {
+                            return (T) Class.forName("net.minecraft.client.Minecraft").getMethod("getMinecraft").invoke(null);
+                        } catch (Throwable t2) {
+                        	return null;
+                        }
                     }
                 }
                         
                 private StringWriter logWriter = new StringWriter();
                         
                 public void logln(Object s) {
-                    this.log(String.format("%s%n", s.toString()));
+                    this.log(String.format("%s%n", s == null ? null : s.toString()));
                 }
                         
                 public void log(Object s) {
-                    this.logWriter.append(s.toString());
+                    this.logWriter.append(s == null ? null : s.toString());
                 }
                         
                 public abstract void run() throws Throwable;
             }
-            """;
+            """.replace("    ", "\t");
     //language=Java
     private static final String BASE_SCRIPT = BASE_SCRIPT_IMPORTS + BASE_SCRIPT_TEXT;
     private final Path path;

@@ -24,7 +24,6 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.*;
-import javax.swing.undo.UndoManager;
 import java.awt.Color;
 import java.awt.*;
 import java.awt.event.*;
@@ -259,7 +258,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
                 var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
                 var line = defaultRootElement.getElementIndex(offset);
-                var pos = new Position(line, (offset - defaultRootElement.getElement(line).getStartOffset()));
+                var pos = UIUtils.offsetToPosition(editorPane, offset);
+                ;
 
                 //Add tab indentation
                 if (string.equals("\n")) {
@@ -323,13 +323,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             signatureHelpPopup.setVisible(false);
         });
 
-        var undoManager = new UndoManager();
-        this.editorPane.getDocument().addUndoableEditListener(e -> {
-            if (UIUtils.getDocumentEventTypeFromEdit(e.getEdit()) == DocumentEvent.EventType.CHANGE)
-                return;
-            undoManager.addEdit(e.getEdit());
-        });
-
         this.editorPane.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -386,23 +379,18 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 }
             }
         });
+        //Swing UndoManager constantly freezes the whole application. Not usable
+        //TODO: Create custom UndoManager for this
         this.editorPane.getActionMap().put("undo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!undoManager.canUndo())
-                    return;
-                undoManager.undo();
-                updateHighlighting();
             }
         });
-        /*this.editorPane.getActionMap().put("redo", new AbstractAction() {
+        this.editorPane.getActionMap().put("redo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!undoManager.canRedo())
-                    return;
-                undoManager.redo(); //TODO: Redo causes almost infinite while loop in FlowView#layout
             }
-        });*/
+        });
         this.editorPane.getActionMap().put("showSignatureHelp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {

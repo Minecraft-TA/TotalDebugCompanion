@@ -34,7 +34,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           body: |
             Changes in this Release
-            - New chunk grid tool
+            - In game java scripting
           draft: false
           prerelease: false
       - name: Upload zip to release

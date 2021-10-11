@@ -1,12 +1,15 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.EditorTabs;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.FileTreeViewHeader;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeView;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeViewHeader;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.Field;
+import java.util.function.Consumer;
 
 public class MainWindow extends JFrame {
 
@@ -17,8 +20,26 @@ public class MainWindow extends JFrame {
 
         root.setLeftComponent(UIUtils.verticalLayout(new FileTreeViewHeader(), new FileTreeView(this.editorTabs)));
         root.setRightComponent(this.editorTabs);
-        root.setDividerSize(5);
+        root.setDividerSize(10);
         root.setDividerLocation(350);
+        root.setOneTouchExpandable(true);
+
+        try {
+            var dividerField = root.getUI().getClass().getSuperclass().getDeclaredField("divider");
+            dividerField.setAccessible(true);
+            var divider = dividerField.get(root.getUI());
+
+            var setButtonSize = (Consumer<Field>) (f) -> {
+                f.setAccessible(true);
+                try {
+                    var button = f.get(divider);
+                    var method = button.getClass().getSuperclass().getDeclaredMethod("setArrowWidth", int.class);
+                    method.invoke(button, 10);
+                } catch (Throwable ignored) {}
+            };
+            setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("leftButton"));
+            setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("rightButton"));
+        } catch (Throwable ignored) {}
 
         getContentPane().add(root);
 
@@ -31,7 +52,18 @@ public class MainWindow extends JFrame {
             }
         });
 
+        var scriptMenu = new JMenu("Script");
+        scriptMenu.add(new AbstractAction("New Script", new FlatSVGIcon("icons/script.svg")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var window = new CreateScriptWindow(editorTabs);
+                window.setVisible(true);
+                UIUtils.centerJFrame(window);
+            }
+        });
+
         menuBar.add(toolsMenu);
+        menuBar.add(scriptMenu);
 
         setJMenuBar(menuBar);
         setDefaultCloseOperation(EXIT_ON_CLOSE);

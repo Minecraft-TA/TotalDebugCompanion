@@ -8,7 +8,6 @@ group = "com.github.minecraft_ta"
 version = "1.5.0"
 
 repositories {
-    jcenter()
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
@@ -20,6 +19,8 @@ dependencies {
     implementation('com.formdev:flatlaf-intellij-themes:1.4')
     implementation('com.formdev:flatlaf-extras:1.4')
     implementation("com.github.javaparser:javaparser-core:3.22.0")
+    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0")
+    implementation("org.apache.commons:commons-compress:1.21")
 }
 
 shadowJar {
@@ -29,10 +30,14 @@ shadowJar {
 runtime {
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     modules = [
+            'java.sql',
             'java.desktop',
+            'java.compiler',
             'java.logging',
             'java.prefs',
+            'java.net.http',
             'java.xml',
+            'jdk.unsupported',
             'java.datatransfer'
     ]
 }

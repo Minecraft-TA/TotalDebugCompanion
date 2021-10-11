@@ -1,7 +1,9 @@
-package com.github.minecraft_ta.totalDebugCompanion.ui.components;
+package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 
 import javax.swing.*;
@@ -14,20 +16,7 @@ public class SearchHeaderBar extends JPanel {
         super();
         setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-        var textField = new JTextField() {
-
-            private final Icon searchIcon = new FlatSVGIcon("icons/search.svg");
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                var graphics = g.create();
-                var insets = getBorder().getBorderInsets(this);
-                searchIcon.paintIcon(this, graphics, 5, insets.top);
-                graphics.dispose();
-            }
-        };
-        textField.setBorder(BorderFactory.createEmptyBorder(5, 25, 5, 5));
+        var textField = new FlatIconTextField(new FlatSVGIcon("icons/search.svg"));
         textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
         textField.setMaximumSize(textField.getPreferredSize());
         textField.getDocument().addDocumentListener((DocumentChangeListener) e -> {

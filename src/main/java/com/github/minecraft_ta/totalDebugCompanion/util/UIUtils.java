@@ -2,7 +2,9 @@ package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
 import javax.swing.text.*;
+import javax.swing.undo.UndoableEdit;
 import java.awt.*;
 
 public class UIUtils {
@@ -62,6 +64,49 @@ public class UIUtils {
         }
 
         return box;
+    }
+
+    public static String getText(JTextComponent c) {
+        try {
+            return c.getDocument().getText(0, c.getDocument().getLength());
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static int countTabsAtStartOfLine(JTextComponent c, Element line) {
+        try {
+            var lineContent = c.getDocument().getText(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
+            var tabs = 0;
+            for (; tabs < lineContent.length(); tabs++) if (lineContent.charAt(tabs) != '\t') break;
+            return tabs;
+        } catch (BadLocationException e) {
+            return 0;
+        }
+    }
+
+    public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
+        var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
+        offset += pos.getCharacter();
+        return offset;
+    }
+
+    public static org.eclipse.lsp4j.Position offsetToPosition(JTextComponent c, int offset) {
+        var defaultRootElement = c.getDocument().getDefaultRootElement();
+        var line = defaultRootElement.getElementIndex(offset);
+        var lineElement = defaultRootElement.getElement(line);
+        var column = (offset - lineElement.getStartOffset());
+        return new org.eclipse.lsp4j.Position(line, column);
+    }
+
+    public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
+        try {
+            var field = edit.getClass().getSuperclass().getDeclaredField("type");
+            field.setAccessible(true);
+            return (DocumentEvent.EventType) field.get(edit);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void focusWindow(JFrame frame) {

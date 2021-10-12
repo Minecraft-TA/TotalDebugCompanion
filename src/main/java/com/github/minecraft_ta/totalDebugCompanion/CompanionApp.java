@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
+import com.github.minecraft_ta.totalDebugCompanion.messages.FocusWindowMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.ReadyMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
@@ -80,6 +81,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, ScriptStatusMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ClassPathMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, StopScriptMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, FocusWindowMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();
@@ -158,6 +160,7 @@ public class CompanionApp {
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
+        SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(mainWindow));
         SERVER.addOnConnectionListener(() -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());

@@ -29,6 +29,8 @@ public class SearchEverywherePopup extends JFrame {
 
     private final JList<IndexedClass> resultList = new JList<>(new DefaultListModel<>());
     {
+        resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        resultList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
         resultList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -52,12 +54,10 @@ public class SearchEverywherePopup extends JFrame {
                 if (clickedIndex == -1 || !resultList.getCellBounds(0, resultList.getLastVisibleIndex()).contains(e.getPoint()))
                     return;
 
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(resultList.getModel().getElementAt(clickedIndex).getNameWithPackage()));
-                setVisible(false);
+                openClass(clickedIndex);
             }
         });
     }
-
     private final JScrollPane resultListScrollPane = new JScrollPane(this.resultList);
     {
         resultListScrollPane.setPreferredSize(new Dimension(500, 500));
@@ -74,8 +74,20 @@ public class SearchEverywherePopup extends JFrame {
             }
 
             var classes = CLASS_INDEX.findClasses(query, 40);
+            var selectedClass = resultList.getSelectedIndex() == -1 ? null : model.get(resultList.getSelectedIndex()).getNameWithPackage();
+
             model.clear();
             model.addAll(Arrays.asList(classes));
+
+            for (int i = 0; i < classes.length && selectedClass != null; i++) {
+                if (!classes[i].getNameWithPackage().equals(selectedClass))
+                    continue;
+
+                resultList.setSelectedIndex(i);
+                return;
+            }
+
+            resultList.setSelectedIndex(0);
         });
         ((AbstractDocument) searchTextField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
@@ -94,10 +106,14 @@ public class SearchEverywherePopup extends JFrame {
                 super.replace(fb, offset, length, text, attrs);
             }
         });
-    }
 
+        searchTextField.registerKeyboardAction((e) -> resultList.setSelectedIndex(Math.max(0, resultList.getSelectedIndex() - 1)), KeyStroke.getKeyStroke("UP"), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        searchTextField.registerKeyboardAction((e) -> resultList.setSelectedIndex(Math.min(resultList.getModel().getSize() - 1, resultList.getSelectedIndex() + 1)), KeyStroke.getKeyStroke("DOWN"), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
     public SearchEverywherePopup() {
         setLayout(new BorderLayout());
+        getRootPane().registerKeyboardAction(e -> INSTANCE.setVisible(false), KeyStroke.getKeyStroke("ESCAPE"), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        getRootPane().registerKeyboardAction(e -> openClass(resultList.getSelectedIndex()), KeyStroke.getKeyStroke("ENTER"), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         add(this.searchTextField, BorderLayout.NORTH);
         add(this.resultListScrollPane, BorderLayout.CENTER);
@@ -112,16 +128,24 @@ public class SearchEverywherePopup extends JFrame {
         });
     }
 
-    public static void open() {
+    public static void open(GraphicsConfiguration graphicsConfiguration) {
         if (INSTANCE.isVisible()) {
             INSTANCE.toFront();
             return;
         }
 
         INSTANCE.setVisible(true);
-        UIUtils.centerJFrame(INSTANCE);
+        UIUtils.centerJFrame(INSTANCE, graphicsConfiguration);
 
         INSTANCE.searchTextField.grabFocus();
         INSTANCE.searchTextField.selectAll();
+    }
+
+    private void openClass(int index) {
+        if (index < 0)
+            return;
+
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(resultList.getModel().getElementAt(index).getNameWithPackage()));
+        setVisible(false);
     }
 }

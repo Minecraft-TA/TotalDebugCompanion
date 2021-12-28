@@ -31,6 +31,14 @@ public class SearchEverywherePopup extends JFrame {
     {
         resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
+        resultList.addListSelectionListener(e -> {
+            var rect = resultList.getCellBounds(e.getFirstIndex(), e.getLastIndex());
+            if (rect == null)
+                return;
+
+            resultList.scrollRectToVisible(rect);
+        });
+
         resultList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

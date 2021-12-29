@@ -10,6 +10,7 @@ import com.github.tth05.jindex.ClassIndex;
 import com.github.tth05.jindex.IndexedClass;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -47,7 +48,8 @@ public class SearchEverywherePopup extends JFrame {
                         <html><span style='color: rgb(187, 187, 187)'>%s</span>  <span style='color: rgb(150, 150, 150)'>%s</span></html>
                         """.formatted(indexedClass.getName(), indexedClass.getNameWithPackage().substring(0, indexedClass.getNameWithPackage().lastIndexOf('.')));
 
-                var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
+                var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
+                component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
                 setIcon(CodeCompletionPopup.CLASS_ICON);
                 return component;
             }

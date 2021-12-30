@@ -8,6 +8,7 @@ import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
+import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -111,7 +112,12 @@ public class FileTreeView extends JScrollPane {
                 if (!(value instanceof LazyTreeNode treeNode))
                     return this;
 
-                setText(((TreeItem) treeNode.getUserObject()).fileName);
+                var fileName = ((TreeItem) treeNode.getUserObject()).fileName;
+                var splitIndex = fileName.lastIndexOf('.', fileName.length() - ".java".length() - 1);
+                if (splitIndex != -1)
+                    setText(TextUtils.htmlHighlightString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
+                else
+                    setText(fileName);
                 return this;
             }
         });

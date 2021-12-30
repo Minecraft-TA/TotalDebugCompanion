@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.AbstractCodeViewPanel;
+import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import org.eclipse.lsp4j.CompletionItem;
 
 import javax.swing.*;
@@ -34,9 +35,8 @@ public class CodeCompletionPopup extends BasePopup {
                 if (dividerIndex == -1)
                     dividerIndex = label.indexOf(':');
 
-                var renderText = dividerIndex == -1 ? label : """
-                        <html><span style='color: rgb(187, 187, 187)'>%s</span>  <span style='color: rgb(150, 150, 150)'>%s</span></html>
-                        """.formatted(label.substring(0, dividerIndex - 1), label.substring(dividerIndex + 2));
+                var renderText = dividerIndex == -1 ? label :
+                        TextUtils.htmlHighlightString(label.substring(0, dividerIndex - 1), "  ", label.substring(dividerIndex + 2));
                 var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
 
                 setIcon(switch (item.getKind()) {

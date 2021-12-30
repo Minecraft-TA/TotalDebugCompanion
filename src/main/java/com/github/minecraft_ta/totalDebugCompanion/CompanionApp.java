@@ -161,6 +161,8 @@ public class CompanionApp {
         UIManager.put("Slider.focusedColor", new ColorUIResource(new Color(0, 0, 0, 0)));
         UIManager.put("Table.focusSelectedCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 5, 0, 0)));
         UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 3, 0, 0)));
+        UIManager.put("Tree.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
+        UIManager.put("List.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
 
         var mainWindow = new MainWindow();
         mainWindow.setSize(1280, 720);

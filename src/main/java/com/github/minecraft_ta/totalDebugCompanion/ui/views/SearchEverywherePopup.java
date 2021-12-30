@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
+import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.jindex.ClassIndex;
 import com.github.tth05.jindex.IndexedClass;
@@ -31,7 +32,6 @@ public class SearchEverywherePopup extends JFrame {
     private final JList<IndexedClass> resultList = new JList<>(new DefaultListModel<>());
     {
         resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        resultList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
         resultList.addListSelectionListener(e -> {
             var rect = resultList.getCellBounds(e.getFirstIndex(), e.getLastIndex());
             if (rect == null)
@@ -44,9 +44,8 @@ public class SearchEverywherePopup extends JFrame {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var indexedClass = (IndexedClass) value;
-                var renderText = """
-                        <html><span style='color: rgb(187, 187, 187)'>%s</span>  <span style='color: rgb(150, 150, 150)'>%s</span></html>
-                        """.formatted(indexedClass.getName(), indexedClass.getNameWithPackage().substring(0, indexedClass.getNameWithPackage().lastIndexOf('.')));
+                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ",
+                        indexedClass.getNameWithPackage().substring(0, indexedClass.getNameWithPackage().lastIndexOf('.')));
 
                 var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));

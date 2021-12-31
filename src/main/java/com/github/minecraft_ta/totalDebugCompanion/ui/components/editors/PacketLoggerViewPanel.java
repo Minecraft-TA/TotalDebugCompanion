@@ -22,6 +22,11 @@ public class PacketLoggerViewPanel extends JPanel {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return columnIndex == 0 ? String.class : Integer.class;
+            }
         });
         table.setAutoCreateRowSorter(true);
         table.setFillsViewportHeight(true);

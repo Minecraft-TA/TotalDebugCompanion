@@ -1,6 +1,10 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
+import com.github.minecraft_ta.totalDebugCompanion.model.PacketLoggerView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeViewHeader;
@@ -56,6 +60,13 @@ public class MainWindow extends JFrame implements AWTEventListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ChunkGridWindow.open();
+            }
+        });
+        toolsMenu.add(new AbstractAction("Packet Logger") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(true, false));
+                editorTabs.openEditorTab(new PacketLoggerView());
             }
         });
 

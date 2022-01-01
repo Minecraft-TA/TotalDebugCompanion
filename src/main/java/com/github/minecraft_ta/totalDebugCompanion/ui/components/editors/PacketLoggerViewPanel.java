@@ -109,18 +109,16 @@ public class PacketLoggerViewPanel extends JPanel {
     }
 
     private void updateTable(JTable table, Map<String, Integer> incomingPackets) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
         for (int i = 0; i < table.getRowCount(); i++) {
             String value = (String) table.getValueAt(i, 0);
             if (incomingPackets.containsKey(value)) {
                 table.setValueAt(incomingPackets.remove(value), i, 1);
-                model.fireTableCellUpdated(i, 1);
             }
         }
 
         //Adds any new packets to the table
         for (Map.Entry<String, Integer> entry : incomingPackets.entrySet()) {
-            model.addRow(new Object[]{entry.getKey(), entry.getValue()});
+            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue()});
         }
     }
 }

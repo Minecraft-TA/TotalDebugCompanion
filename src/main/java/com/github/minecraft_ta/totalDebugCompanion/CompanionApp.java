@@ -174,7 +174,10 @@ public class CompanionApp {
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1))));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1));
+            SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
+        }));
 
         MainWindow.INSTANCE.setSize(1280, 720);
         MainWindow.INSTANCE.setVisible(true);

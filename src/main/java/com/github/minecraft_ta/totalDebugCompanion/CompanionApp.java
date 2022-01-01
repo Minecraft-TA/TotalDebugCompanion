@@ -13,6 +13,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAn
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.IncomingPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.OutgoingPacketsMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketClearMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ClassPathMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
@@ -89,6 +90,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, PacketLoggerStateChangeMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, IncomingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OutgoingPacketsMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, PacketClearMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();

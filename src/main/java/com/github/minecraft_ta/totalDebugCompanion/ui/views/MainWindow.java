@@ -66,7 +66,6 @@ public class MainWindow extends JFrame implements AWTEventListener {
         toolsMenu.add(new AbstractAction("Packet Logger") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(true, false));
                 //Focus on the packet logger tab if it's already open
                 boolean found = false;
                 for (IEditorPanel tab : editorTabs.getEditors()) {

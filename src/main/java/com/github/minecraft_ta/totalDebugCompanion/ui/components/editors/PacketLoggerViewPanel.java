@@ -74,15 +74,14 @@ public class PacketLoggerViewPanel extends JPanel {
         add(new JScrollPane(table));
 
         CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, incomingPacketsMessage -> {
-            //Updates the table every time a new packet is received with the data from the map in the message
             updateTable(table, incomingPacketsMessage.getIncomingPackets());
         });
 
         CompanionApp.SERVER.getMessageBus().listenAlways(OutgoingPacketsMessage.class, outgoingPacketsMessage -> {
-            //Updates the table every time a new packet is received with the data from the map in the message
             updateTable(table, outgoingPacketsMessage.getOutgoingPackets());
         });
 
+        //Add a listener to the run button to send a message to the game to start or stop logging packets
         runButton.addToggleListener(b -> {
             int selectedIndex = packetSelector.getSelectedIndex();
             CompletableFuture.runAsync(() -> {
@@ -100,24 +99,33 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Add a listener to the direction selector to send a message to the game to change the direction of the packets also clears the table
         packetSelector.addActionListener(e -> {
-            int selectedIndex = packetSelector.getSelectedIndex();
-            CompletableFuture.runAsync(() -> {
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0, selectedIndex == 1));
-            });
+            if (runButton.isToggled()) {
+                int selectedIndex = packetSelector.getSelectedIndex();
+                CompletableFuture.runAsync(() -> {
+                    CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0, selectedIndex == 1));
+                });
+            }
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
     }
 
-    private void updateTable(JTable table, Map<String, Integer> incomingPackets) {
+    /**
+     * Updates the table with the given packet map
+     *
+     * @param table The table to update
+     * @param packets The packet map to update the table with
+     */
+    private void updateTable(JTable table, Map<String, Integer> packets) {
+        //Updates the already existing rows with the new values
         for (int i = 0; i < table.getRowCount(); i++) {
             String value = (String) table.getValueAt(i, 0);
-            if (incomingPackets.containsKey(value)) {
-                table.setValueAt(incomingPackets.remove(value), i, 1);
+            if (packets.containsKey(value)) {
+                table.setValueAt(packets.remove(value), i, 1);
             }
         }
 
         //Adds any new packets to the table
-        for (Map.Entry<String, Integer> entry : incomingPackets.entrySet()) {
+        for (Map.Entry<String, Integer> entry : packets.entrySet()) {
             ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue()});
         }
     }

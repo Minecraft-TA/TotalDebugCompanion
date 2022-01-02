@@ -13,7 +13,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class PacketLoggerViewPanel extends JPanel {
 
@@ -28,8 +27,8 @@ public class PacketLoggerViewPanel extends JPanel {
         FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), true) {
             @Override
             public void setToggled(boolean b) {
-                this.state = b;
-                this.setIcon(state ? new FlatSVGIcon("icons/pause.svg") : new FlatSVGIcon("icons/run.svg"));
+                super.setToggled(b);
+                this.setIcon(b ? new FlatSVGIcon("icons/pause.svg") : new FlatSVGIcon("icons/run.svg"));
             }
         };
 
@@ -41,7 +40,7 @@ public class PacketLoggerViewPanel extends JPanel {
         packetSelector.addItem("Incoming Packets");
         packetSelector.addItem("Outgoing Packets");
         packetSelector.setEditable(false);
-        packetSelector.setPreferredSize(new Dimension(50, 20));
+        packetSelector.setMaximumSize(new Dimension(200, (int) packetSelector.getPreferredSize().getHeight()));
 
         //Add a header for the buttons and the direction selector
         JPanel header = new JPanel();
@@ -84,16 +83,12 @@ public class PacketLoggerViewPanel extends JPanel {
         //Add a listener to the run button to send a message to the game to start or stop logging packets
         runButton.addToggleListener(b -> {
             int selectedIndex = packetSelector.getSelectedIndex();
-            CompletableFuture.runAsync(() -> {
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0 && b, selectedIndex == 1 && b));
-            });
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0 && b, selectedIndex == 1 && b));
         });
 
         //Add a listener to the clear button to send a message to the game to clear the packet map also clears the table
         clearButton.addActionListener(e -> {
-            CompletableFuture.runAsync(() -> {
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketClearMessage());
-            });
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketClearMessage());
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
 
@@ -101,9 +96,7 @@ public class PacketLoggerViewPanel extends JPanel {
         packetSelector.addActionListener(e -> {
             if (runButton.isToggled()) {
                 int selectedIndex = packetSelector.getSelectedIndex();
-                CompletableFuture.runAsync(() -> {
-                    CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0, selectedIndex == 1));
-                });
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0, selectedIndex == 1));
             }
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
@@ -112,7 +105,7 @@ public class PacketLoggerViewPanel extends JPanel {
     /**
      * Updates the table with the given packet map
      *
-     * @param table The table to update
+     * @param table   The table to update
      * @param packets The packet map to update the table with
      */
     private void updateTable(JTable table, Map<String, Integer> packets) {

@@ -14,7 +14,7 @@ public class FlatIconButton extends JButton {
 
     private final Color HOVER_COLOR = Color.GRAY.darker();
     private final Color TOGGLED_COLOR = new Color(90, 90, 90);
-    protected boolean state;
+    private boolean state;
 
     private final List<Consumer<Boolean>> toggleListeners = new ArrayList<>();
 

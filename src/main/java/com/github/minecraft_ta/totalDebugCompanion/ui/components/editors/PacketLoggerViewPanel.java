@@ -72,11 +72,11 @@ public class PacketLoggerViewPanel extends JPanel {
         table.setGridColor(getBackground());
         add(new JScrollPane(table));
 
-        CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, incomingPacketsMessage -> {
+        CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, this, incomingPacketsMessage -> {
             updateTable(table, incomingPacketsMessage.getIncomingPackets());
         });
 
-        CompanionApp.SERVER.getMessageBus().listenAlways(OutgoingPacketsMessage.class, outgoingPacketsMessage -> {
+        CompanionApp.SERVER.getMessageBus().listenAlways(OutgoingPacketsMessage.class, this, outgoingPacketsMessage -> {
             updateTable(table, outgoingPacketsMessage.getOutgoingPackets());
         });
 
@@ -121,5 +121,13 @@ public class PacketLoggerViewPanel extends JPanel {
         for (Map.Entry<String, Integer> entry : packets.entrySet()) {
             ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue()});
         }
+    }
+
+    public boolean canClose() {
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketClearMessage());
+        CompanionApp.SERVER.getMessageBus().unregister(IncomingPacketsMessage.class, this);
+        CompanionApp.SERVER.getMessageBus().unregister(OutgoingPacketsMessage.class, this);
+        return true;
     }
 }

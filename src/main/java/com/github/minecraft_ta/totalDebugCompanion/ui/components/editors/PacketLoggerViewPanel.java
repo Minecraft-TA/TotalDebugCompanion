@@ -5,7 +5,7 @@ import com.formdev.flatlaf.extras.components.FlatComboBox;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.IncomingPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.OutgoingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketClearMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.ClearPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 
@@ -88,7 +88,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Add a listener to the clear button to send a message to the game to clear the packet map also clears the table
         clearButton.addActionListener(e -> {
-            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketClearMessage());
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
 
@@ -125,7 +125,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
     public boolean canClose() {
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
-        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketClearMessage());
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
         CompanionApp.SERVER.getMessageBus().unregister(IncomingPacketsMessage.class, this);
         CompanionApp.SERVER.getMessageBus().unregister(OutgoingPacketsMessage.class, this);
         return true;

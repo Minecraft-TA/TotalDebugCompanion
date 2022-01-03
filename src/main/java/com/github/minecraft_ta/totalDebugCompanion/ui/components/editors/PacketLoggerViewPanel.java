@@ -2,10 +2,11 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.components.FlatComboBox;
+import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.ClearPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.IncomingPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.OutgoingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.ClearPacketsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 
@@ -55,7 +56,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Creates the table
         JTable table = new JTable();
-        table.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Packet Name", "Amount"}) {
+        table.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Packet Name", "Amount", "Bytes"}) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -70,6 +71,7 @@ public class PacketLoggerViewPanel extends JPanel {
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.setGridColor(getBackground());
+        table.getColumnModel().getColumn(0).setPreferredWidth(280);
         add(new JScrollPane(table));
 
         CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, this, incomingPacketsMessage -> {
@@ -108,18 +110,20 @@ public class PacketLoggerViewPanel extends JPanel {
      * @param table   The table to update
      * @param packets The packet map to update the table with
      */
-    private void updateTable(JTable table, Map<String, Integer> packets) {
+    private void updateTable(JTable table, Map<String, Pair<Integer, Integer>> packets) {
         //Updates the already existing rows with the new values
         for (int i = 0; i < table.getRowCount(); i++) {
             String value = (String) table.getValueAt(i, 0);
-            if (packets.containsKey(value)) {
-                table.setValueAt(packets.remove(value), i, 1);
+            Pair<Integer, Integer> packetData = packets.remove(value);
+            if (packetData != null) {
+                table.setValueAt(packetData.a, i, 1);
+                table.setValueAt(packetData.b, i, 2);
             }
         }
 
         //Adds any new packets to the table
-        for (Map.Entry<String, Integer> entry : packets.entrySet()) {
-            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue()});
+        for (Map.Entry<String, Pair<Integer, Integer>> entry : packets.entrySet()) {
+            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue().a, entry.getValue().b});
         }
     }
 

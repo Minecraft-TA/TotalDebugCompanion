@@ -140,7 +140,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         setupLSP();
         updateHighlighting();
 
-        CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, (m) -> {
+        CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, this, (m) -> {
             if (m.getScriptId() != this.scriptId)
                 return;
 
@@ -496,6 +496,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     public boolean canSave() {
+        CompanionApp.SERVER.getMessageBus().unregister(ScriptStatusMessage.class, this);
         return true;
     }
 

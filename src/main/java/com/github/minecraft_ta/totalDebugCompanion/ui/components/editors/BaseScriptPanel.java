@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.BaseScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -41,6 +43,7 @@ public class BaseScriptPanel extends ScriptPanel {
         if (!result) {
             this.bottomInformationBar.setFailureInfoText("BaseScript is not in required format");
         } else {
+            CompanionApp.SERVER.getMessageBus().unregister(ScriptStatusMessage.class, this);
             this.bottomInformationBar.setSuccessInfoText("Successfully updated BaseScript");
         }
         return result;

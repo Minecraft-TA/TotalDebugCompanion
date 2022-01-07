@@ -12,6 +12,8 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -86,7 +88,11 @@ public class PacketLoggerViewPanel extends JPanel {
                 return columnIndex == 0 ? String.class : Integer.class;
             }
         });
-        table.setAutoCreateRowSorter(true);
+        //Adds a sorter to the table
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(table.getModel());
+        sorter.setSortsOnUpdates(true);
+        table.setRowSorter(sorter);
+
         table.setFillsViewportHeight(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.setGridColor(getBackground());

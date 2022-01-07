@@ -133,6 +133,8 @@ public class PacketLoggerViewPanel extends JPanel {
                 int selectedIndex = packetSelector.getSelectedIndex();
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0, selectedIndex == 1));
             }
+            startTime = -1;
+            timeLabel.setText("00:00:00");
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
     }

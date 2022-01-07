@@ -22,6 +22,7 @@ import java.util.Map;
 
 public class PacketLoggerViewPanel extends JPanel {
 
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
     private long startTime = -1;
 
     /**
@@ -58,7 +59,6 @@ public class PacketLoggerViewPanel extends JPanel {
                 startTime = System.currentTimeMillis();
             }
             long time = System.currentTimeMillis() - startTime;
-            SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
             timeLabel.setText(sdf.format(time));
         });
 
@@ -112,7 +112,6 @@ public class PacketLoggerViewPanel extends JPanel {
             if (b) {
                 timer.start();
                 try {
-                    SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
                     Date date = sdf.parse(timeLabel.getText());
                     startTime = System.currentTimeMillis() - date.getTime();
                 } catch (ParseException e) {

@@ -13,9 +13,14 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 public class PacketLoggerViewPanel extends JPanel {
+
+    private long startTime = -1;
 
     /**
      * Creates a JTable with two columns: Packet Name and amount of times it was received.
@@ -43,6 +48,15 @@ public class PacketLoggerViewPanel extends JPanel {
         packetSelector.setEditable(false);
         packetSelector.setMaximumSize(new Dimension(200, (int) packetSelector.getPreferredSize().getHeight()));
 
+        //Adds a timer at the rop right corner of the panel to display how long the packet logger has been running
+        JLabel timeLabel = new JLabel("00:00:00");
+        timeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        Timer timer = new Timer(50, e -> {
+            long time = System.currentTimeMillis() - startTime;
+            SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
+            timeLabel.setText(sdf.format(time));
+        });
+
         //Add a header for the buttons and the direction selector
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
@@ -51,6 +65,8 @@ public class PacketLoggerViewPanel extends JPanel {
         header.add(clearButton);
         header.add(Box.createHorizontalStrut(5));
         header.add(packetSelector);
+        header.add(Box.createHorizontalStrut(5));
+        header.add(timeLabel);
 
         add(header, BorderLayout.NORTH);
 
@@ -84,12 +100,26 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Add a listener to the run button to send a message to the game to start or stop logging packets
         runButton.addToggleListener(b -> {
+            if (b) {
+                timer.start();
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
+                    Date date = sdf.parse(timeLabel.getText());
+                    startTime = System.currentTimeMillis() - date.getTime();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                timer.stop();
+            }
             int selectedIndex = packetSelector.getSelectedIndex();
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(selectedIndex == 0 && b, selectedIndex == 1 && b));
         });
 
         //Add a listener to the clear button to send a message to the game to clear the packet map also clears the table
         clearButton.addActionListener(e -> {
+            startTime = 0;
+            timeLabel.setText("00:00:00");
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });

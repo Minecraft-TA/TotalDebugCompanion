@@ -52,6 +52,9 @@ public class PacketLoggerViewPanel extends JPanel {
         JLabel timeLabel = new JLabel("00:00:00");
         timeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         Timer timer = new Timer(50, e -> {
+            if (startTime == -1) {
+                startTime = System.currentTimeMillis();
+            }
             long time = System.currentTimeMillis() - startTime;
             SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
             timeLabel.setText(sdf.format(time));
@@ -118,7 +121,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Add a listener to the clear button to send a message to the game to clear the packet map also clears the table
         clearButton.addActionListener(e -> {
-            startTime = 0;
+            startTime = -1;
             timeLabel.setText("00:00:00");
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
             ((DefaultTableModel) table.getModel()).setRowCount(0);

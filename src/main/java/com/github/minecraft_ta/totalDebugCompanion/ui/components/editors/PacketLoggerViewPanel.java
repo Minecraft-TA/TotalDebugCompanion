@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class PacketLoggerViewPanel extends JPanel {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("mm:ss:SSS");
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("mm:ss:SSS");
     private long startTime = -1;
 
     /**
@@ -59,7 +59,7 @@ public class PacketLoggerViewPanel extends JPanel {
                 startTime = System.currentTimeMillis();
             }
             long time = System.currentTimeMillis() - startTime;
-            timeLabel.setText(sdf.format(time));
+            timeLabel.setText(SIMPLE_DATE_FORMAT.format(time));
         });
 
         //Add a header for the buttons and the direction selector
@@ -112,7 +112,7 @@ public class PacketLoggerViewPanel extends JPanel {
             if (b) {
                 timer.start();
                 try {
-                    Date date = sdf.parse(timeLabel.getText());
+                    Date date = SIMPLE_DATE_FORMAT.parse(timeLabel.getText());
                     startTime = System.currentTimeMillis() - date.getTime();
                 } catch (ParseException e) {
                     e.printStackTrace();

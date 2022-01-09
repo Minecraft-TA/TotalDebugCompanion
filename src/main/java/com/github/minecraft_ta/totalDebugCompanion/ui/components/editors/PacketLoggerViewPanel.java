@@ -26,8 +26,8 @@ public class PacketLoggerViewPanel extends JPanel {
     private long startTime = -1;
 
     /**
-     * Creates a JTable with two columns: Packet Name and amount of times it was received.
-     * Updates the table every time a new packet is received using the companion app's message bus inside the lambda.
+     * Creates a JTable with three columns: Packet Name, amount of times it was received and total size of the packets in bytes
+     * Updates the table every time a new packet is received using the companion app's message bus
      */
     public PacketLoggerViewPanel() {
         setLayout(new BorderLayout(0, 0));

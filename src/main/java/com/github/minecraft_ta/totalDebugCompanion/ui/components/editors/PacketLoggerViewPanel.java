@@ -4,10 +4,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.components.FlatComboBox;
 import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.ClearPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.IncomingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.OutgoingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 
 import javax.swing.*;
@@ -51,8 +48,18 @@ public class PacketLoggerViewPanel extends JPanel {
         packetSelector.setEditable(false);
         packetSelector.setMaximumSize(new Dimension(200, (int) packetSelector.getPreferredSize().getHeight()));
 
+        //Adds a combo box to filter the packets by the channel they were sent on
+        FlatComboBox<String> channelSelector = new FlatComboBox<>();
+        channelSelector.addItem("All channels");
+        channelSelector.setEditable(false);
+        channelSelector.setMaximumSize(new Dimension(200, (int) channelSelector.getPreferredSize().getHeight()));
+
+        //Sends a message to the game to request the channel list
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestChannelListMessage());
+
         //Adds a timer at the rop right corner of the panel to display how long the packet logger has been running
         JLabel timeLabel = new JLabel("00:00:00");
+        timeLabel.setIcon(new FlatSVGIcon("icons/clock.svg"));
         timeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         Timer timer = new Timer(50, e -> {
             if (startTime == -1) {
@@ -71,7 +78,10 @@ public class PacketLoggerViewPanel extends JPanel {
         header.add(Box.createHorizontalStrut(5));
         header.add(packetSelector);
         header.add(Box.createHorizontalStrut(5));
+        header.add(channelSelector);
+        header.add(Box.createHorizontalGlue());
         header.add(timeLabel);
+        header.add(Box.createHorizontalStrut(5));
 
         add(header, BorderLayout.NORTH);
 
@@ -100,11 +110,15 @@ public class PacketLoggerViewPanel extends JPanel {
         add(new JScrollPane(table));
 
         CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, this, incomingPacketsMessage -> {
-            updateTable(table, incomingPacketsMessage.getIncomingPackets());
+            SwingUtilities.invokeLater(() -> updateTable(table, incomingPacketsMessage.getIncomingPackets()));
         });
 
         CompanionApp.SERVER.getMessageBus().listenAlways(OutgoingPacketsMessage.class, this, outgoingPacketsMessage -> {
-            updateTable(table, outgoingPacketsMessage.getOutgoingPackets());
+            SwingUtilities.invokeLater(() -> updateTable(table, outgoingPacketsMessage.getOutgoingPackets()));
+        });
+
+        CompanionApp.SERVER.getMessageBus().listenAlways(ChannelListMessage.class, this, channelListMessage -> {
+            SwingUtilities.invokeLater(() -> channelListMessage.getChannels().forEach(channelSelector::addItem));
         });
 
         //Add a listener to the run button to send a message to the game to start or stop logging packets
@@ -142,6 +156,12 @@ public class PacketLoggerViewPanel extends JPanel {
             timeLabel.setText("00:00:00");
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
+
+        //Add a listener to the channel selector to send a message to the game to change the channel of the packets also clears the table
+        channelSelector.addActionListener(e -> {
+
+        });
+
     }
 
     /**
@@ -172,6 +192,7 @@ public class PacketLoggerViewPanel extends JPanel {
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
         CompanionApp.SERVER.getMessageBus().unregister(IncomingPacketsMessage.class, this);
         CompanionApp.SERVER.getMessageBus().unregister(OutgoingPacketsMessage.class, this);
+        CompanionApp.SERVER.getMessageBus().unregister(ChannelListMessage.class, this);
         return true;
     }
 }

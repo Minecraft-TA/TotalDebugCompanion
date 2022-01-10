@@ -88,7 +88,6 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, IncomingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OutgoingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ClearPacketsMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, RequestChannelListMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChannelListMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 

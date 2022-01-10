@@ -55,7 +55,7 @@ public class PacketLoggerViewPanel extends JPanel {
         channelSelector.setMaximumSize(new Dimension(200, (int) channelSelector.getPreferredSize().getHeight()));
 
         //Sends a message to the game to request the channel list
-        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RequestChannelListMessage());
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChannelListMessage());
 
         //Adds a timer at the rop right corner of the panel to display how long the packet logger has been running
         JLabel timeLabel = new JLabel("00:00:00");

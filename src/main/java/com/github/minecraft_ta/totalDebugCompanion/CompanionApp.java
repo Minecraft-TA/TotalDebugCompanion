@@ -89,6 +89,7 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, OutgoingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ClearPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChannelListMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, SetChannelMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();
@@ -176,6 +177,7 @@ public class CompanionApp {
             SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1));
             SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
             SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
+            SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage("All channels"));
         }));
 
         MainWindow.INSTANCE.setSize(1280, 720);

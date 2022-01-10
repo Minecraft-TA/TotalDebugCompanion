@@ -159,7 +159,9 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Add a listener to the channel selector to send a message to the game to change the channel of the packets also clears the table
         channelSelector.addActionListener(e -> {
-
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage((String) channelSelector.getSelectedItem()));
+            CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
+            ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
 
     }
@@ -190,6 +192,7 @@ public class PacketLoggerViewPanel extends JPanel {
     public boolean canClose() {
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage("All channels"));
         CompanionApp.SERVER.getMessageBus().unregister(IncomingPacketsMessage.class, this);
         CompanionApp.SERVER.getMessageBus().unregister(OutgoingPacketsMessage.class, this);
         CompanionApp.SERVER.getMessageBus().unregister(ChannelListMessage.class, this);

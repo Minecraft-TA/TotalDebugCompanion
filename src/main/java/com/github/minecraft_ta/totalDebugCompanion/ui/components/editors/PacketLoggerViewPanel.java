@@ -110,11 +110,19 @@ public class PacketLoggerViewPanel extends JPanel {
         add(new JScrollPane(table));
 
         CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, this, incomingPacketsMessage -> {
-            SwingUtilities.invokeLater(() -> updateTable(table, incomingPacketsMessage.getIncomingPackets()));
+            SwingUtilities.invokeLater(() -> {
+                if (packetSelector.getSelectedIndex() == 0) {
+                    updateTable(table, incomingPacketsMessage.getIncomingPackets());
+                }
+            });
         });
 
         CompanionApp.SERVER.getMessageBus().listenAlways(OutgoingPacketsMessage.class, this, outgoingPacketsMessage -> {
-            SwingUtilities.invokeLater(() -> updateTable(table, outgoingPacketsMessage.getOutgoingPackets()));
+            SwingUtilities.invokeLater(() -> {
+                if (packetSelector.getSelectedIndex() == 1) {
+                    updateTable(table, outgoingPacketsMessage.getOutgoingPackets());
+                }
+            });
         });
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ChannelListMessage.class, this, channelListMessage -> {

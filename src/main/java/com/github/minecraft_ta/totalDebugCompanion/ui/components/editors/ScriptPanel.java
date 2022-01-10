@@ -496,7 +496,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     public boolean canSave() {
-        CompanionApp.SERVER.getMessageBus().unregister(ScriptStatusMessage.class, this);
         return true;
     }
 

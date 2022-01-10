@@ -1,7 +1,9 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
+import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.ScriptPanel;
 
 import javax.swing.*;
@@ -39,7 +41,11 @@ public class ScriptView implements IEditorPanel {
 
     @Override
     public boolean canClose() {
-        return this.scriptPanel.canSave();
+        var result = this.scriptPanel.canSave();
+        if (result)
+            CompanionApp.SERVER.getMessageBus().unregister(ScriptStatusMessage.class, this.scriptPanel);
+
+        return result;
     }
 
     public String getSourceText() {

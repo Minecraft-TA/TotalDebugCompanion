@@ -14,9 +14,8 @@ public class FlatIconButton extends JButton {
 
     private final Color HOVER_COLOR = Color.GRAY.darker();
     private final Color TOGGLED_COLOR = new Color(90, 90, 90);
-    private boolean state;
-
     private final List<Consumer<Boolean>> toggleListeners = new ArrayList<>();
+    private boolean state;
 
     public FlatIconButton(FlatSVGIcon icon, boolean toggleable) {
         super(icon);
@@ -28,11 +27,9 @@ public class FlatIconButton extends JButton {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (!toggleable)
-                    return;
-
-                setToggled(!state);
-                toggleListeners.forEach(l -> l.accept(state));
+                if (toggleable) {
+                    toggle();
+                }
 
                 if (state) {
                     setContentAreaFilled(true);
@@ -56,6 +53,15 @@ public class FlatIconButton extends JButton {
         });
     }
 
+    public void toggle() {
+        setToggled(!state);
+        toggleListeners.forEach(l -> l.accept(state));
+    }
+
+    public boolean isToggled() {
+        return this.state;
+    }
+
     public void setToggled(boolean b) {
         this.state = b;
 
@@ -69,10 +75,6 @@ public class FlatIconButton extends JButton {
     @Override
     public void setIcon(Icon icon) {
         super.setIcon(new FlatSVGIcon((FlatSVGIcon) icon));
-    }
-
-    public boolean isToggled() {
-        return this.state;
     }
 
     public void addToggleListener(Consumer<Boolean> listener) {

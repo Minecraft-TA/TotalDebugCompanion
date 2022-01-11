@@ -12,6 +12,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -172,6 +174,14 @@ public class PacketLoggerViewPanel extends JPanel {
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
 
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    runButton.toggle();
+                }
+            }
+        });
     }
 
     /**

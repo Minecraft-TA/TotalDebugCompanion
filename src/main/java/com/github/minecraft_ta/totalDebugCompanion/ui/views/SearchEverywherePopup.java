@@ -21,6 +21,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 public class SearchEverywherePopup extends JFrame {
@@ -49,7 +50,14 @@ public class SearchEverywherePopup extends JFrame {
 
                 var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
-                setIcon(CodeCompletionPopup.CLASS_ICON);
+
+                if (Modifier.isInterface(indexedClass.getAccessFlags()))
+                    setIcon(CodeCompletionPopup.INTERFACE_ICON);
+                else if ((indexedClass.getAccessFlags() & 0x00004000) != 0)
+                    setIcon(CodeCompletionPopup.ENUM_ICON);
+                else
+                    setIcon(CodeCompletionPopup.CLASS_ICON);
+
                 return component;
             }
         });

@@ -20,4 +20,8 @@ public class TextUtils {
 
         return count;
     }
+
+    public static String htmlHighlightString(String primary, String divider, String secondary) {
+        return "<html><span style='color: rgb(187, 187, 187)'>%s</span>%s<span style='color: rgb(150, 150, 150)'>%s</span></html>".formatted(primary, divider, secondary);
+    }
 }

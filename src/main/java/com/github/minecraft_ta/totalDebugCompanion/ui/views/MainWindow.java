@@ -7,13 +7,18 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTr
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
 
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements AWTEventListener {
 
     private final EditorTabs editorTabs = new EditorTabs();
+
+    private long lastShiftReleasedTime = 0;
 
     public MainWindow() {
         var root = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -68,6 +73,27 @@ public class MainWindow extends JFrame {
         setJMenuBar(menuBar);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setTitle("TotalDebugCompanion");
+
+        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.KEY_EVENT_MASK);
+    }
+
+    @Override
+    public void eventDispatched(AWTEvent event) {
+        if (!(event instanceof KeyEvent))
+            return;
+
+        KeyEvent keyEvent = (KeyEvent) event;
+        if (keyEvent.getID() != 402 || keyEvent.getKeyCode() != KeyEvent.VK_SHIFT)
+            return;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - this.lastShiftReleasedTime > 300) {
+            this.lastShiftReleasedTime = currentTime;
+            return;
+        }
+
+        this.lastShiftReleasedTime = 0;
+        SearchEverywherePopup.open(this.getGraphicsConfiguration());
     }
 
     public EditorTabs getEditorTabs() {

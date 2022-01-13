@@ -10,9 +10,11 @@ version = "1.6.0"
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    maven { url "https://packagecloud.io/tth05/repo/maven2" }
 }
 
 dependencies {
+    implementation("com.github.tth05:jindex:0.0.3")
     implementation("com.github.tth05:SCNet:18bc6c5")
 
     implementation('com.formdev:flatlaf:1.6.5')

@@ -4,6 +4,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.components.FlatComboBox;
 import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 
@@ -14,6 +15,8 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -174,11 +177,36 @@ public class PacketLoggerViewPanel extends JPanel {
             ((DefaultTableModel) table.getModel()).setRowCount(0);
         });
 
+        //Adds the ability to pause using the space bar
         table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                     runButton.toggle();
+                }
+            }
+        });
+
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem decompile = new JMenuItem("Decompile");
+        decompile.setIcon(new FlatSVGIcon("icons/decompile.svg"));
+        decompile.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                String packet = (String) table.getValueAt(row, 0);
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(packet));
+            }
+        });
+        popup.add(decompile);
+
+        //Adds a right click menu to the table
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                if (e.getButton() == MouseEvent.BUTTON3 && row != -1) {
+                    table.setRowSelectionInterval(row, row);
+                    popup.show(table, e.getX(), e.getY());
                 }
             }
         });

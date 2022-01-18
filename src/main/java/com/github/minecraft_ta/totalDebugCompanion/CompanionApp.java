@@ -164,20 +164,18 @@ public class CompanionApp {
         UIManager.put("Tree.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
         UIManager.put("List.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
 
-        var mainWindow = new MainWindow();
-        mainWindow.setSize(1280, 720);
-        mainWindow.setVisible(true);
-
-        SERVER.getMessageBus().listenAlways(OpenFileMessage.class, (m) -> OpenFileMessage.handle(m, mainWindow));
-        SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, (m) -> OpenSearchResultsMessage.handle(m, mainWindow));
-        SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(mainWindow));
+        SERVER.getMessageBus().listenAlways(OpenFileMessage.class, OpenFileMessage::handle);
+        SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, OpenSearchResultsMessage::handle);
+        SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(MainWindow.INSTANCE));
         SERVER.addOnConnectionListener(() -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1))));
 
-        UIUtils.centerJFrame(mainWindow);
+        MainWindow.INSTANCE.setSize(1280, 720);
+        MainWindow.INSTANCE.setVisible(true);
+        UIUtils.centerJFrame(MainWindow.INSTANCE);
     }
 
     private static void setupEclipseProject() {

@@ -28,14 +28,13 @@ public class OpenSearchResultsMessage extends AbstractMessageIncoming {
         this.time = messageStream.readInt();
     }
 
-    public static void handle(OpenSearchResultsMessage message, MainWindow window) {
+    public static void handle(OpenSearchResultsMessage message) {
+        var window = MainWindow.INSTANCE;
         var editorTabs = window.getEditorTabs();
-        editorTabs.getEditorTabLock().lock();
         editorTabs.openEditorTab(new SearchResultView(
                 message.query, message.results, message.methodSearch, message.classesCount, message.time
         )).join();
 
         UIUtils.focusWindow(window);
-        editorTabs.getEditorTabLock().unlock();
     }
 }

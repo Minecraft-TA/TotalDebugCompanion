@@ -16,11 +16,13 @@ import java.util.function.Consumer;
 
 public class MainWindow extends JFrame implements AWTEventListener {
 
+    public static final MainWindow INSTANCE = new MainWindow();
+
     private final EditorTabs editorTabs = new EditorTabs();
 
     private long lastShiftReleasedTime = 0;
 
-    public MainWindow() {
+    private MainWindow() {
         var root = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
         root.setLeftComponent(UIUtils.verticalLayout(new FileTreeViewHeader(), new FileTreeView(this.editorTabs)));
@@ -79,10 +81,9 @@ public class MainWindow extends JFrame implements AWTEventListener {
 
     @Override
     public void eventDispatched(AWTEvent event) {
-        if (!(event instanceof KeyEvent))
+        if (!(event instanceof KeyEvent keyEvent))
             return;
 
-        KeyEvent keyEvent = (KeyEvent) event;
         if (keyEvent.getID() != 402 || keyEvent.getKeyCode() != KeyEvent.VK_SHIFT)
             return;
 

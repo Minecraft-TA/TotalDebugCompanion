@@ -2,7 +2,6 @@ package com.github.minecraft_ta.totalDebugCompanion.messages.codeView;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
-import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
@@ -24,14 +23,14 @@ public class OpenFileMessage extends AbstractMessageIncoming {
         this.row = messageStream.readInt();
     }
 
-    public static void handle(OpenFileMessage message, MainWindow window) {
+    public static void handle(OpenFileMessage message) {
         if (!Files.exists(message.path) || !FileUtils.isSubPathOf(CompanionApp.getRootPath(), message.path))
             return;
 
         System.out.printf("Opening %s at line %d%n", message.path, message.row);
 
-        EditorTabs editorTabs = window.getEditorTabs();
-        editorTabs.getEditorTabLock().lock();
+        var window = MainWindow.INSTANCE;
+        var editorTabs = window.getEditorTabs();
         editorTabs.getEditors().stream()
                 .filter(e -> e instanceof CodeView)
                 .map(e -> (CodeView) e)
@@ -44,6 +43,5 @@ public class OpenFileMessage extends AbstractMessageIncoming {
                 });
 
         UIUtils.focusWindow(window);
-        editorTabs.getEditorTabLock().unlock();
     }
 }

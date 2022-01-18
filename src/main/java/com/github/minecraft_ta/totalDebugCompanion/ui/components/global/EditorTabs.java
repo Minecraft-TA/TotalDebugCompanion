@@ -10,12 +10,10 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class EditorTabs extends JTabbedPane {
 
     private final List<IEditorPanel> editors = new ArrayList<>();
-    private final ReentrantLock lock = new ReentrantLock();
 
     public EditorTabs() {
         super();
@@ -68,10 +66,6 @@ public class EditorTabs extends JTabbedPane {
         });
 
         return future;
-    }
-
-    public ReentrantLock getEditorTabLock() {
-        return this.lock;
     }
 
     public List<IEditorPanel> getEditors() {

@@ -6,7 +6,9 @@ import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
+import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -207,6 +209,9 @@ public class PacketLoggerViewPanel extends JPanel {
                 if (e.getButton() == MouseEvent.BUTTON3 && row != -1) {
                     table.setRowSelectionInterval(row, row);
                     popup.show(table, e.getX(), e.getY());
+                } else if (e.getClickCount() == 2 && row != -1) {
+                    String packet = (String) table.getValueAt(row, 0);
+                    MainWindow.INSTANCE.getEditorTabs().openEditorTab(new PacketView(packet));
                 }
             }
         });

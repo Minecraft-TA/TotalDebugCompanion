@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.AnimatedFlatSVGIcon;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public class BottomInformationBar extends JPanel {
     }
 
     public void setDefaultInfoText(String text) {
-        this.infoLabel.setIcon(new FlatSVGIcon("icons/information.svg"));
+        this.infoLabel.setIcon(Icons.INFORMATION);
         this.infoLabel.setText(text);
     }
 
@@ -46,12 +46,12 @@ public class BottomInformationBar extends JPanel {
     }
 
     public void setSuccessInfoText(String text) {
-        this.infoLabel.setIcon(new FlatSVGIcon("icons/success.svg"));
+        this.infoLabel.setIcon(Icons.SUCCESS);
         this.infoLabel.setText(text);
     }
 
     public void setFailureInfoText(String text) {
-        this.infoLabel.setIcon(new FlatSVGIcon("icons/error.svg"));
+        this.infoLabel.setIcon(Icons.ERROR);
         this.infoLabel.setText(text);
     }
 

@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class DownloadProgressWindow extends JFrame {
 
     public DownloadProgressWindow() {
         setTitle("Downloading...");
-        setIconImage(new FlatSVGIcon("icons/download.svg").getImage());
+        setIconImage(Icons.DOWNLOAD.getImage());
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 

@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.lazyFileTree.DirectoryTreeItem;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.lazyFileTree.TreeItem;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -12,10 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ZipFileRootItem extends DirectoryTreeItem {
-
-    private static final Icon FILE_ICON = new FlatSVGIcon("icons/text.svg");
-    private static final Icon CLASS_FILE_ICON = new FlatSVGIcon("icons/classFile.svg");
-    private static final Icon JAR_FILE_ICON = new FlatSVGIcon("icons/jar.svg");
 
     private final Path path;
     private Node root;
@@ -37,7 +33,7 @@ public class ZipFileRootItem extends DirectoryTreeItem {
 
     @Override
     public Icon getIcon() {
-        return JAR_FILE_ICON;
+        return Icons.JAR_FILE;
     }
 
     private void indexZipFile(Path path) {
@@ -87,8 +83,8 @@ public class ZipFileRootItem extends DirectoryTreeItem {
         @Override
         public Icon getIcon() {
             if (this.getName().endsWith(".class"))
-                return CLASS_FILE_ICON;
-            return FILE_ICON;
+                return Icons.CLASS_FILE;
+            return Icons.TEXT_FILE;
         }
     }
 

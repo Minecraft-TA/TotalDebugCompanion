@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeViewHeader;
@@ -60,7 +60,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
         });
 
         var scriptMenu = new JMenu("Script");
-        scriptMenu.add(new AbstractAction("New Script", new FlatSVGIcon("icons/javaFile.svg")) {
+        scriptMenu.add(new AbstractAction("New Script", Icons.JAVA_FILE) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 var window = new CreateScriptWindow(editorTabs);

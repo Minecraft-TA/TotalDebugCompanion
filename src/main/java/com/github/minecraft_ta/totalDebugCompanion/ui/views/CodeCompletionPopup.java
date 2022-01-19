@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.AbstractCodeViewPanel;
 import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import org.eclipse.lsp4j.CompletionItem;
@@ -14,15 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CodeCompletionPopup extends BasePopup {
-
-    public static final FlatSVGIcon METHOD_ICON = new FlatSVGIcon("icons/method.svg");
-    public static final FlatSVGIcon CLASS_ICON = new FlatSVGIcon("icons/class.svg");
-    public static final FlatSVGIcon CONSTANT_ICON = new FlatSVGIcon("icons/constant.svg");
-    public static final FlatSVGIcon PROPERTY_ICON = new FlatSVGIcon("icons/property.svg");
-    public static final FlatSVGIcon VARIABLE_ICON = new FlatSVGIcon("icons/variable.svg");
-    public static final FlatSVGIcon INTERFACE_ICON = new FlatSVGIcon("icons/interface.svg");
-    public static final FlatSVGIcon ENUM_ICON = new FlatSVGIcon("icons/enum.svg");
-    public static final FlatSVGIcon CONSTRUCTOR_ICON = new FlatSVGIcon("icons/constructor.svg");
 
     private final JList<CompletionItem> completionItemList = new JList<>(new DefaultListModel<>());
     {
@@ -40,14 +31,14 @@ public class CodeCompletionPopup extends BasePopup {
                 var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
 
                 setIcon(switch (item.getKind()) {
-                    case Method -> METHOD_ICON;
-                    case Class -> CLASS_ICON;
-                    case Constant -> CONSTANT_ICON;
-                    case Field -> PROPERTY_ICON;
-                    case Variable -> VARIABLE_ICON;
-                    case Interface -> INTERFACE_ICON;
-                    case Enum -> ENUM_ICON;
-                    case Constructor -> CONSTRUCTOR_ICON;
+                    case Method -> Icons.JAVA_METHOD;
+                    case Class -> Icons.JAVA_CLASS;
+                    case Constant -> Icons.JAVA_CONSTANT;
+                    case Field -> Icons.JAVA_PROPERTY;
+                    case Variable -> Icons.JAVA_VARIABLE;
+                    case Interface -> Icons.JAVA_INTERFACE;
+                    case Enum -> Icons.JAVA_ENUM;
+                    case Constructor -> Icons.JAVA_CONSTRUCTOR;
                     default -> null;
                 });
 

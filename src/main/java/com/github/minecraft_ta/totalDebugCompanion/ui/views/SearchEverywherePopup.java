@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
@@ -52,11 +52,11 @@ public class SearchEverywherePopup extends JFrame {
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
 
                 if (Modifier.isInterface(indexedClass.getAccessFlags()))
-                    setIcon(CodeCompletionPopup.INTERFACE_ICON);
+                    setIcon(Icons.JAVA_INTERFACE);
                 else if ((indexedClass.getAccessFlags() & 0x00004000) != 0)
-                    setIcon(CodeCompletionPopup.ENUM_ICON);
+                    setIcon(Icons.JAVA_ENUM);
                 else
-                    setIcon(CodeCompletionPopup.CLASS_ICON);
+                    setIcon(Icons.JAVA_CLASS);
 
                 return component;
             }
@@ -81,7 +81,7 @@ public class SearchEverywherePopup extends JFrame {
         resultListScrollPane.setPreferredSize(new Dimension(500, 500));
     }
 
-    private final FlatIconTextField searchTextField = new FlatIconTextField(new FlatSVGIcon("icons/search.svg"));
+    private final FlatIconTextField searchTextField = new FlatIconTextField(Icons.SEARCH_ICON);
     {
         searchTextField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
             var query = searchTextField.getText();

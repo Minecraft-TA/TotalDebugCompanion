@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.BaseScriptView;
@@ -32,7 +32,7 @@ public class FileTreeView extends JScrollPane {
 
                 var popupMenu = new JPopupMenu();
                 var deleteItem = popupMenu.add("Delete");
-                deleteItem.setIcon(new FlatSVGIcon("icons/remove.svg"));
+                deleteItem.setIcon(Icons.DELETE);
                 deleteItem.addActionListener(event -> deleteSelectedItems());
 
                 popupMenu.show(this, x, y);
@@ -75,6 +75,11 @@ public class FileTreeView extends JScrollPane {
                 var splitIndex = fileName.lastIndexOf('.', fileName.length() - ".java".length() - 1);
                 if (splitIndex != -1)
                     item.setRenderedName(TextUtils.htmlHighlightString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
+
+                if (path.getParent().getFileName().toString().equals("src"))
+                    item.setIcon(Icons.JAVA_FILE);
+                else
+                    item.setIcon(Icons.JAVA_CLASS);
                 return item;
             }
         });

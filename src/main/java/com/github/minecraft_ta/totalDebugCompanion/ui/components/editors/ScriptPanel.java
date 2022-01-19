@@ -1,8 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
@@ -48,9 +48,9 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
     private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
 
-    private final FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), false);
-    private final FlatIconButton runServerButton = new FlatIconButton(new FlatSVGIcon("icons/runServer.svg"), false);
-    private final FlatIconButton stopButton = new FlatIconButton(new FlatSVGIcon("icons/stop.svg"), false);
+    private final FlatIconButton runButton = new FlatIconButton(Icons.RUN, false);
+    private final FlatIconButton runServerButton = new FlatIconButton(Icons.RUN_SERVER, false);
+    private final FlatIconButton stopButton = new FlatIconButton(Icons.STOP, false);
     {
         runButton.setToolTipText("Run on client");
         runServerButton.setToolTipText("Run on server");

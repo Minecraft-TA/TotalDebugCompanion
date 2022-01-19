@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.global;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
@@ -16,7 +17,7 @@ public class SearchHeaderBar extends JPanel {
         super();
         setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-        var textField = new FlatIconTextField(new FlatSVGIcon("icons/search.svg"));
+        var textField = new FlatIconTextField(Icons.SEARCH_ICON);
         textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
         textField.setMaximumSize(textField.getPreferredSize());
         textField.getDocument().addDocumentListener((DocumentChangeListener) e -> {
@@ -26,19 +27,19 @@ public class SearchHeaderBar extends JPanel {
         add(textField);
         add(createSeparator());
 
-        add(createToggleableFlatButton("Match case", new FlatSVGIcon("icons/matchCase.svg"), (b) -> {
+        add(createToggleableFlatButton("Match case", Icons.MATCH_CASE, (b) -> {
             searchManager.setMatchCase(b);
             //Force refresh
             searchManager.setQuery(textField.getText());
         }));
-        JButton regexButton = createToggleableFlatButton("Regex", new FlatSVGIcon("icons/regex.svg"), (b) -> {
+        JButton regexButton = createToggleableFlatButton("Regex", Icons.REGEX, (b) -> {
             searchManager.setUseRegex(b);
             searchManager.setQuery(textField.getText());
         });
         add(regexButton);
         add(createSeparator());
-        add(createFlatButton("Previous", new FlatSVGIcon("icons/previousOccurence.svg"), searchManager::focusPreviousMatch));
-        add(createFlatButton("Next", new FlatSVGIcon("icons/nextOccurence.svg"), searchManager::focusNextMatch));
+        add(createFlatButton("Previous", Icons.PREVIOUS_OCCURRENCE, searchManager::focusPreviousMatch));
+        add(createFlatButton("Next", Icons.NEXT_OCCURRENCE, searchManager::focusNextMatch));
 
         JLabel indexLabel = new JLabel("");
         searchManager.addFocusedIndexChangedListener(i -> {

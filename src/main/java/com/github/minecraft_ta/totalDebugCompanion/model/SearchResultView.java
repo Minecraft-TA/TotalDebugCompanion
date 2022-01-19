@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.SearchResultViewPanel;
 
 import javax.swing.*;
@@ -8,8 +8,6 @@ import java.awt.*;
 import java.util.List;
 
 public class SearchResultView implements IEditorPanel {
-
-    private static final Icon SEARCH_ICON = new FlatSVGIcon("icons/search.svg");
 
     private final String query;
     private final List<String> results;
@@ -37,7 +35,7 @@ public class SearchResultView implements IEditorPanel {
 
     @Override
     public Icon getIcon() {
-        return SEARCH_ICON;
+        return Icons.SEARCH_ICON;
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
@@ -110,7 +110,7 @@ public class ChunkGridWindow extends JFrame {
             getChunkGridRequestInfo().setDimension(TextUtils.asIntOrDefault(this.dimensionTextField.getText(), 0));
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(getChunkGridRequestInfo()));
         });
-        var centerOnPlayerButton = new FlatIconButton(new FlatSVGIcon("icons/target.svg"), false);
+        var centerOnPlayerButton = new FlatIconButton(Icons.TARGET, false);
         centerOnPlayerButton.setToolTipText("Center on player");
         centerOnPlayerButton.addActionListener(e -> {
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new UpdateFollowPlayerStateMessage(UpdateFollowPlayerStateMessage.STATE_ONCE));
@@ -144,7 +144,7 @@ public class ChunkGridWindow extends JFrame {
                     e.getStateChange() == ItemEvent.DESELECTED ? UpdateFollowPlayerStateMessage.STATE_NONE : UpdateFollowPlayerStateMessage.STATE_FOLLOW
             ));
         });
-        var overlayModeButton = new FlatIconButton(new FlatSVGIcon("icons/overlayMode.svg"), false);
+        var overlayModeButton = new FlatIconButton(Icons.OVERLAY_MODE, false);
         overlayModeButton.addActionListener(e -> {
             toggleOverlayMode();
         });
@@ -249,8 +249,6 @@ public class ChunkGridWindow extends JFrame {
     }
 
     private class ChunkGridPanel extends JPanel {
-
-        private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/overlayMode.svg");
 
         private static final Color[] COLORS = new Color[]{
                 new Color(40, 40, 40),
@@ -483,7 +481,7 @@ public class ChunkGridWindow extends JFrame {
                     g.fillRoundRect(getWidth() - 22, 2, 20, 20, 5, 5);
                 }
 
-                CLOSE_ICON.paintIcon(this, g, getWidth() - 20, 4);
+                Icons.OVERLAY_MODE.paintIcon(this, g, getWidth() - 20, 4);
             }
         }
     }

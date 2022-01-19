@@ -7,6 +7,7 @@ public class TreeItem {
     private final boolean isHiddenRoot;
     private final String name;
     private String renderedName;
+    private Icon icon;
 
     protected TreeItem(String name) {
         this(name, false);
@@ -43,7 +44,11 @@ public class TreeItem {
         return renderedName;
     }
 
+    public void setIcon(Icon icon) {
+        this.icon = icon;
+    }
+
     public Icon getIcon() {
-        return null;
+        return this.icon;
     }
 }

@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -10,9 +10,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class CloseButton extends JButton {
-
-    private static final FlatSVGIcon CLOSE_ICON = new FlatSVGIcon("icons/close.svg");
-    private static final FlatSVGIcon CLOSE_HOVERED_ICON = new FlatSVGIcon("icons/closeHovered.svg");
 
     private boolean hovered;
 
@@ -52,9 +49,9 @@ public class CloseButton extends JButton {
         Graphics2D g2 = (Graphics2D) g.create();
 
         if (this.hovered) {
-            CLOSE_HOVERED_ICON.paintIcon(this, g, 0, 0);
+            Icons.CLOSE_HOVERED_ICON.paintIcon(this, g, 0, 0);
         } else {
-            CLOSE_ICON.paintIcon(this, g, 0, 0);
+            Icons.CLOSE_ICON.paintIcon(this, g, 0, 0);
         }
 
         g2.dispose();

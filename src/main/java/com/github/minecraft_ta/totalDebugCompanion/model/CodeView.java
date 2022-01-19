@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.util.StringUtils;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.CodeViewPanel;
 
 import javax.swing.*;
@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class CodeView implements IEditorPanel {
-
-    private static final Icon CLASS_ICON = new FlatSVGIcon("icons/class.svg");
 
     private final Path path;
     private final CodeViewPanel codeViewPanel;
@@ -59,7 +57,7 @@ public class CodeView implements IEditorPanel {
 
     @Override
     public Icon getIcon() {
-        return CLASS_ICON;
+        return Icons.JAVA_CLASS;
     }
 
     @Override

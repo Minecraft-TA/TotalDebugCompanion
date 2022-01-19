@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 public class FileTreeItemFactory {
 
-    private LazyFileJTree tree;
+    protected LazyFileJTree tree;
 
     public TreeItem createHiddenRoot() {
         return new TreeItem("", true);

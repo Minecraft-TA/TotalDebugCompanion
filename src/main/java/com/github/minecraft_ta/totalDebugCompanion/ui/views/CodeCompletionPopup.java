@@ -55,7 +55,7 @@ public class CodeCompletionPopup extends BasePopup {
             }
         });
         completionItemList.setFont(AbstractCodeViewPanel.JETBRAINS_MONO_FONT.deriveFont(14f));
-        completionItemList.setSelectionBackground(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f));
+        completionItemList.setSelectionBackground(UIManager.getColor("List.selectionBackground"));
         completionItemList.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {

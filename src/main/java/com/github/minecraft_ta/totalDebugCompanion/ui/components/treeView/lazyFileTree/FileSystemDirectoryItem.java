@@ -5,7 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.List;
 
 public class FileSystemDirectoryItem extends DirectoryTreeItem {
 
@@ -26,7 +26,7 @@ public class FileSystemDirectoryItem extends DirectoryTreeItem {
     }
 
     @Override
-    public Collection<TreeItem> loadChildren() {
+    public List<TreeItem> loadChildren() {
         try {
             return Files.walk(this.path, 1)
                     .map(path -> {

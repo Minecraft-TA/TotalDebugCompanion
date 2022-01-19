@@ -1,12 +1,14 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.lazyFileTree;
 
+import javax.swing.*;
+
 public class TreeItem {
 
     private final boolean isHiddenRoot;
     private final String name;
     private String renderedName;
 
-    TreeItem(String name) {
+    protected TreeItem(String name) {
         this(name, false);
     }
 
@@ -39,5 +41,9 @@ public class TreeItem {
         if (this.renderedName == null)
             return this.name;
         return renderedName;
+    }
+
+    public Icon getIcon() {
+        return null;
     }
 }

@@ -23,7 +23,7 @@ public class CreateScriptWindow extends JFrame {
         var header = new JPanel();
         header.add(new JLabel("New Script"));
 
-        var textField = new FlatIconTextField(new FlatSVGIcon("icons/script.svg"));
+        var textField = new FlatIconTextField(new FlatSVGIcon("icons/javaFile.svg"));
         textField.setPreferredSize(new Dimension(250, (int) textField.getPreferredSize().getHeight()));
 
         var verifyInput = (Predicate<String>) (s) -> !s.isBlank() && !Files.exists(JavaLanguageServer.SRC_DIR.resolve(s + ".java")) && s.matches("^[^\\d_][\\w]*$");

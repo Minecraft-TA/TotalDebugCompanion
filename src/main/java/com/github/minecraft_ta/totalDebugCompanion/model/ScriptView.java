@@ -72,7 +72,7 @@ public class ScriptView implements IEditorPanel {
 
     @Override
     public Icon getIcon() {
-        return new FlatSVGIcon("icons/script.svg");
+        return new FlatSVGIcon("icons/javaFile.svg");
     }
 
     @Override

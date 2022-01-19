@@ -60,7 +60,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
         });
 
         var scriptMenu = new JMenu("Script");
-        scriptMenu.add(new AbstractAction("New Script", new FlatSVGIcon("icons/script.svg")) {
+        scriptMenu.add(new AbstractAction("New Script", new FlatSVGIcon("icons/javaFile.svg")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 var window = new CreateScriptWindow(editorTabs);

@@ -101,6 +101,9 @@ public class LazyFileJTree extends JTree {
                     return this;
 
                 setText(treeNode.getUserObject().getRenderedName());
+                var icon = treeNode.getUserObject().getIcon();
+                if (icon != null)
+                    setIcon(icon);
                 return this;
             }
         });
@@ -144,7 +147,12 @@ public class LazyFileJTree extends JTree {
     }
 
     private void loadItemsForNode(LazyTreeNode node) {
-        CompletableFuture.supplyAsync(() -> ((DirectoryTreeItem) node.getUserObject()).loadChildren()).thenAccept((items) -> {
+        CompletableFuture.supplyAsync(() -> ((DirectoryTreeItem) node.getUserObject()).loadChildren().stream().sorted((c1, c2) -> {
+            var value = Boolean.compare(c2 instanceof DirectoryTreeItem, c1 instanceof DirectoryTreeItem);
+            if (value == 0)
+                value = c1.getName().compareTo(c2.getName());
+            return value;
+        }).toList()).thenAccept((items) -> {
             SwingUtilities.invokeLater(() -> {
                 var selection = getSelectionRows();
 
@@ -154,6 +162,9 @@ public class LazyFileJTree extends JTree {
 
                 setSelectionRows(selection);
             });
+        }).exceptionally((e) -> {
+            e.printStackTrace();
+            return null;
         });
     }
 

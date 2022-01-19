@@ -74,6 +74,7 @@ public class SearchEverywherePopup extends JFrame {
                 openClass(clickedIndex);
             }
         });
+        resultList.setSelectionBackground(UIManager.getColor("List.selectionBackground"));
     }
     private final JScrollPane resultListScrollPane = new JScrollPane(this.resultList);
     {

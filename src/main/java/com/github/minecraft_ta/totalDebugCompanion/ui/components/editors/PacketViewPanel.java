@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.CapturePacketMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketContentMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
@@ -9,6 +10,7 @@ import com.google.gson.JsonParser;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 
@@ -22,6 +24,15 @@ public class PacketViewPanel extends JPanel {
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Packets");
         JTree tree = new JTree(root);
+        tree.setCellRenderer(new DefaultTreeCellRenderer() {
+            @Override
+            public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+                super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+                setIcon(Icons.FIELD);
+                return this;
+            }
+        });
+
         tree.expandRow(0);
 
         //Adds a packet and its content to the tree.

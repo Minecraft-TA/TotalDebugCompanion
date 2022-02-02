@@ -15,10 +15,10 @@ public class Icons {
 
     public static final FlatSVGIcon INFORMATION = new FlatSVGIcon("icons/information.svg");
     public static final FlatSVGIcon SUCCESS = new FlatSVGIcon("icons/success.svg");
-    public static final FlatSVGIcon WARNING =new FlatSVGIcon("icons/warning.svg");
+    public static final FlatSVGIcon WARNING = new FlatSVGIcon("icons/warning.svg");
     public static final FlatSVGIcon ERROR = new FlatSVGIcon("icons/error.svg");
 
-    public static final FlatSVGIcon JAVA_FILE =new FlatSVGIcon("icons/javaFile.svg");
+    public static final FlatSVGIcon JAVA_FILE = new FlatSVGIcon("icons/javaFile.svg");
     public static final FlatSVGIcon TEXT_FILE = new FlatSVGIcon("icons/text.svg");
     public static final FlatSVGIcon CLASS_FILE = new FlatSVGIcon("icons/classFile.svg");
     public static final FlatSVGIcon JAR_FILE = new FlatSVGIcon("icons/jar.svg");
@@ -45,7 +45,6 @@ public class Icons {
     public static final FlatSVGIcon CLEAR = new FlatSVGIcon("icons/clear.svg");
     public static final FlatSVGIcon CLOCK = new FlatSVGIcon("icons/clock.svg");
     public static final FlatSVGIcon DECOMPILE = new FlatSVGIcon("icons/decompile.svg");
-
-
+    public static final FlatSVGIcon FIELD = new FlatSVGIcon("icons/field.svg");
 
 }

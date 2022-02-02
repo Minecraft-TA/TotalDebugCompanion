@@ -4,6 +4,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.components.FlatComboBox;
 import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
@@ -37,16 +38,16 @@ public class PacketLoggerViewPanel extends JPanel {
         setLayout(new BorderLayout(0, 0));
 
         //Adds a toggleable run button to the top of the panel
-        FlatIconButton runButton = new FlatIconButton(new FlatSVGIcon("icons/run.svg"), true) {
+        FlatIconButton runButton = new FlatIconButton(Icons.RUN, true) {
             @Override
             public void setToggled(boolean b) {
                 super.setToggled(b);
-                this.setIcon(b ? new FlatSVGIcon("icons/pause.svg") : new FlatSVGIcon("icons/run.svg"));
+                this.setIcon(b ? Icons.PAUSE : Icons.RUN);
             }
         };
 
         //Add a clear button to send a message to the game to clear the packet map
-        FlatIconButton clearButton = new FlatIconButton(new FlatSVGIcon("icons/clear.svg"), false);
+        FlatIconButton clearButton = new FlatIconButton(Icons.CLEAR, false);
 
         //Add a combo box to select the packets to view
         FlatComboBox<String> packetSelector = new FlatComboBox<>();
@@ -66,7 +67,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
         //Adds a timer at the rop right corner of the panel to display how long the packet logger has been running
         JLabel timeLabel = new JLabel("00:00:00");
-        timeLabel.setIcon(new FlatSVGIcon("icons/clock.svg"));
+        timeLabel.setIcon(Icons.CLOCK);
         timeLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         Timer timer = new Timer(50, e -> {
             if (startTime == -1) {
@@ -191,7 +192,7 @@ public class PacketLoggerViewPanel extends JPanel {
 
         JPopupMenu popup = new JPopupMenu();
         JMenuItem decompile = new JMenuItem("Decompile");
-        decompile.setIcon(new FlatSVGIcon("icons/decompile.svg"));
+        decompile.setIcon(Icons.DECOMPILE);
         decompile.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {

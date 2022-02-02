@@ -40,4 +40,12 @@ public class Icons {
     public static final FlatSVGIcon REGEX = new FlatSVGIcon("icons/regex.svg");
     public static final FlatSVGIcon PREVIOUS_OCCURRENCE = new FlatSVGIcon("icons/previousOccurrence.svg");
     public static final FlatSVGIcon NEXT_OCCURRENCE = new FlatSVGIcon("icons/nextOccurrence.svg");
+
+    public static final FlatSVGIcon PAUSE = new FlatSVGIcon("icons/pause.svg");
+    public static final FlatSVGIcon CLEAR = new FlatSVGIcon("icons/clear.svg");
+    public static final FlatSVGIcon CLOCK = new FlatSVGIcon("icons/clock.svg");
+    public static final FlatSVGIcon DECOMPILE = new FlatSVGIcon("icons/decompile.svg");
+
+
+
 }

@@ -90,6 +90,8 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, ClearPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChannelListMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, SetChannelMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, PacketContentMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, CapturePacketMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();

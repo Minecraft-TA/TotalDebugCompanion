@@ -5,7 +5,14 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.PacketV
 import javax.swing.*;
 import java.awt.*;
 
-public record PacketView(String packet) implements IEditorPanel {
+public class PacketView implements IEditorPanel {
+
+    private final String packet;
+    private PacketViewPanel packetViewPanel;
+
+    public PacketView(String packet) {
+        this.packet = packet;
+    }
 
     @Override
     public String getTitle() {
@@ -24,7 +31,18 @@ public record PacketView(String packet) implements IEditorPanel {
 
     @Override
     public Component getComponent() {
-        return new PacketViewPanel(this);
+        if (packetViewPanel == null) {
+            packetViewPanel = new PacketViewPanel(this);
+        }
+        return this.packetViewPanel;
     }
 
+    @Override
+    public boolean canClose() {
+        return this.packetViewPanel.canClose(packet);
+    }
+
+    public String getPacket() {
+        return packet;
+    }
 }

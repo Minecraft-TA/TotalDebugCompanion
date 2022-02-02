@@ -33,13 +33,12 @@ public class PacketViewPanel extends JPanel {
             }
         });
 
-        tree.expandRow(0);
-
         //Adds a packet and its content to the tree.
         CompanionApp.SERVER.getMessageBus().listenAlways(PacketContentMessage.class, message -> {
             if (message.getPacketName().equals(packetView.getPacket())) {
                 DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), message.getPacketName());
                 ((DefaultTreeModel) tree.getModel()).insertNodeInto(packetNode, root, root.getChildCount());
+                tree.expandRow(0);
             }
         });
 

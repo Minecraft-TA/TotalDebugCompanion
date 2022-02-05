@@ -47,5 +47,7 @@ public class Icons {
     public static final FlatSVGIcon DECOMPILE = new FlatSVGIcon("icons/decompile.svg");
     public static final FlatSVGIcon FIELD = new FlatSVGIcon("icons/field.svg");
 
-    public static final FlatSVGIcon PRRIMTIVE = new FlatSVGIcon("icons/primitive.svg");
+    public static final FlatSVGIcon PRIMITIVE = new FlatSVGIcon("icons/primitive.svg");
+    public static final FlatSVGIcon VALUE = new FlatSVGIcon("icons/value.svg");
+    public static final FlatSVGIcon ARRAY = new FlatSVGIcon("icons/array.svg");
 }

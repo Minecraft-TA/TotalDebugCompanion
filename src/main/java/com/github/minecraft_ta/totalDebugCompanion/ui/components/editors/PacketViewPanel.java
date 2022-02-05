@@ -40,7 +40,8 @@ public class PacketViewPanel extends JPanel {
         //Adds a packet and its content to the tree.
         CompanionApp.SERVER.getMessageBus().listenAlways(PacketContentMessage.class, this, message -> {
             if (message.getPacketName().equals(packetView.getPacket())) {
-                DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), message.getPacketName());
+                String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel());
+                DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), packetName, Type.VALUE);
                 ((DefaultTreeModel) tree.getModel()).insertNodeInto(packetNode, root, root.getChildCount());
                 tree.expandRow(0);
             }
@@ -55,19 +56,19 @@ public class PacketViewPanel extends JPanel {
      * @param jsonElement The json element to convert.
      * @return The tree made of nodes.
      */
-    private DefaultMutableTreeNode jsonToTree(JsonElement jsonElement, String name) {
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode(new TreeItem(name, Type.FIELD));
+    private DefaultMutableTreeNode jsonToTree(JsonElement jsonElement, String name, Type type) {
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(new TreeItem(name, type));
         if (jsonElement.isJsonObject()) {
             for (String key : jsonElement.getAsJsonObject().keySet()) {
-                root.add(jsonToTree(jsonElement.getAsJsonObject().get(key), key));
+                root.add(jsonToTree(jsonElement.getAsJsonObject().get(key), key, Type.FIELD));
             }
         } else if (jsonElement.isJsonArray()) {
             int i = 0;
             for (JsonElement element : jsonElement.getAsJsonArray()) {
-                root.add(jsonToTree(element, String.valueOf(i)));
+                root.add(jsonToTree(element, String.valueOf(i), Type.VALUE));
                 i++;
             }
-            root.setUserObject(new TreeItem(TextUtils.htmlHighlightString(name, " ", "length: " + jsonElement.getAsJsonArray().size()), Type.FIELD));
+            root.setUserObject(new TreeItem(TextUtils.htmlHighlightString(name, " ", "size = " + jsonElement.getAsJsonArray().size()), Type.ARRAY));
         } else {
             root.setUserObject(new TreeItem(name + " = " + jsonElement.getAsString(), Type.PRIMITIVE));
         }
@@ -82,8 +83,9 @@ public class PacketViewPanel extends JPanel {
 
     private enum Type {
         FIELD(Icons.FIELD),
-        PRIMITIVE(Icons.PRRIMTIVE);
-        //OBJECT(Icons.OBJECT);
+        PRIMITIVE(Icons.PRIMITIVE),
+        VALUE(Icons.VALUE),
+        ARRAY(Icons.ARRAY);
 
         private final FlatSVGIcon icon;
 

@@ -1,6 +1,5 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.CapturePacketMessage;
@@ -11,9 +10,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 public class PacketViewPanel extends JPanel {
@@ -26,24 +27,34 @@ public class PacketViewPanel extends JPanel {
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Packets");
         JTree tree = new JTree(root);
+        tree.setRootVisible(false);
+        tree.setShowsRootHandles(true);
         tree.setCellRenderer(new DefaultTreeCellRenderer() {
             @Override
             public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
                 super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-                if (value instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode) value).getUserObject() instanceof TreeItem) {
-                    setIcon(((TreeItem) ((DefaultMutableTreeNode) value).getUserObject()).getType().getIcon());
+                if (value instanceof DefaultMutableTreeNode treeNode && treeNode.getUserObject() instanceof TreeItem treeItem) {
+                    setIcon(treeItem.getType().getIcon());
                 }
                 return this;
             }
         });
+        BasicTreeUI treeUI = (BasicTreeUI) tree.getUI();
+        treeUI.setCollapsedIcon(Icons.RIGHT_ARROW);
+        treeUI.setExpandedIcon(Icons.DOWN_ARROW);
+
 
         //Adds a packet and its content to the tree.
         CompanionApp.SERVER.getMessageBus().listenAlways(PacketContentMessage.class, this, message -> {
             if (message.getPacketName().equals(packetView.getPacket())) {
                 String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel());
                 DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), packetName, Type.VALUE);
-                ((DefaultTreeModel) tree.getModel()).insertNodeInto(packetNode, root, root.getChildCount());
-                tree.expandRow(0);
+                DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
+                model.insertNodeInto(packetNode, root, root.getChildCount());
+
+                if (root.getChildCount() == 1) {
+                    model.nodeStructureChanged((TreeNode) tree.getModel().getRoot());
+                }
             }
         });
 
@@ -87,9 +98,9 @@ public class PacketViewPanel extends JPanel {
         VALUE(Icons.VALUE),
         ARRAY(Icons.ARRAY);
 
-        private final FlatSVGIcon icon;
+        private final Icon icon;
 
-        Type(FlatSVGIcon icon) {
+        Type(Icon icon) {
             this.icon = icon;
         }
 

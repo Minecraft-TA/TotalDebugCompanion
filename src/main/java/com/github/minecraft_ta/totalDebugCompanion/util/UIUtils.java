@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.util;
 
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
@@ -78,7 +80,9 @@ public class UIUtils {
         try {
             var lineContent = c.getDocument().getText(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
             var tabs = 0;
-            for (; tabs < lineContent.length(); tabs++) if (lineContent.charAt(tabs) != '\t') break;
+            for (; tabs < lineContent.length(); tabs++)
+                if (lineContent.charAt(tabs) != '\t')
+                    break;
             return tabs;
         } catch (BadLocationException e) {
             return 0;
@@ -121,12 +125,8 @@ public class UIUtils {
     }
 
     public static void centerJFrame(JFrame frame) {
-        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
-    }
-
-    public static void centerJFrame(JFrame frame, GraphicsConfiguration gc) {
-        Rectangle dim = gc.getBounds();
+        var gc = MainWindow.INSTANCE.getGraphicsConfiguration();
+        var dim = gc.getBounds();
         frame.setLocation(dim.x + (dim.width / 2 - frame.getSize().width / 2), dim.height / 2 - frame.getSize().height / 2);
     }
 }

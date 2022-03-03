@@ -94,7 +94,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
         }
 
         this.lastShiftReleasedTime = 0;
-        SearchEverywherePopup.open(this.getGraphicsConfiguration());
+        SearchEverywherePopup.open();
     }
 
     public EditorTabs getEditorTabs() {

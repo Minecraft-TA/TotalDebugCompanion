@@ -20,6 +20,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMess
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SimpleMenuBarBorder;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.DownloadProgressWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
@@ -163,6 +164,8 @@ public class CompanionApp {
         UIManager.put("Table.focusCellHighlightBorder", new BorderUIResource(BorderFactory.createEmptyBorder(0, 3, 0, 0)));
         UIManager.put("Tree.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
         UIManager.put("List.selectionBackground", new ColorUIResource(new Color(5 / 255f, 127 / 255f, 242 / 255f, 0.5f)));
+        UIManager.put("TitlePane.unifiedBackground", false);
+        UIManager.put("MenuBar.border", new SimpleMenuBarBorder());
 
         SERVER.getMessageBus().listenAlways(OpenFileMessage.class, OpenFileMessage::handle);
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, OpenSearchResultsMessage::handle);

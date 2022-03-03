@@ -146,14 +146,14 @@ public class SearchEverywherePopup extends JFrame {
         });
     }
 
-    public static void open(GraphicsConfiguration graphicsConfiguration) {
+    public static void open() {
         if (INSTANCE.isVisible()) {
             INSTANCE.toFront();
             return;
         }
 
         INSTANCE.setVisible(true);
-        UIUtils.centerJFrame(INSTANCE, graphicsConfiguration);
+        UIUtils.centerJFrame(INSTANCE);
 
         INSTANCE.searchTextField.grabFocus();
         INSTANCE.searchTextField.selectAll();

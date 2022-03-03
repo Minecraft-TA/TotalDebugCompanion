@@ -18,6 +18,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -117,28 +118,31 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
-        var textArea = this.editorPane;
-        textArea.setText(scriptView.getSourceText());
-        CompanionApp.LSP.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(scriptView.getURI(), "java", 0, UIUtils.getText(textArea))));
+        this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
+        CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());
+        this.editorPane.setText(scriptView.getSourceText());
+//        var textArea = this.editorPane;
+//        textArea.setText(scriptView.getSourceText());
+//        CompanionApp.LSP.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(scriptView.getURI(), "java", 0, UIUtils.getText(textArea))));
 
-        textArea.setBackground(new Color(60, 63, 65));
-        textArea.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            if (e.getType() == DocumentEvent.EventType.CHANGE)
-                return;
-
-            updateHighlighting();
-        });
-        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
-        textArea.getActionMap().put("autoComplete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleAutoCompletion();
-            }
-        });
+//        textArea.setBackground(new Color(60, 63, 65));
+//        textArea.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+//            if (e.getType() == DocumentEvent.EventType.CHANGE)
+//                return;
+//
+//            updateHighlighting();
+//        });
+//        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
+//        textArea.getActionMap().put("autoComplete", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                handleAutoCompletion();
+//            }
+//        });
 
         setupLogPanel();
-        setupLSP();
-        updateHighlighting();
+//        setupLSP();
+//        updateHighlighting();
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, this, (m) -> {
             if (m.getScriptId() != this.scriptId)
@@ -219,7 +223,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void updateHighlighting() {
-        SwingUtilities.invokeLater(() -> {
+        //TODO: Semantic highlighting
+        /*SwingUtilities.invokeLater(() -> {
             CompanionApp.LSP.semanticsTokenFull(new SemanticTokensParams(new TextDocumentIdentifier(scriptView.getURI())))
                     .thenAccept(res -> {
                         var styledDocument = this.editorPane.getStyledDocument();
@@ -227,7 +232,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         CodeUtils.highlightJavaCodeJavaParser(this.editorPane);
                         CodeUtils.highlightJavaCodeSemanticTokens(res.getData(), this.editorPane);
                     });
-        });
+        });*/
     }
 
     private void setupLSP() {

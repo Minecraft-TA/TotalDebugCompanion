@@ -183,9 +183,11 @@ public class CompanionApp {
             SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage("All channels"));
         }));
 
-        MainWindow.INSTANCE.setSize(1280, 720);
-        MainWindow.INSTANCE.setVisible(true);
-        UIUtils.centerJFrame(MainWindow.INSTANCE);
+        SwingUtilities.invokeLater(() -> {
+            MainWindow.INSTANCE.setSize(1280, 720);
+            MainWindow.INSTANCE.setVisible(true);
+            UIUtils.centerJFrame(MainWindow.INSTANCE);
+        });
     }
 
     private static void setupEclipseProject() {

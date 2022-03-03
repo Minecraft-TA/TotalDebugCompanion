@@ -5,6 +5,9 @@ import com.github.javaparser.JavaToken;
 import com.github.javaparser.Range;
 import com.github.javaparser.TokenRange;
 import org.eclipse.lsp4j.SemanticTokensLegend;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
+import org.fife.ui.rsyntaxtextarea.TokenTypes;
 
 import javax.swing.*;
 import javax.swing.text.MutableAttributeSet;
@@ -55,7 +58,34 @@ public class CodeUtils {
         StyleConstants.setForeground(PROPERTY_ATTRIBUTES, Color.decode("#E06C75"));
     }
 
-    public static void highlightAndSetJavaCodeAnsi(JTextPane component, String ansiText) {
+    public static void initJavaColors(SyntaxScheme scheme) {
+        scheme.getStyle(TokenTypes.RESERVED_WORD).foreground = Color.decode("#C679DD");
+        scheme.getStyle(TokenTypes.RESERVED_WORD_2).foreground = Color.decode("#C679DD");
+        scheme.getStyle(TokenTypes.DATA_TYPE).foreground = Color.decode("#C679DD");
+        scheme.getStyle(TokenTypes.VARIABLE).foreground = Color.decode("#C67900");
+
+        scheme.getStyle(TokenTypes.LITERAL_BOOLEAN).foreground = Color.decode("#D19A66");
+        scheme.getStyle(TokenTypes.LITERAL_NUMBER_DECIMAL_INT).foreground = Color.decode("#D19A66");
+        scheme.getStyle(TokenTypes.LITERAL_NUMBER_FLOAT).foreground = Color.decode("#D19A66");
+        scheme.getStyle(TokenTypes.LITERAL_NUMBER_HEXADECIMAL).foreground = Color.decode("#D19A66");
+
+        scheme.getStyle(TokenTypes.LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.decode("#98C379");
+        scheme.getStyle(TokenTypes.LITERAL_CHAR).foreground = Color.decode("#98C379");
+
+        scheme.getStyle(TokenTypes.COMMENT_MULTILINE).foreground = Color.decode("#6e7f7f");
+        scheme.getStyle(TokenTypes.COMMENT_MARKUP).foreground = Color.decode("#6e7f7f");
+        scheme.getStyle(TokenTypes.COMMENT_DOCUMENTATION).foreground = Color.decode("#6e7f7f");
+        scheme.getStyle(TokenTypes.COMMENT_EOL).foreground = Color.decode("#6e7f7f");
+
+        scheme.getStyle(TokenTypes.SEPARATOR).foreground = UIManager.getColor("EditorPane.foreground");
+        scheme.getStyle(TokenTypes.OPERATOR).foreground = UIManager.getColor("EditorPane.foreground");
+
+        scheme.getStyle(TokenTypes.ANNOTATION).foreground = Color.decode("#E5C17C");
+        //throws XXX for some reason
+        scheme.getStyle(TokenTypes.FUNCTION).foreground = Color.decode("#E5C17C");
+    }
+
+    public static void highlightAndSetJavaCodeAnsi(RSyntaxTextArea component, String ansiText) {
         var newString = new StringBuilder((int) (ansiText.length() * 0.75));
         var highlights = new ArrayList<HighlightData>();
 
@@ -105,9 +135,12 @@ public class CodeUtils {
         }
 
         component.setText(newString.toString());
-        for (HighlightData highlight : highlights) {
+        //TODO: ANSI Highlighting
+        component.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
+        CodeUtils.initJavaColors(component.getSyntaxScheme());
+        /*for (HighlightData highlight : highlights) {
             component.getStyledDocument().setCharacterAttributes(highlight.offsetStart, highlight.offsetEnd - highlight.offsetStart, highlight.attributeSet, true);
-        }
+        }*/
     }
 
     public static void highlightJavaCodeJavaParser(JTextPane component) {

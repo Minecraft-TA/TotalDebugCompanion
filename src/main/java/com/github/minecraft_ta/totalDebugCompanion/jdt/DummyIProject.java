@@ -81,14 +81,14 @@ class DummyIProject implements IProject {
     @Override
     public IFile getFile(String name) {
         if (name.equals(".classpath"))
-            return new DummyFile("""
+            return new DummyFile(new StringBufferImpl("""
                     <?xml version="1.0" encoding="UTF-8"?>
                     <classpath>
                         <classpathentry kind="src" path="src"/>
                         <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
                         <classpathentry kind="output" path="bin"/>
                     </classpath>
-                    """);
+                    """));
         return null;
     }
 

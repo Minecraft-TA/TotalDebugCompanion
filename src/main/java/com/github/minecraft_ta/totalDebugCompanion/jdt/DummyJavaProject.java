@@ -23,11 +23,11 @@ class DummyJavaProject extends JavaProject {
 
     @Override
     public SearchableEnvironment newSearchableNameEnvironment(WorkingCopyOwner owner, boolean excludeTestCode) throws JavaModelException {
-        return new SearchableEnvironment(this, new ICompilationUnit[]{new CompilationUnit((PackageFragment) DummyJavaProject.this.getPackageFragmentRoot(new Workspace().newResource(new org.eclipse.core.runtime.Path("dummy/Package"), IResource.FOLDER)).getPackageFragment("Package"),
+        return new SearchableEnvironment(this, new ICompilationUnit[]{new CompilationUnit((PackageFragment) DummyJavaProject.this.getPackageFragmentRoot(new Workspace().newResource(new org.eclipse.core.runtime.Path("dummy/Package"), IResource.FILE)).getPackageFragment("Package"),
                 "HalloDude", DefaultWorkingCopyOwner.PRIMARY) {
             @Override
             public IResource resource(PackageFragmentRoot root) {
-                return new DummyFile("public class HalloDude {public static void test() {}}");
+                return new DummyFile(new StringBufferImpl("public class HalloDude {public static void test() {}}"));
             }
 
             @Override

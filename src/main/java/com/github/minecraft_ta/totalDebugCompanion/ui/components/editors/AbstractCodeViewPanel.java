@@ -1,13 +1,16 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.BottomInformationBar;
+import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
@@ -51,6 +54,19 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorPane.setBackground(UIManager.getColor("TextPane.background"));
         this.editorPane.setForeground(UIManager.getColor("EditorPane.foreground"));
         this.editorPane.setSelectionColor(UIManager.getColor("EditorPane.selectionBackground"));
+        this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
+            if (e.getType() == DocumentEvent.EventType.CHANGE)
+                return;
+
+            try {
+                var document = this.editorPane.getDocument();
+                var field = document.getClass().getDeclaredField("tokenMaker");
+                field.setAccessible(true);
+                ((JavaTokenMaker) field.get(document)).reset(document.getText(0, document.getLength()));
+            } catch (Throwable ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
         add(this.editorScrollPane, BorderLayout.CENTER);
         add(this.bottomInformationBar, BorderLayout.SOUTH);

@@ -8,7 +8,7 @@ import org.eclipse.core.runtime.content.IContentType;
 
 class DummyContentManager extends ContentTypeManager {
 
-    ContentType boi;
+    private ContentType javaContentType;
 
     @Override
     public IContentType[] getAllContentTypes() {
@@ -21,9 +21,9 @@ class DummyContentManager extends ContentTypeManager {
     }
 
     private ContentType getJava() {
-        if (boi == null)
-            boi = ContentType.createContentType(new ContentTypeCatalog(this, 0), "1", "java", (byte) 1, new String[]{"java"}
-                    , new String[0], new String[0], "adfw", "ad", Maps.newHashMap(), null);
-        return boi;
+        if (javaContentType == null)
+            javaContentType = ContentType.createContentType(new ContentTypeCatalog(this, 0), "1", "java", (byte) 1, new String[]{"java"}
+                    , new String[0], new String[0], "java", "java", Maps.newHashMap(), null);
+        return javaContentType;
     }
 }

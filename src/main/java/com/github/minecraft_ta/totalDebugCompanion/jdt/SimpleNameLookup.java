@@ -52,7 +52,7 @@ class SimpleNameLookup extends NameLookup {
 
                 @Override
                 public IPackageFragment getPackageFragment() {
-                    return (PackageFragment) dummyJavaProject.getPackageFragmentRoot(new Workspace().newResource(new org.eclipse.core.runtime.Path("dummy/Package"), IResource.FOLDER)).getPackageFragment("");
+                    return (PackageFragment) dummyJavaProject.getPackageFragmentRoot(new Workspace().newResource(new org.eclipse.core.runtime.Path("dummy/Package"), IResource.FILE)).getPackageFragment("");
                 }
             });
     }

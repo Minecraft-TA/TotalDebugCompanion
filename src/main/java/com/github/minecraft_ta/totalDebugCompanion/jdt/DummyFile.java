@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.jdt.core.IBuffer;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -17,9 +18,9 @@ import java.util.Map;
 
 class DummyFile implements IFile {
 
-    private String contents;
+    private final IBuffer contents;
 
-    public DummyFile(String contents) {
+    public DummyFile(IBuffer contents) {
         this.contents = contents;
     }
 
@@ -85,7 +86,7 @@ class DummyFile implements IFile {
 
     @Override
     public InputStream getContents(boolean force) throws CoreException {
-        return new ByteArrayInputStream(this.contents.getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream(this.contents.getContents().getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

@@ -26,6 +26,9 @@ import com.github.tth05.scnet.Server;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -67,6 +70,13 @@ public class CompanionApp {
             return;
         }
 
+        TokenMakerFactory.setDefaultInstance(new AbstractTokenMakerFactory() {
+            @Override
+            protected void initTokenMakerMap() {
+                putMapping(RSyntaxTextArea.SYNTAX_STYLE_NONE, "org.fife.ui.rsyntaxtextarea.modes.PlainTextTokenMaker");
+                putMapping(RSyntaxTextArea.SYNTAX_STYLE_JAVA, "com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker");
+            }
+        });
         LSP = new JavaLanguageServer();
 
         int id = 1;

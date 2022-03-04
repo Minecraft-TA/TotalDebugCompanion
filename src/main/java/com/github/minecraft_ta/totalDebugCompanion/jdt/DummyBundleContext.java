@@ -9,6 +9,48 @@ import java.util.Dictionary;
 
 class DummyBundleContext implements BundleContext {
 
+    private static final ServiceReference CONTENT_MANAGER_SERVICE_REFERENCE = new ServiceReference() {
+        @Override
+        public Object getProperty(String key) {
+            return null;
+        }
+
+        @Override
+        public String[] getPropertyKeys() {
+            return new String[0];
+        }
+
+        @Override
+        public Bundle getBundle() {
+            return null;
+        }
+
+        @Override
+        public Bundle[] getUsingBundles() {
+            return new Bundle[0];
+        }
+
+        @Override
+        public boolean isAssignableTo(Bundle bundle, String className) {
+            return false;
+        }
+
+        @Override
+        public int compareTo(Object reference) {
+            return 0;
+        }
+
+        @Override
+        public Dictionary<String, Object> getProperties() {
+            return null;
+        }
+
+        @Override
+        public Object adapt(Class type) {
+            return null;
+        }
+    };
+
     @Override
     public String getProperty(String key) {
         return null;
@@ -101,47 +143,7 @@ class DummyBundleContext implements BundleContext {
 
     @Override
     public ServiceReference<?>[] getAllServiceReferences(String clazz, String filter) throws InvalidSyntaxException {
-        return new ServiceReference[]{new ServiceReference() {
-            @Override
-            public Object getProperty(String key) {
-                return null;
-            }
-
-            @Override
-            public String[] getPropertyKeys() {
-                return new String[0];
-            }
-
-            @Override
-            public Bundle getBundle() {
-                return null;
-            }
-
-            @Override
-            public Bundle[] getUsingBundles() {
-                return new Bundle[0];
-            }
-
-            @Override
-            public boolean isAssignableTo(Bundle bundle, String className) {
-                return false;
-            }
-
-            @Override
-            public int compareTo(Object reference) {
-                return 0;
-            }
-
-            @Override
-            public Dictionary<String, Object> getProperties() {
-                return null;
-            }
-
-            @Override
-            public Object adapt(Class type) {
-                return null;
-            }
-        }};
+        return new ServiceReference[]{CONTENT_MANAGER_SERVICE_REFERENCE};
     }
 
     @Override
@@ -161,7 +163,10 @@ class DummyBundleContext implements BundleContext {
 
     @Override
     public <S> S getService(ServiceReference<S> reference) {
-        return (S) new DummyContentManager();
+        if (reference == CONTENT_MANAGER_SERVICE_REFERENCE)
+            return (S) new DummyContentManager();
+
+        throw new UnsupportedOperationException("Tried to get service for unknown reference");
     }
 
     @Override

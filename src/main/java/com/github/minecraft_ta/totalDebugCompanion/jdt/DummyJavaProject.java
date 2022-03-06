@@ -18,7 +18,7 @@ class DummyJavaProject extends JavaProject {
 
     @Override
     public NameLookup newNameLookup(ICompilationUnit[] workingCopies, boolean excludeTestCode) throws JavaModelException {
-        return new SimpleNameLookup(this);
+        return new SimpleNameLookup();
     }
 
     @Override

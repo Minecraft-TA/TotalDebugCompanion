@@ -1,25 +1,19 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
-import org.eclipse.core.internal.resources.Workspace;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.internal.codeassist.impl.AssistSourceType;
 import org.eclipse.jdt.internal.core.IJavaElementRequestor;
 import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.NameLookup;
-import org.eclipse.jdt.internal.core.PackageFragment;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 class SimpleNameLookup extends NameLookup {
 
-    private final DummyJavaProject dummyJavaProject;
-
-    public SimpleNameLookup(DummyJavaProject dummyJavaProject) {
+    public SimpleNameLookup() {
         super(null, null, null, null, null);
-        this.dummyJavaProject = dummyJavaProject;
     }
 
     @Override
@@ -42,7 +36,7 @@ class SimpleNameLookup extends NameLookup {
             requestor.acceptType(new AssistSourceType(null, "Hallo", null, null) {
                 @Override
                 public JavaProject getJavaProject() {
-                    return dummyJavaProject;
+                    return JDTHacks.DUMMY_JAVA_PROJECT;
                 }
 
                 @Override
@@ -52,7 +46,7 @@ class SimpleNameLookup extends NameLookup {
 
                 @Override
                 public IPackageFragment getPackageFragment() {
-                    return (PackageFragment) dummyJavaProject.getPackageFragmentRoot(new Workspace().newResource(new org.eclipse.core.runtime.Path("dummy/Package"), IResource.FILE)).getPackageFragment("");
+                    return JDTHacks.createPackageFragment("");
                 }
             });
     }

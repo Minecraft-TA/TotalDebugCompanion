@@ -4,6 +4,7 @@ import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaToken;
 import com.github.javaparser.Range;
 import com.github.javaparser.TokenRange;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.ShadowedTokenTypes;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
@@ -81,6 +82,7 @@ public class CodeUtils {
         scheme.getStyle(TokenTypes.OPERATOR).foreground = UIManager.getColor("EditorPane.foreground");
 
         scheme.getStyle(TokenTypes.ANNOTATION).foreground = Color.decode("#E5C17C");
+        scheme.getStyle(ShadowedTokenTypes.TYPE).foreground = Color.decode("#E5C17C");
         //throws XXX for some reason
         scheme.getStyle(TokenTypes.FUNCTION).foreground = Color.decode("#E5C17C");
     }

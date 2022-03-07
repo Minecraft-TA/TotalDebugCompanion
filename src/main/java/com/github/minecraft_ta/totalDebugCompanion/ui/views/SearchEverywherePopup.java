@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 public class SearchEverywherePopup extends JFrame {
 
-    private static final ClassIndex CLASS_INDEX = new ClassIndex(CompanionApp.getRootPath().resolve("index").toAbsolutePath().normalize().toString());
+    public static final ClassIndex CLASS_INDEX = ClassIndex.fromFile(CompanionApp.getRootPath().resolve("index").toAbsolutePath().normalize().toString());
 
     private static final SearchEverywherePopup INSTANCE = new SearchEverywherePopup();
 
@@ -46,7 +46,7 @@ public class SearchEverywherePopup extends JFrame {
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var indexedClass = (IndexedClass) value;
                 var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ",
-                        indexedClass.getNameWithPackage().substring(0, indexedClass.getNameWithPackage().lastIndexOf('.')));
+                        indexedClass.getNameWithPackageDot().substring(0, indexedClass.getNameWithPackageDot().lastIndexOf('.')));
 
                 var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
@@ -163,7 +163,7 @@ public class SearchEverywherePopup extends JFrame {
         if (index < 0)
             return;
 
-        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(resultList.getModel().getElementAt(index).getNameWithPackage()));
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(resultList.getModel().getElementAt(index).getNameWithPackageDot()));
         setVisible(false);
     }
 }

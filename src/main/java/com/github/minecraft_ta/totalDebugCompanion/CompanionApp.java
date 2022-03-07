@@ -73,7 +73,6 @@ public class CompanionApp {
         TokenMakerFactory.setDefaultInstance(new AbstractTokenMakerFactory() {
             @Override
             protected void initTokenMakerMap() {
-                putMapping(RSyntaxTextArea.SYNTAX_STYLE_NONE, "org.fife.ui.rsyntaxtextarea.modes.PlainTextTokenMaker");
                 putMapping(RSyntaxTextArea.SYNTAX_STYLE_JAVA, "com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker");
             }
         });

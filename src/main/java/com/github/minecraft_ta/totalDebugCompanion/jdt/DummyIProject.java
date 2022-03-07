@@ -399,7 +399,7 @@ class DummyIProject implements IProject {
 
     @Override
     public String getName() {
-        return null;
+        return "dummy-folder";
     }
 
     @Override

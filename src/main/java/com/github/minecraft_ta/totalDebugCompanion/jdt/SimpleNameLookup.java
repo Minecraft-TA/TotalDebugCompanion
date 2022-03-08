@@ -3,7 +3,6 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.codeassist.impl.AssistSourceType;
 import org.eclipse.jdt.internal.core.IJavaElementRequestor;
 import org.eclipse.jdt.internal.core.JavaProject;
@@ -21,7 +20,7 @@ class SimpleNameLookup extends NameLookup {
 
     @Override
     public boolean isPackage(String[] pkgName) {
-        var packageName = pkgName.length == 1 ? "" : Util.concatWith(Arrays.copyOf(pkgName, pkgName.length - 1), '.');
+        var packageName = pkgName.length == 1 ? "" : Util.concatWith(Arrays.copyOf(pkgName, pkgName.length - 1), '/');
         var className = pkgName[pkgName.length - 1];
 
         //If it's not a class, it's a package. For now.
@@ -33,13 +32,7 @@ class SimpleNameLookup extends NameLookup {
 //        System.out.println("findType -> " + "typeName = " + typeName + ", packageName = " + packageName + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", checkRestrictions = " + checkRestrictions + ", moduleContext = " + Arrays.deepToString(moduleContext));
 
         if (SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName) != null) {
-            var type = new JIndexBinaryType(packageName, typeName);
-            try {
-                type.getElementInfo();
-            } catch (JavaModelException e) {
-                e.printStackTrace();
-            }
-            return JDTHacks.createNameLookupAnswer(type, null, null);
+            return JDTHacks.createNameLookupAnswer(new JIndexBinaryType(packageName, typeName), null, null);
         }
         return null;
     }

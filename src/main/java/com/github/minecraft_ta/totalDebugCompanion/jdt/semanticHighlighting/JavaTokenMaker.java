@@ -35,14 +35,19 @@ public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenM
         var currentToken = firstToken;
 
         while (currentToken != null) {
+            //Yes, this is not efficient, but who cares for now ¯\_(ツ)_/¯
             for (Token token : this.tokens) {
-                if (token.getTextOffset() == currentToken.getOffset() && currentToken.getType() != TokenTypes.NULL) {
+                if (currentToken.getType() == TokenTypes.NULL)
+                    continue;
+
+                if (token.getTextOffset() == currentToken.getOffset()) {
                     currentToken.setType(token.getType());
                 }
             }
 
             currentToken = currentToken.getNextToken();
         }
+
         return firstToken;
     }
 }

@@ -15,7 +15,7 @@ public class InternalCompilationUnit extends CompilationUnit {
 
     public InternalCompilationUnit(String name, String contents) {
         //TODO: is the name relevant?
-        super(null, name, DefaultWorkingCopyOwner.PRIMARY);
+        super(JDTHacks.createPackageFragment(extractPackageName(contents)), name, DefaultWorkingCopyOwner.PRIMARY);
         this.buffer = new StringBufferImpl(contents);
     }
 
@@ -44,4 +44,19 @@ public class InternalCompilationUnit extends CompilationUnit {
         return JDTHacks.DUMMY_JAVA_PROJECT;
     }
 
+    private static String extractPackageName(String contents) {
+        for (int i = 0; i < Math.min(100, contents.length()); i++) {
+            char c = contents.charAt(i);
+            if (c == '\n') {
+                String firstLine = contents.substring(0, i);
+                if (!firstLine.startsWith("package ")) {
+                    return "";
+                } else {
+                    return firstLine.substring("package ".length(), i - 1 /* semi-colon */);
+                }
+            }
+        }
+
+        return "";
+    }
 }

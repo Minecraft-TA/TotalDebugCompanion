@@ -3,7 +3,6 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
-import org.eclipse.jdt.internal.core.util.Util;
 
 import java.lang.reflect.Modifier;
 
@@ -144,6 +143,6 @@ public class DummyIBinaryType implements IBinaryType {
 
     @Override
     public char[] getFileName() {
-        return Util.concat(getName(), ".class".toCharArray());
+        return null;
     }
 }

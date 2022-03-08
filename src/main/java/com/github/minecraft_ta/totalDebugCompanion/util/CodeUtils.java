@@ -136,10 +136,10 @@ public class CodeUtils {
             }
         }
 
-        component.setText(newString.toString());
-        //TODO: ANSI Highlighting
         component.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
         CodeUtils.initJavaColors(component.getSyntaxScheme());
+        component.setText(newString.toString());
+        //TODO: ANSI Highlighting
         /*for (HighlightData highlight : highlights) {
             component.getStyledDocument().setCharacterAttributes(highlight.offsetStart, highlight.offsetEnd - highlight.offsetStart, highlight.attributeSet, true);
         }*/

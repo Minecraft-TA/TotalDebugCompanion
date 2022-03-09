@@ -63,7 +63,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
                 ChunkGridWindow.open();
             }
         });
-        toolsMenu.add(new AbstractAction("Packet Logger") {
+        toolsMenu.add(new AbstractAction("Packet Logger", Icons.UP_DOWN) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //Focus on the packet logger tab if it's already open

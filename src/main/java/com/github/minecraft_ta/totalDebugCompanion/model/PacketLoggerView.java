@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.model;
 
+import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.PacketLoggerViewPanel;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public class PacketLoggerView implements IEditorPanel {
 
     @Override
     public Icon getIcon() {
-        return null;
+        return Icons.UP_DOWN;
     }
 
     @Override

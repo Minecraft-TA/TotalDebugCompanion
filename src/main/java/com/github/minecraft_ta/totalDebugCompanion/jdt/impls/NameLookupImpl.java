@@ -1,5 +1,7 @@
-package com.github.minecraft_ta.totalDebugCompanion.jdt;
+package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -12,9 +14,9 @@ import org.eclipse.jdt.internal.core.util.Util;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
-class SimpleNameLookup extends NameLookup {
+public class NameLookupImpl extends NameLookup {
 
-    public SimpleNameLookup() {
+    public NameLookupImpl() {
         super(null, null, null, null, null);
     }
 
@@ -32,7 +34,7 @@ class SimpleNameLookup extends NameLookup {
 //        System.out.println("findType -> " + "typeName = " + typeName + ", packageName = " + packageName + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", checkRestrictions = " + checkRestrictions + ", moduleContext = " + Arrays.deepToString(moduleContext));
 
         if (SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName) != null) {
-            return JDTHacks.createNameLookupAnswer(new JIndexBinaryType(packageName, typeName), null, null);
+            return JDTHacks.createNameLookupAnswer(new JIndexResolvedBinaryType(packageName, typeName), null, null);
         }
         return null;
     }

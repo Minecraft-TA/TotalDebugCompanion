@@ -30,7 +30,6 @@ public class AbstractCodeViewPanel extends JPanel {
         }
     }
 
-
     protected final RSyntaxTextArea editorPane = new RSyntaxTextArea();
     protected final RTextScrollPane editorScrollPane = new RTextScrollPane(editorPane);
 

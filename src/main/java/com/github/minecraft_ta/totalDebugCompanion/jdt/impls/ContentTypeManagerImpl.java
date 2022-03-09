@@ -1,4 +1,4 @@
-package com.github.minecraft_ta.totalDebugCompanion.jdt;
+package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 
 import com.google.common.collect.Maps;
 import org.eclipse.core.internal.content.ContentType;
@@ -6,7 +6,7 @@ import org.eclipse.core.internal.content.ContentTypeCatalog;
 import org.eclipse.core.internal.content.ContentTypeManager;
 import org.eclipse.core.runtime.content.IContentType;
 
-class DummyContentManager extends ContentTypeManager {
+public class ContentTypeManagerImpl extends ContentTypeManager {
 
     private ContentType javaContentType;
 

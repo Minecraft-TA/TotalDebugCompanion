@@ -1,5 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.BundleContextImpl;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.ContentTypeManagerImpl;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.JavaProjectImpl;
 import org.eclipse.core.internal.resources.Folder;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.internal.runtime.DataArea;
@@ -42,7 +45,7 @@ public class JDTHacks {
             throw new RuntimeException(e);
         }
 
-        DUMMY_JAVA_PROJECT = new DummyJavaProject();
+        DUMMY_JAVA_PROJECT = new JavaProjectImpl();
         PACKAGE_FRAGMENT_ROOT = createPackageFragmentRoot();
     }
 
@@ -482,7 +485,7 @@ public class JDTHacks {
         //bundleContext
         var field = InternalPlatform.class.getDeclaredField("context");
         field.setAccessible(true);
-        field.set(InternalPlatform.getDefault(), new DummyBundleContext());
+        field.set(InternalPlatform.getDefault(), new BundleContextImpl());
 
         //bundle
         field = ResourcesPlugin.class.getSuperclass().getDeclaredField("bundle");
@@ -497,7 +500,7 @@ public class JDTHacks {
         //contentTracker
         field = InternalPlatform.class.getDeclaredField("contentTracker");
         field.setAccessible(true);
-        var value = new ServiceTracker<IContentTypeManager, IContentTypeManager>(InternalPlatform.getDefault().getBundleContext(), DummyContentManager.class.getName(), null);
+        var value = new ServiceTracker<IContentTypeManager, IContentTypeManager>(InternalPlatform.getDefault().getBundleContext(), ContentTypeManagerImpl.class.getName(), null);
         value.open(true);
         field.set(InternalPlatform.getDefault(), value);
 

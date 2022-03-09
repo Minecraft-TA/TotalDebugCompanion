@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 
@@ -16,7 +17,7 @@ public class Test {
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         var ast = (CompilationUnit) parser.createAST(null);*/
 
-        var unit = new InternalCompilationUnit("Test", "public class Test {public static void test() {Hallo}}");
+        var unit = new CompilationUnitImpl("Test", "public class Test {public static void test() {Hallo}}");
 
         var time = System.nanoTime();
 

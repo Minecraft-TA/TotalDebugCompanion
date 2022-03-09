@@ -1,5 +1,6 @@
-package com.github.minecraft_ta.totalDebugCompanion.jdt;
+package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -9,19 +10,19 @@ import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 
-public class InternalCompilationUnit extends CompilationUnit {
+public class CompilationUnitImpl extends CompilationUnit {
 
     private final IBuffer buffer;
 
-    public InternalCompilationUnit(String name, String contents) {
+    public CompilationUnitImpl(String name, String contents) {
         //TODO: is the name relevant?
         super(JDTHacks.createPackageFragment(extractPackageName(contents)), name, DefaultWorkingCopyOwner.PRIMARY);
-        this.buffer = new StringBufferImpl(contents);
+        this.buffer = new BufferImpl(contents);
     }
 
     @Override
     public IResource resource(PackageFragmentRoot root) {
-        return new DummyFile(this.buffer);
+        return new FileImpl(this.buffer);
     }
 
     @Override

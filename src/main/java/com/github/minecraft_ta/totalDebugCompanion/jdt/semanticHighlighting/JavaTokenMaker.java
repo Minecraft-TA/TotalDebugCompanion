@@ -1,6 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting;
 
-import com.github.minecraft_ta.totalDebugCompanion.jdt.InternalCompilationUnit;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -17,8 +17,8 @@ public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenM
 
     public void reset(String text) {
         long t = System.nanoTime();
-        ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
-        parser.setSource(new InternalCompilationUnit("Test", text));
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
+        parser.setSource(new CompilationUnitImpl("Test", text));
         parser.setResolveBindings(true);
         parser.setStatementsRecovery(true);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);

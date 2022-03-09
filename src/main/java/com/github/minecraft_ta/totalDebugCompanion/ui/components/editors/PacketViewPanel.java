@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.CapturePacketMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketContentMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -19,13 +20,15 @@ import java.awt.*;
 
 public class PacketViewPanel extends JPanel {
 
+    private boolean isCapturing;
+
     public PacketViewPanel(PacketView packetView) {
         setLayout(new BorderLayout(0, 0));
 
         //Sends a packet to the game to get the packet content
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new CapturePacketMessage(packetView.getPacket(), false));
 
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Packets");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         JTree tree = new JTree(root);
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
@@ -43,9 +46,50 @@ public class PacketViewPanel extends JPanel {
         treeUI.setCollapsedIcon(Icons.RIGHT_ARROW);
         treeUI.setExpandedIcon(Icons.DOWN_ARROW);
 
+        //Adds a toggleable run button to the top of the panel
+        FlatIconButton runButton = new FlatIconButton(Icons.RUN, true) {
+            @Override
+            public void setToggled(boolean b) {
+                super.setToggled(b);
+                this.setIcon(b ? Icons.PAUSE : Icons.RUN);
+            }
+        };
+
+        //Adds a clear button to send a message to the game to clear the packet map
+        FlatIconButton clearButton = new FlatIconButton(Icons.CLEAR, false);
+
+        //Adds a ComboBox to select the amount of packets to show
+        JComboBox<Integer> packetCountSelector = new JComboBox<>(new Integer[]{1, 5, 10, 20, 50, 100, 200, 500, 1000});
+        packetCountSelector.setMaximumSize(new Dimension(200, (int) packetCountSelector.getPreferredSize().getHeight()));
+        packetCountSelector.setSelectedIndex(5);
+
+        //Add a header for the buttons and the direction selector
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
+        header.add(runButton);
+        header.add(Box.createHorizontalStrut(5));
+        header.add(clearButton);
+        header.add(Box.createHorizontalStrut(5));
+        header.add(packetCountSelector);
+        add(header, BorderLayout.NORTH);
+
+        //Pauses incoming packets when the run button is toggled
+        runButton.addToggleListener(b -> {
+            this.isCapturing = b;
+        });
+
+        //Clears the packet map when the clear button is pressed
+        clearButton.addActionListener(e -> {
+            root.removeAllChildren();
+            tree.updateUI();
+        });
 
         //Adds a packet and its content to the tree.
         CompanionApp.SERVER.getMessageBus().listenAlways(PacketContentMessage.class, this, message -> {
+            //Return if logging is paused or if we already have more packets than the packet count selector allows
+            //noinspection ConstantConditions
+            if (!isCapturing || root.getChildCount() >= (int) packetCountSelector.getSelectedItem()) return;
+
             if (message.getPacketName().equals(packetView.getPacket())) {
                 String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel());
                 DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), packetName, Type.VALUE);

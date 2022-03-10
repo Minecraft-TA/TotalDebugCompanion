@@ -76,6 +76,10 @@ public class PacketLoggerViewPanel extends JPanel {
             timeLabel.setText(SIMPLE_DATE_FORMAT.format(time));
         });
 
+        //Adds a placeholder to the panel
+        JLabel placeholder = new JLabel("Press the run button to start logging packets");
+        placeholder.setOpaque(false);
+
         //Add a header for the buttons and the direction selector
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
@@ -114,6 +118,12 @@ public class PacketLoggerViewPanel extends JPanel {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.setGridColor(getBackground());
         table.getColumnModel().getColumn(0).setPreferredWidth(280);
+        table.setLayout(new GridBagLayout());
+        table.add(placeholder);
+        table.getModel().addTableModelListener(e -> {
+            TableModel m = (TableModel) e.getSource();
+            placeholder.setVisible(m.getRowCount() == 0);
+        });
         add(new JScrollPane(table));
 
         CompanionApp.SERVER.getMessageBus().listenAlways(IncomingPacketsMessage.class, this, incomingPacketsMessage -> {

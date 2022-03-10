@@ -22,6 +22,11 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public boolean isPackage(String[] pkgName) {
+        //Hack, because JIndex has no actual isPackage function, causing unresolved types to be seen as packages
+        // sometimes
+        if (Character.isUpperCase(pkgName[0].charAt(0)))
+            return false;
+
         var packageName = pkgName.length == 1 ? "" : Util.concatWith(Arrays.copyOf(pkgName, pkgName.length - 1), '/');
         var className = pkgName[pkgName.length - 1];
 
@@ -33,8 +38,9 @@ public class NameLookupImpl extends NameLookup {
     public Answer findType(String typeName, String packageName, boolean partialMatch, int acceptFlags, boolean checkRestrictions, IPackageFragmentRoot[] moduleContext) {
 //        System.out.println("findType -> " + "typeName = " + typeName + ", packageName = " + packageName + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", checkRestrictions = " + checkRestrictions + ", moduleContext = " + Arrays.deepToString(moduleContext));
 
-        if (SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName) != null) {
-            return JDTHacks.createNameLookupAnswer(new JIndexResolvedBinaryType(packageName, typeName), null, null);
+        var foundClass = SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName);
+        if (foundClass != null) {
+            return JDTHacks.createNameLookupAnswer(new JIndexResolvedBinaryType(foundClass), null, null);
         }
         return null;
     }

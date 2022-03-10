@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.tth05:jindex:0.0.5")
+    implementation("com.github.tth05:jindex:0.0.6")
     implementation("com.github.tth05:SCNet:18bc6c5")
 
     implementation('com.formdev:flatlaf:2.0.1')

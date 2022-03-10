@@ -1,11 +1,9 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting;
 
-import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.IBinding;
-import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.*;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenImpl;
+import org.fife.ui.rsyntaxtextarea.TokenTypes;
 
 import java.util.List;
 
@@ -34,6 +32,8 @@ public class SemanticTokensVisitor extends ASTVisitor {
     private int getTokenType(IBinding binding) {
         return switch (binding.getKind()) {
             case IBinding.TYPE -> ShadowedTokenTypes.TYPE;
+            case IBinding.METHOD -> TokenTypes.FUNCTION;
+            case IBinding.VARIABLE -> ((IVariableBinding) binding).isField() ? TokenTypes.VARIABLE : -1;
             default -> -1;
         };
     }

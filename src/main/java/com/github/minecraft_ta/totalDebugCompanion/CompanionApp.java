@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import com.github.minecraft_ta.totalDebugCompanion.messages.FocusWindowMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.ReadyMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
@@ -21,6 +22,9 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.Server;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
@@ -123,6 +127,16 @@ public class CompanionApp {
     }
 
     private static void setupScripts() {
+        //This forces a lot of JDT class loading. By doing this here, we don't have to do it later when opening a file,
+        // thus making the UI more responsive.
+        new Thread(() -> {
+            ASTParser parser = ASTParser.newParser(AST.JLS8);
+            parser.setSource(new CompilationUnitImpl("Test", "class Test{}"));
+            parser.setResolveBindings(true);
+            parser.setKind(ASTParser.K_COMPILATION_UNIT);
+            var ast = (CompilationUnit) parser.createAST(null);
+        }).start();
+
         FileUtils.createIfNotExists(ROOT_PATH.resolve("scripts"), true);
         BaseScript.writeToFileIfNotExists();
     }

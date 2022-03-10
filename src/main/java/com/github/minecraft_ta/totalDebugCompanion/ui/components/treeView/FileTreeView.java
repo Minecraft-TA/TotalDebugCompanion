@@ -43,7 +43,7 @@ public class FileTreeView extends JScrollPane {
                 return;
 
             if (item instanceof FileSystemFileItem fileItem) {
-                if (node.getParent().getUserObject().getName().equals("src")) {
+                if (node.getParent().getUserObject().getName().equals("scripts")) {
                     var name = fileItem.getName().replace(".java", "");
                     if (name.equals("BaseScript"))
                         tabs.openEditorTab(new BaseScriptView(name));
@@ -75,7 +75,7 @@ public class FileTreeView extends JScrollPane {
                 if (splitIndex != -1)
                     item.setRenderedName(TextUtils.htmlHighlightString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
 
-                if (path.getParent().getFileName().toString().equals("src"))
+                if (path.getParent().getFileName().toString().equals("scripts"))
                     item.setIcon(Icons.JAVA_FILE);
                 else
                     item.setIcon(Icons.JAVA_CLASS);

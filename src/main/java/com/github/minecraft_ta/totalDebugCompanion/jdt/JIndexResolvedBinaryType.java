@@ -1,20 +1,20 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
-import org.eclipse.jdt.core.JavaModelException;
+import com.github.tth05.jindex.IndexedClass;
 import org.eclipse.jdt.internal.core.CompilationUnit;
 import org.eclipse.jdt.internal.core.ResolvedBinaryType;
 
 public class JIndexResolvedBinaryType extends ResolvedBinaryType {
 
-    private final String packageName;
+    private final JIndexBinaryType binaryType;
 
-    public JIndexResolvedBinaryType(String packageName, String name) {
-        super(new CompilationUnit(JDTHacks.createPackageFragment(packageName), name, null), name, "some unique key");
-        this.packageName = packageName;
+    public JIndexResolvedBinaryType(IndexedClass indexedClass) {
+        super(new CompilationUnit(JDTHacks.createPackageFragment(indexedClass.getPackage()), indexedClass.getName(), null), indexedClass.getName(), "some unique key");
+        this.binaryType = new JIndexBinaryType(indexedClass);
     }
 
     @Override
-    public Object getElementInfo() throws JavaModelException {
-        return new JIndexBinaryType(this.packageName, this.name);
+    public Object getElementInfo() {
+        return this.binaryType;
     }
 }

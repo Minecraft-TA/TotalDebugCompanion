@@ -80,8 +80,9 @@ public class CodeUtils {
 
         scheme.getStyle(TokenTypes.ANNOTATION).foreground = Color.decode("#E5C17C");
         scheme.getStyle(ShadowedTokenTypes.TYPE).foreground = Color.decode("#E5C17C");
-        //throws XXX for some reason
-        scheme.getStyle(TokenTypes.FUNCTION).foreground = Color.decode("#E5C17C");
+
+        scheme.getStyle(TokenTypes.FUNCTION).foreground = Color.decode("#61AEEF");
+        scheme.getStyle(ShadowedTokenTypes.FIELD).foreground = Color.decode("#E06C75");
     }
 
     public static void highlightAndSetJavaCodeAnsi(RSyntaxTextArea component, String ansiText) {

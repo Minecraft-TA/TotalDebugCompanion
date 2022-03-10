@@ -66,6 +66,11 @@ public class FlatIconButton extends JButton {
         }
     }
 
+    @Override
+    public void setIcon(Icon icon) {
+        super.setIcon(new FlatSVGIcon((FlatSVGIcon) icon));
+    }
+
     public boolean isToggled() {
         return this.state;
     }

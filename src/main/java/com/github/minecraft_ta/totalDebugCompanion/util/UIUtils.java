@@ -89,19 +89,19 @@ public class UIUtils {
         }
     }
 
-    public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
+   /* public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
         var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
         offset += pos.getCharacter();
         return offset;
-    }
+    }*/
 
-    public static org.eclipse.lsp4j.Position offsetToPosition(JTextComponent c, int offset) {
+    /*public static org.eclipse.lsp4j.Position offsetToPosition(JTextComponent c, int offset) {
         var defaultRootElement = c.getDocument().getDefaultRootElement();
         var line = defaultRootElement.getElementIndex(offset);
         var lineElement = defaultRootElement.getElement(line);
         var column = (offset - lineElement.getStartOffset());
         return new org.eclipse.lsp4j.Position(line, column);
-    }
+    }*/
 
     public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
         try {

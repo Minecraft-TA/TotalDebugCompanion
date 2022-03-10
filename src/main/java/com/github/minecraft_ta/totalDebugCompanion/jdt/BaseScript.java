@@ -1,6 +1,7 @@
-package com.github.minecraft_ta.totalDebugCompanion.lsp;
+package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
-import org.eclipse.xtext.xbase.lib.Pair;
+import com.github.javaparser.utils.Pair;
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -74,29 +75,28 @@ public class BaseScript {
             """.replace("    ", "\t");
     //language=Java
     private static final String BASE_SCRIPT = BASE_SCRIPT_IMPORTS + BASE_SCRIPT_TEXT;
-    private final Path path;
+    private static final Path PATH = CompanionApp.getRootPath().resolve("scripts").resolve("BaseScript.java");
 
-    public BaseScript(Path path) {
-        this.path = path;
+    private BaseScript() {
     }
 
-    public String mergeWithNormalScript(String scriptText) {
+    public static String mergeWithNormalScript(String scriptText) {
         var pair = extractImports(getText());
-        return pair.getKey() + scriptText + pair.getValue();
+        return pair.a + scriptText + pair.b;
     }
 
-    public void writeToFileIfNotExists() {
+    public static void writeToFileIfNotExists() {
         try {
-            if (!Files.exists(this.path))
-                Files.writeString(this.path, BASE_SCRIPT);
+            if (!Files.exists(PATH))
+                Files.writeString(PATH, BASE_SCRIPT);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public String getText() {
+    public static String getText() {
         try {
-            return Files.readString(this.path).replace("\r\n", "\n");
+            return Files.readString(PATH).replace("\r\n", "\n");
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -111,6 +111,6 @@ public class BaseScript {
             imports.append(matcher.group());
         }
 
-        return Pair.of(imports.toString(), code.replaceAll(IMPORT_PATTERN.pattern() + "(\\r\\n|\\r|\\n)", ""));
+        return new Pair<>(imports.toString(), code.replaceAll(IMPORT_PATTERN.pattern() + "(\\r\\n|\\r|\\n)", ""));
     }
 }

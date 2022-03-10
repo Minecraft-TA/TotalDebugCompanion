@@ -2,7 +2,6 @@ package com.github.minecraft_ta.totalDebugCompanion.model;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.ScriptPanel;
 
@@ -19,7 +18,7 @@ public class ScriptView implements IEditorPanel {
     protected ScriptPanel scriptPanel;
 
     public ScriptView(String scriptName) {
-        this.path = JavaLanguageServer.SRC_DIR.resolve(scriptName + ".java");
+        this.path = CompanionApp.getRootPath().resolve("scripts").resolve(scriptName + ".java");
         try {
             if (!Files.exists(this.path)) {
                 this.text = """

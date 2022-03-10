@@ -1,8 +1,5 @@
 package com.github.minecraft_ta.totalDebugCompanion.lsp.diagnostics;
 
-import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
-import org.eclipse.lsp4j.Diagnostic;
-
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -19,7 +16,7 @@ public class DiagnosticsManager {
     private final Map<String, JTextComponent> editors = new HashMap<>();
     private final Map<String, List<Object>> currentHighlights = new HashMap<>();
 
-    public void publishDiagnostics(String uri, List<Diagnostic> diagnostics) {
+   /* public void publishDiagnostics(String uri, List<Diagnostic> diagnostics) {
         var editor = this.editors.get(uri);
         if (editor == null)
             return;
@@ -47,7 +44,7 @@ public class DiagnosticsManager {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
     public void clearAllHighlights(String uri) {
         var editor = this.editors.get(uri);

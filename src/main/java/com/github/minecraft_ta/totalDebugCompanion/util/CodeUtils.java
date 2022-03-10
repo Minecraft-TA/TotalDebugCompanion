@@ -5,7 +5,6 @@ import com.github.javaparser.JavaToken;
 import com.github.javaparser.Range;
 import com.github.javaparser.TokenRange;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.ShadowedTokenTypes;
-import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rsyntaxtextarea.TokenTypes;
@@ -17,7 +16,6 @@ import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CodeUtils {
@@ -32,7 +30,6 @@ public class CodeUtils {
     private static final SimpleAttributeSet ITALIC_TYPE_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet PROPERTY_ATTRIBUTES = new SimpleAttributeSet();
 
-    private static SemanticTokensLegend tokenLegend;
     private static final Map<Integer, MutableAttributeSet> colorToAttributeSetMap = new HashMap<>();
 
     static {
@@ -169,46 +166,6 @@ public class CodeUtils {
         }
     }
 
-    public static void highlightJavaCodeSemanticTokens(List<Integer> data, JTextPane component) {
-        int line = 0;
-        int column = 0;
-        for (int i = 0; i < data.size(); i += 5) {
-            var relativeLine = data.get(i);
-            if (relativeLine != 0)
-                column = 0;
-            line += relativeLine;
-            column += data.get(i + 1);
-
-            var tokenLength = data.get(i + 2);
-            var tokenType = tokenLegend.getTokenTypes().get(data.get(i + 3));
-            //Token modifiers are ignored for now
-            var tokenModifiers = data.get(i + 4);
-            /*var tokenModifierList = IntStream.range(0, 12)
-                    .map(shift -> ((tokenModifiers >> shift) & 0b1) == 1 ? shift : -1)
-                    .filter(shift -> shift != -1)
-                    .mapToObj(index -> tokenLegend.getTokenModifiers().get(index)).toList();*/
-
-            var colors = switch (tokenType) {
-                case "method" -> METHOD_ATTRIBUTES;
-                case "class", "annotation" -> TYPE_ATTRIBUTES;
-                case "interface" -> ITALIC_TYPE_ATTRIBUTES;
-                case "property" -> PROPERTY_ATTRIBUTES;
-                case "namespace", "modifier", "parameter", "variable" -> null;
-                default -> {
-                    System.out.println("Unknown highlight token" + tokenType);
-                    yield null;
-                }
-            };
-
-            if (colors != null) {
-                var rootElement = component.getDocument().getDefaultRootElement();
-                var element = rootElement.getElement(line);
-
-                component.getStyledDocument().setCharacterAttributes(element.getStartOffset() + column, tokenLength, colors, true);
-            }
-        }
-    }
-
     private static SimpleAttributeSet getColorCode(JavaToken token) {
         return switch (token.getCategory()) {
             case KEYWORD -> KEYWORD_ATTRIBUTES;
@@ -220,10 +177,6 @@ public class CodeUtils {
             case COMMENT -> COMMENT_ATTRIBUTES;
             default -> null;
         };
-    }
-
-    public static void setTokenLegend(SemanticTokensLegend legend) {
-        tokenLegend = legend;
     }
 
     record HighlightData(int offsetStart, int offsetEnd, MutableAttributeSet attributeSet) {}

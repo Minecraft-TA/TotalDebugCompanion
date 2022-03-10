@@ -2,7 +2,6 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.BaseScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
@@ -85,7 +84,7 @@ public class FileTreeView extends JScrollPane {
         });
 
         tree.addRootNodes(
-                tree.getItemFactory().createFileSystemDirectoryItem(JavaLanguageServer.SRC_DIR, true),
+                tree.getItemFactory().createFileSystemDirectoryItem(CompanionApp.getRootPath().resolve("scripts"), true),
                 tree.getItemFactory().createFileSystemDirectoryItem(CompanionApp.getRootPath().resolve("decompiled-files"), true),
                 new DirectoryTreeItem("mods") {
                     @Override

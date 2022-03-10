@@ -1,8 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
@@ -27,7 +27,7 @@ public class CreateScriptWindow extends JFrame {
         var textField = new FlatIconTextField(new FlatSVGIcon(Icons.JAVA_FILE));
         textField.setPreferredSize(new Dimension(150, (int) textField.getPreferredSize().getHeight()));
 
-        var verifyInput = (Predicate<String>) (s) -> !s.isBlank() && !Files.exists(JavaLanguageServer.SRC_DIR.resolve(s + ".java")) && s.matches("^[^\\d_]\\w*$");
+        var verifyInput = (Predicate<String>) (s) -> !s.isBlank() && !Files.exists(CompanionApp.getRootPath().resolve("scripts").resolve(s + ".java")) && s.matches("^[^\\d_]\\w*$");
         var setIconAndVerify = (Supplier<Boolean>) () -> {
             var result = verifyInput.test(textField.getText());
             textField.setIconFilter(result ? null : new FlatSVGIcon.ColorFilter((c) -> Color.decode("#D05B64")));

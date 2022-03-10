@@ -1,23 +1,20 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.AbstractCodeViewPanel;
-import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
-import org.eclipse.lsp4j.CompletionItem;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class CodeCompletionPopup extends BasePopup {
 
-    private final JList<CompletionItem> completionItemList = new JList<>(new DefaultListModel<>());
+    private final JList<Object> completionItemList = new JList<>(new DefaultListModel<>());
     {
-        completionItemList.setCellRenderer(new DefaultListCellRenderer() {
+        //TODO: Fix completion popup
+        /*completionItemList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var item = (CompletionItem) value;
@@ -44,7 +41,7 @@ public class CodeCompletionPopup extends BasePopup {
 
                 return component;
             }
-        });
+        });*/
         completionItemList.setFont(AbstractCodeViewPanel.JETBRAINS_MONO_FONT.deriveFont(14f));
         completionItemList.setSelectionBackground(UIManager.getColor("List.selectionBackground"));
         completionItemList.addKeyListener(new KeyAdapter() {
@@ -76,8 +73,8 @@ public class CodeCompletionPopup extends BasePopup {
         this.completionItemList.scrollRectToVisible(cellBounds);
     }
 
-    public void setItems(List<CompletionItem> items) {
-        var model = ((DefaultListModel<CompletionItem>) this.completionItemList.getModel());
+    public void setItems(List<?> items) {
+        /*var model = ((DefaultListModel<CompletionItem>) this.completionItemList.getModel());
         model.removeAllElements();
         model.addAll(items);
         this.completionItemList.setSelectedIndex(0);
@@ -87,7 +84,7 @@ public class CodeCompletionPopup extends BasePopup {
                 items.stream().max(Comparator.comparingInt(i -> i.getLabel().length())).get().getLabel()
         );
         this.scrollPane.setPreferredSize(new Dimension(longestItemLength + 25, Math.min(200, this.completionItemList.getPreferredSize().height)));
-        pack();
+        pack();*/
     }
 
     public void addKeyEnterListener(Runnable r) {
@@ -107,15 +104,15 @@ public class CodeCompletionPopup extends BasePopup {
         return this.completionItemList.getSelectedIndex();
     }
 
-    public CompletionItem getSelectedValue() {
+   /* public CompletionItem getSelectedValue() {
         return this.completionItemList.getSelectedValue();
-    }
+    }*/
 
     public Rectangle getCellBounds(int index1, int index2) {
         return this.completionItemList.getCellBounds(index1, index2);
     }
 
-    public DefaultListModel<CompletionItem> getModel() {
+   /* public DefaultListModel<CompletionItem> getModel() {
         return ((DefaultListModel<CompletionItem>) this.completionItemList.getModel());
-    }
+    }*/
 }

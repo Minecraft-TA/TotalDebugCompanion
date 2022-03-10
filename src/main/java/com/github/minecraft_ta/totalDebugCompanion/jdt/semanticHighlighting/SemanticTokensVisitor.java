@@ -1,7 +1,9 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting;
 
-import org.eclipse.jdt.core.dom.*;
-import org.eclipse.jdt.internal.compiler.lookup.PackageBinding;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenImpl;
 
@@ -13,16 +15,6 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
     public SemanticTokensVisitor(List<Token> tokens) {
         this.tokens = tokens;
-    }
-
-    @Override
-    public boolean visit(ImportDeclaration node) {
-        var binding = node.resolveBinding();
-        if (binding == null || binding instanceof PackageBinding)
-            return false;
-
-        ((QualifiedName) node.getName()).getName().accept(this);
-        return false;
     }
 
     @Override

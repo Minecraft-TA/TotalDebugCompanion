@@ -3,42 +3,30 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
-import com.github.minecraft_ta.totalDebugCompanion.ui.views.BasePopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.text.edits.TextEdit;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.text.DocumentFilter;
 import javax.swing.text.*;
-import java.awt.Color;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.MatchResult;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
 
@@ -179,7 +167,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         setRunButtonsState(false);
         this.bottomInformationBar.setProcessInfoText("Compiling...");
-        String fullScript = CompanionApp.LSP.getBaseScript().mergeWithNormalScript(UIUtils.getText(this.editorPane));
+        String fullScript = BaseScript.mergeWithNormalScript(UIUtils.getText(this.editorPane));
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, fullScript, server, (RunScriptMessage.ExecutionEnvironment) this.executionEnvironmentComboBox.getSelectedItem()));
     }
 
@@ -238,8 +226,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private void setupLSP() {
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
-                CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
-                CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
+                //TODO: Diagnostics?
+//                CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(this.scriptId));
                 saveScript();
             }
@@ -263,15 +251,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
                 var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
                 var line = defaultRootElement.getElementIndex(offset);
-                var pos = UIUtils.offsetToPosition(editorPane, offset);
-                ;
+//                var pos = UIUtils.offsetToPosition(editorPane, offset);;
 
                 //Add tab indentation
                 if (string.equals("\n")) {
                     string = string + "\t".repeat(UIUtils.countTabsAtStartOfLine(editorPane, defaultRootElement.getElement(line)));
                 }
 
-                sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
+//                sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
 
                 didTypeBeforeCaretMove = true;
                 super.insertString(fb, offset, string, attr);
@@ -289,34 +276,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
                 remove(fb, offset, length);
                 insertString(fb, offset, text, attrs);
-            }
-
-            @Override
-            public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-                if (length == 0)
-                    return;
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line1 = defaultRootElement.getElementIndex(offset);
-                var pos1 = new Position(line1, (offset - defaultRootElement.getElement(line1).getStartOffset()));
-                var pos2 = new Position(line1, pos1.getCharacter() + length);
-                var oldText = fb.getDocument().getText(offset, length);
-
-                var fullSync = oldText.contains("\n");
-                super.remove(fb, offset, length);
-
-                if (!fullSync)
-                    sendChanges(new TextDocumentContentChangeEvent(new Range(pos1, pos2), length, ""));
-                else
-                    sendChanges(new TextDocumentContentChangeEvent(UIUtils.getText(editorPane)));
-            }
-
-            private void sendChanges(TextDocumentContentChangeEvent... changes) {
-                CompanionApp.LSP.didChange(
-                        new DidChangeTextDocumentParams(
-                                new VersionedTextDocumentIdentifier(scriptView.getURI(), 0),
-                                List.of(changes)
-                        )
-                );
             }
         });
 
@@ -338,7 +297,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     e.consume();
                     doAutoCompletion();
                 } else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
+                    //TODO: Completion popup up and down
+                    /*var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
                     if (selectedIndex > codeCompletionPopup.getModel().getSize() - 1)
                         selectedIndex = 0;
                     else if (selectedIndex < 0)
@@ -346,7 +306,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                     codeCompletionPopup.setSelectedIndex(selectedIndex);
                     codeCompletionPopup.scrollRectToVisible(codeCompletionPopup.getCellBounds(selectedIndex, selectedIndex));
-                    e.consume();
+                    e.consume();*/
                 }
             }
         });
@@ -354,52 +314,21 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.getActionMap().put("formatFile", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompanionApp.LSP.formatting(new DocumentFormattingParams(new TextDocumentIdentifier(scriptView.getURI()), new FormattingOptions(4, false)))
-                        .thenAccept(res -> {
-                            Collections.reverse(res);
-                            SwingUtilities.invokeLater(() -> res.forEach(ScriptPanel.this::applyTextEdit));
-                            bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
-                                    .formatted(Stream.concat(
-                                                    res.stream().map(t -> t.getRange().getEnd().getLine()),
-                                                    res.stream().map(t -> t.getRange().getStart().getLine()))
-                                            .distinct().count()));
-                        });
-            }
-        });
-        this.editorPane.getActionMap().put("deleteLine", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                var offset = editorPane.getCaretPosition();
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line = defaultRootElement.getElementIndex(offset);
-                var element = defaultRootElement.getElement(line);
-                var inLineCaretPos = offset - element.getStartOffset();
-
-                try {
-                    editorPane.getDocument().remove(Math.max(element.getStartOffset() - 1, 0), Math.min(element.getEndOffset() - element.getStartOffset(), editorPane.getDocument().getLength()));
-                    element = defaultRootElement.getElement(Math.min(defaultRootElement.getElementCount() - 1, line));
-                    editorPane.setCaretPosition(Math.min(element.getStartOffset() + inLineCaretPos, element.getEndOffset() - 1));
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-        //Swing UndoManager constantly freezes the whole application. Not usable
-        //TODO: Create custom UndoManager for this
-        this.editorPane.getActionMap().put("undo", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        this.editorPane.getActionMap().put("redo", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+                //TODO: Format the file
+             /*   Collections.reverse(res);
+                SwingUtilities.invokeLater(() -> res.forEach(ScriptPanel.this::applyTextEdit));
+                bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
+                        .formatted(Stream.concat(
+                                        res.stream().map(t -> t.getRange().getEnd().getLine()),
+                                        res.stream().map(t -> t.getRange().getStart().getLine()))
+                                .distinct().count()));*/
             }
         });
         this.editorPane.getActionMap().put("showSignatureHelp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompanionApp.LSP.signatureHelp(new SignatureHelpParams(new TextDocumentIdentifier(scriptView.getURI()), UIUtils.offsetToPosition(editorPane, editorPane.getCaretPosition())))
+                //TODO: Signature help
+                /*CompanionApp.LSP.signatureHelp(new SignatureHelpParams(new TextDocumentIdentifier(scriptView.getURI()), UIUtils.offsetToPosition(editorPane, editorPane.getCaretPosition())))
                         .thenAccept(res -> {
                             if (res.getSignatures().isEmpty() || res.getSignatures().stream().allMatch(s -> s.getParameters().isEmpty()) ||
                                 res.getActiveSignature() == null)
@@ -411,7 +340,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                                     signatureHelpPopup.show(editorPane, (int) cursorRect.getX(), (int) cursorRect.getY() - 5, BasePopup.Alignment.TOP_CENTER);
                                 });
                             } catch (BadLocationException ignored) {}
-                        });
+                        });*/
             }
         });
         this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
@@ -421,9 +350,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         });
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl P"), "showSignatureHelp");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
@@ -433,14 +359,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
                 return;
 
-            CompanionApp.LSP.getDiagnosticsManager().clearAllHighlights(this.scriptView.getURI());
+            //TODO: Diagnostics clear?
+//            CompanionApp.LSP.getDiagnosticsManager().clearAllHighlights(this.scriptView.getURI());
         });
-        CompanionApp.LSP.getDiagnosticsManager().register(this.scriptView.getURI(), this.editorPane);
     }
 
     private void handleAutoCompletion() {
         final var caretPosition = this.editorPane.getCaretPosition();
-        CompanionApp.LSP.completion(new CompletionParams(new TextDocumentIdentifier(this.scriptView.getURI()), UIUtils.offsetToPosition(this.editorPane, caretPosition), new CompletionContext(CompletionTriggerKind.Invoked)))
+        //TODO: Auto-completion
+        /*CompanionApp.LSP.completion(new CompletionParams(new TextDocumentIdentifier(this.scriptView.getURI()), UIUtils.offsetToPosition(this.editorPane, caretPosition), new CompletionContext(CompletionTriggerKind.Invoked)))
                 .thenAccept(res -> {
                     var items = res.getRight().getItems();
                     if (items == null || items.isEmpty() || this.editorPane.getCaretPosition() != caretPosition) {
@@ -468,14 +395,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     } catch (BadLocationException e) {
                         e.printStackTrace();
                     }
-                });
+                });*/
     }
 
     private void doAutoCompletion() {
         if (codeCompletionPopup.getSelectedIndex() == -1)
             return;
+        //TODO: Auto-completion 2
 
-        var item = codeCompletionPopup.getSelectedValue();
+        /*var item = codeCompletionPopup.getSelectedValue();
         var textEdit = item.getTextEdit();
 
         //weird snippets like sysout, dowhile...
@@ -497,7 +425,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         if (item.getAdditionalTextEdits() != null)
             item.getAdditionalTextEdits().forEach(this::applyTextEdit);
 
-        codeCompletionPopup.setVisible(false);
+        codeCompletionPopup.setVisible(false);*/
     }
 
     public boolean canSave() {
@@ -506,9 +434,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
     private void saveScript() {
         try {
-            if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()) || !canSave())
+            //TODO: Maybe change to lastSavedHashCode or something
+            /*if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()) || !canSave())
                 return;
-            this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());
+            this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());*/
             Files.writeString(this.scriptView.getPath(), UIUtils.getText(this.editorPane));
             System.out.println("Successfully saved script " + this.scriptView.getPath());
         } catch (IOException ex) {
@@ -522,7 +451,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void applyTextEdit(TextEdit edit, boolean snippet) {
-        var forceSelectionOffset = -1;
+        //TODO: Apply text edit, what about snippets?
+        /*var forceSelectionOffset = -1;
         var forceSelectionLength = -1;
         var text = new StringBuilder(edit.getNewText());
         if (snippet) {
@@ -558,6 +488,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             }
         } catch (BadLocationException ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 }

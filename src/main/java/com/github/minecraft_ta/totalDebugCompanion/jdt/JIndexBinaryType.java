@@ -4,6 +4,7 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IBinaryTypeStub;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
+import org.eclipse.jdt.internal.compiler.env.IBinaryField;
 import org.eclipse.jdt.internal.compiler.env.IBinaryNestedType;
 import org.eclipse.jdt.internal.compiler.env.ITypeAnnotationWalker;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
@@ -54,6 +55,11 @@ public class JIndexBinaryType implements IBinaryTypeStub {
         var dollarIndex = name.indexOf('$');
 
         return name.substring(dollarIndex == -1 ? 0 : dollarIndex + 1).toCharArray();
+    }
+
+    @Override
+    public IBinaryField[] getFields() {
+        return Arrays.stream(this.indexedClass.getFields()).map(JIndexBinaryField::new).toArray(JIndexBinaryField[]::new);
     }
 
     @Override

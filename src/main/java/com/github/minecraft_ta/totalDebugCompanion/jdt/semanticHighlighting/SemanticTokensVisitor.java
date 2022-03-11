@@ -1,17 +1,15 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting;
 
 import org.eclipse.jdt.core.dom.*;
-import org.fife.ui.rsyntaxtextarea.Token;
-import org.fife.ui.rsyntaxtextarea.TokenImpl;
 import org.fife.ui.rsyntaxtextarea.TokenTypes;
 
-import java.util.List;
+import java.util.Map;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 
-    private final List<Token> tokens;
+    private final Map<Integer, Integer> tokens;
 
-    public SemanticTokensVisitor(List<Token> tokens) {
+    public SemanticTokensVisitor(Map<Integer, Integer> tokens) {
         this.tokens = tokens;
     }
 
@@ -39,10 +37,6 @@ public class SemanticTokensVisitor extends ASTVisitor {
     }
 
     private void addToken(ASTNode node, int type) {
-        var t = new TokenImpl();
-        t.textOffset = node.getStartPosition();
-        t.textCount = node.getLength();
-        t.setType(type);
-        this.tokens.add(t);
+        this.tokens.put(node.getStartPosition(), type);
     }
 }

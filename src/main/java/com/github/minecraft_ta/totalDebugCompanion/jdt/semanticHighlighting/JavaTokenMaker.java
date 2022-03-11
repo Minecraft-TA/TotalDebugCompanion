@@ -8,12 +8,12 @@ import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rsyntaxtextarea.TokenTypes;
 
 import javax.swing.text.Segment;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker {
 
-    private final List<Token> tokens = new ArrayList<>();
+    private final Map<Integer, Integer> overwrittenTokenTypes = new HashMap<>();
 
     public void reset(String text) {
         long t = System.nanoTime();
@@ -24,8 +24,8 @@ public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenM
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
         var ast = (CompilationUnit) parser.createAST(null);
 
-        tokens.clear();
-        ast.accept(new SemanticTokensVisitor(tokens));
+        overwrittenTokenTypes.clear();
+        ast.accept(new SemanticTokensVisitor(overwrittenTokenTypes));
         System.out.println("Finding special tokens took " + (System.nanoTime() - t) / 1_000_000.0);
     }
 
@@ -35,14 +35,10 @@ public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenM
         var currentToken = firstToken;
 
         while (currentToken != null) {
-            //Yes, this is not efficient, but who cares for now ¯\_(ツ)_/¯
-            for (Token token : this.tokens) {
-                if (currentToken.getType() == TokenTypes.NULL)
-                    continue;
-
-                if (token.getTextOffset() == currentToken.getOffset()) {
-                    currentToken.setType(token.getType());
-                }
+            if (currentToken.getType() != TokenTypes.NULL) {
+                var token = this.overwrittenTokenTypes.get(currentToken.getOffset());
+                if (token != null)
+                    currentToken.setType(token);
             }
 
             currentToken = currentToken.getNextToken();

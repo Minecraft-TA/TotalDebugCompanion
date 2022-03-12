@@ -3,10 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IBinaryTypeStub;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
-import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
-import org.eclipse.jdt.internal.compiler.env.IBinaryField;
-import org.eclipse.jdt.internal.compiler.env.IBinaryNestedType;
-import org.eclipse.jdt.internal.compiler.env.ITypeAnnotationWalker;
+import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 
@@ -60,6 +57,11 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public IBinaryField[] getFields() {
         return Arrays.stream(this.indexedClass.getFields()).map(JIndexBinaryField::new).toArray(JIndexBinaryField[]::new);
+    }
+
+    @Override
+    public IBinaryMethod[] getMethods() {
+        return Arrays.stream(this.indexedClass.getMethods()).map(JIndexBinaryMethod::new).toArray(JIndexBinaryMethod[]::new);
     }
 
     @Override

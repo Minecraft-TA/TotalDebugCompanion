@@ -13,6 +13,7 @@ import java.util.Arrays;
 public class JIndexBinaryType implements IBinaryTypeStub {
 
     private final IndexedClass indexedClass;
+    private int count;
 
     public JIndexBinaryType(IndexedClass indexedClass) {
         this.indexedClass = indexedClass;
@@ -36,14 +37,26 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public char[] getSuperclassName() {
-        //TODO: Return super class name
-        return null;
+        var superClass = this.indexedClass.getSuperClass();
+        if (superClass == null) {
+            return null;
+        }
+
+        return superClass.getNameWithPackage().toCharArray();
     }
 
     @Override
     public char[][] getInterfaceNames() {
-        //TODO: Return interface names
-        return null;
+        var interfaces = this.indexedClass.getInterfaces();
+        if (interfaces == null)
+            return null;
+
+        var array = new char[interfaces.length][];
+        for (int i = 0; i < interfaces.length; i++) {
+            array[i] = interfaces[i].getNameWithPackage().toCharArray();
+        }
+
+        return array;
     }
 
     @Override
@@ -55,17 +68,37 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     }
 
     @Override
+    public char[] getGenericSignature() {
+        var str = this.indexedClass.getGenericSignatureString();
+        if (str == null)
+            return null;
+        return str.toCharArray();
+    }
+
+    @Override
     public IBinaryField[] getFields() {
-        return Arrays.stream(this.indexedClass.getFields()).map(JIndexBinaryField::new).toArray(JIndexBinaryField[]::new);
+        var fields = this.indexedClass.getFields();
+        var array = new JIndexBinaryField[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            array[i] = new JIndexBinaryField(fields[i]);
+        }
+        return array;
     }
 
     @Override
     public IBinaryMethod[] getMethods() {
-        return Arrays.stream(this.indexedClass.getMethods()).map(JIndexBinaryMethod::new).toArray(JIndexBinaryMethod[]::new);
+        var methods = this.indexedClass.getMethods();
+        var array = new JIndexBinaryMethod[methods.length];
+        for (int i = 0; i < methods.length; i++) {
+            array[i] = new JIndexBinaryMethod(methods[i]);
+        }
+        return array;
     }
 
     @Override
     public IBinaryNestedType[] getMemberTypes() {
+        count++;
+//        System.out.println(count);
         //TODO: Maybe implement this in JIndex instead?
         return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(this.indexedClass.getName(), 500))
                 .filter(c -> c.getName().contains("$"))

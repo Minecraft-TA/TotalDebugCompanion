@@ -14,13 +14,13 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.tth05:jindex:0.0.7")
+    implementation("com.github.tth05:jindex:0.0.11")
     implementation("com.github.tth05:SCNet:18bc6c5")
 
-    implementation('com.formdev:flatlaf:2.0.1')
-    implementation('com.formdev:flatlaf-intellij-themes:2.0.1')
-    implementation('com.formdev:flatlaf-extras:2.0.1')
-    implementation("com.fifesoft:rsyntaxtextarea:3.1.6")
+    implementation('com.formdev:flatlaf:2.1')
+    implementation('com.formdev:flatlaf-intellij-themes:2.1')
+    implementation('com.formdev:flatlaf-extras:2.1')
+    implementation('com.fifesoft:rsyntaxtextarea:3.2.0')
 
     implementation('com.github.javaparser:javaparser-core:3.24.0')
     implementation("org.apache.commons:commons-compress:1.21")

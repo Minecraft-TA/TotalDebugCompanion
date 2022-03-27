@@ -18,7 +18,7 @@ public class JavaTokenMaker extends org.fife.ui.rsyntaxtextarea.modes.JavaTokenM
     public void reset(String text) {
         long t = System.nanoTime();
         ASTParser parser = ASTParser.newParser(AST.JLS8);
-        parser.setSource(new CompilationUnitImpl("Test", text));
+        parser.setSource(new CompilationUnitImpl("TODO: Pass correct name here?", text));
         parser.setResolveBindings(true);
         parser.setStatementsRecovery(true);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);

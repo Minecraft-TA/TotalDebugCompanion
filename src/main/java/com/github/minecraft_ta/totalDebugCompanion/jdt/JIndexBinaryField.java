@@ -30,11 +30,6 @@ public class JIndexBinaryField implements IBinaryField {
     }
 
     @Override
-    public char[] getGenericSignature() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public char[] getName() {
         return this.indexedField.getName().toCharArray();
     }
@@ -45,8 +40,16 @@ public class JIndexBinaryField implements IBinaryField {
     }
 
     @Override
+    public char[] getGenericSignature() {
+        var str = this.indexedField.getGenericSignatureString();
+        if (str == null)
+            return null;
+        return str.toCharArray();
+    }
+
+    @Override
     public char[] getTypeName() {
-        return this.indexedField.getTypeSignature().toSignatureString().toCharArray();
+        return this.indexedField.getDescriptorString().toCharArray();
     }
 
     @Override

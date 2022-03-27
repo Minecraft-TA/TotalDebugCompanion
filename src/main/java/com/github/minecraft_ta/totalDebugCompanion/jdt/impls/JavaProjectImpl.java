@@ -34,7 +34,11 @@ public class JavaProjectImpl extends JavaProject {
     @Override
     public Map<String, String> getOptions(boolean inheritJavaCoreOptions) {
         //TODO: Load these from a file
-        return JavaCore.getOptions();
+        var options = JavaCore.getOptions();
+        options.put("org.eclipse.jdt.core.compiler.compliance", "1.8");
+        options.put("org.eclipse.jdt.core.compiler.source", "1.8");
+        options.put("org.eclipse.jdt.core.compiler.codegen.targetPlatform", "1.8");
+        return options;
     }
 
     @Override

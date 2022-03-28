@@ -6,6 +6,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,6 +78,9 @@ public class BaseScript {
     private static final String BASE_SCRIPT = BASE_SCRIPT_IMPORTS + BASE_SCRIPT_TEXT;
     private static final Path PATH = CompanionApp.getRootPath().resolve("scripts").resolve("BaseScript.java");
 
+    private static FileTime lastChanged;
+    private static String cachedContents;
+
     private BaseScript() {
     }
 
@@ -96,7 +100,13 @@ public class BaseScript {
 
     public static String getText() {
         try {
-            return Files.readString(PATH).replace("\r\n", "\n");
+            var lastModifiedTime = Files.getLastModifiedTime(PATH);
+            if (!lastModifiedTime.equals(lastChanged)) {
+                lastChanged = lastModifiedTime;
+                cachedContents = Files.readString(PATH).replace("\r\n", "\n");
+            }
+
+            return cachedContents;
         } catch (IOException e) {
             e.printStackTrace();
             return null;

@@ -3,7 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.BundleContextImpl;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.ContentTypeManagerImpl;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.JavaProjectImpl;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IResourceStub;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.RootResourceImpl;
 import org.eclipse.core.internal.resources.Folder;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.internal.runtime.DataArea;
@@ -69,12 +69,7 @@ public class JDTHacks {
     }
 
     private static PackageFragmentRoot createPackageFragmentRoot() {
-        return createInstance(PackageFragmentRoot.class, new Class<?>[]{IResource.class, JavaProject.class}, new IResourceStub() {
-            @Override
-            public IPath getFullPath() {
-                return new Path("dummy-folder");
-            }
-        }, DUMMY_JAVA_PROJECT);
+        return createInstance(PackageFragmentRoot.class, new Class<?>[]{IResource.class, JavaProject.class}, new RootResourceImpl(), DUMMY_JAVA_PROJECT);
     }
 
     private static <T> T createInstance(Class<T> clazz, Class<?>[] argClasses, Object... args) {

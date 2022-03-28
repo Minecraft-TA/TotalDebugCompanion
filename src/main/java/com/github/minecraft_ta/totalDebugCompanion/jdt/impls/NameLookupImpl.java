@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
@@ -36,7 +37,9 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public Answer findType(String typeName, String packageName, boolean partialMatch, int acceptFlags, boolean checkRestrictions, IPackageFragmentRoot[] moduleContext) {
-//        System.out.println("findType -> " + "typeName = " + typeName + ", packageName = " + packageName + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", checkRestrictions = " + checkRestrictions + ", moduleContext = " + Arrays.deepToString(moduleContext));
+        //Special case for BaseScript resolution
+        if (packageName.equals("") && typeName.equals("BaseScript"))
+            return JDTHacks.createNameLookupAnswer(new CompilationUnitImpl("BaseScript", BaseScript.getText()).getType("BaseScript"), null, null);
 
         var foundClass = SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName);
         if (foundClass != null) {

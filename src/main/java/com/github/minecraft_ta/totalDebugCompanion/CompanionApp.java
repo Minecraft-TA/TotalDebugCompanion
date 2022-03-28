@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker;
 import com.github.minecraft_ta.totalDebugCompanion.messages.FocusWindowMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.ReadyMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridDataMessage;
@@ -84,7 +85,7 @@ public class CompanionApp {
         TokenMakerFactory.setDefaultInstance(new AbstractTokenMakerFactory() {
             @Override
             protected void initTokenMakerMap() {
-                putMapping(RSyntaxTextArea.SYNTAX_STYLE_JAVA, "com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker");
+                putMapping(RSyntaxTextArea.SYNTAX_STYLE_JAVA, JavaTokenMaker.class.getName());
             }
         });
 

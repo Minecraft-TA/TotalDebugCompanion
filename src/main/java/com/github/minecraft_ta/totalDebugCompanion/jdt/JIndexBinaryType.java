@@ -7,7 +7,6 @@ import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
 
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 public class JIndexBinaryType implements IBinaryTypeStub {
@@ -133,7 +132,7 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public int getModifiers() {
-        return Modifier.PUBLIC;
+        return this.indexedClass.getAccessFlags();
     }
 
     @Override

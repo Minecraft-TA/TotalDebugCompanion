@@ -17,7 +17,6 @@ import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.core.*;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
@@ -173,7 +172,5 @@ public class JDTHacks {
         field = ResourcesPlugin.class.getDeclaredField("workspace");
         field.setAccessible(true);
         field.set(null, new Workspace());
-
-        CompletionEngine.DEBUG = true;
     }
 }

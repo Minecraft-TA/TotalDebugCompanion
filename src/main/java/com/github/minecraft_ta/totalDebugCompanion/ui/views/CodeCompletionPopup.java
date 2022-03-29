@@ -74,7 +74,7 @@ public class CodeCompletionPopup extends BasePopup {
     }
 
     public void setItems(List<?> items) {
-        /*var model = ((DefaultListModel<CompletionItem>) this.completionItemList.getModel());
+       /* var model = ((DefaultListModel<CompletionItem>) this.completionItemList.getModel());
         model.removeAllElements();
         model.addAll(items);
         this.completionItemList.setSelectedIndex(0);

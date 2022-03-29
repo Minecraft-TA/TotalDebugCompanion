@@ -21,6 +21,7 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
     private final SearchManager searchManager = new SearchManager(editorPane);
 
     public CodeViewPanel(CodeView codeView) {
+        super(codeView.getPath().toString());
         this.editorPane.setEditable(false);
         this.editorPane.addMouseListener(new MouseAdapter() {
             @Override

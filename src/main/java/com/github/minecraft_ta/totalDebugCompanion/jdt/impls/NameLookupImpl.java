@@ -4,21 +4,20 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
+import com.github.tth05.jindex.IndexedClass;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.internal.codeassist.impl.AssistSourceType;
 import org.eclipse.jdt.internal.core.IJavaElementRequestor;
-import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.NameLookup;
 import org.eclipse.jdt.internal.core.util.Util;
 
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class NameLookupImpl extends NameLookup {
 
     public NameLookupImpl() {
-        super(null, null, null, null, null);
+        super(null, null, null, null, new HashMap<>());
     }
 
     @Override
@@ -52,23 +51,9 @@ public class NameLookupImpl extends NameLookup {
     public void seekTypes(String name, IPackageFragment pkg, boolean partialMatch, int acceptFlags, IJavaElementRequestor requestor, boolean considerSecondaryTypes) {
         System.out.println("seekTypes -> name = " + name + ", pkg = " + pkg + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", requestor = " + requestor + ", considerSecondaryTypes = " + considerSecondaryTypes);
         //super.seekTypes(name, pkg, partialMatch, acceptFlags, requestor, considerSecondaryTypes);
-        if ("Hallo".startsWith(name))
-            requestor.acceptType(new AssistSourceType(null, "Hallo", null, null) {
-                @Override
-                public JavaProject getJavaProject() {
-                    return JDTHacks.DUMMY_JAVA_PROJECT;
-                }
-
-                @Override
-                public int getFlags() {
-                    return Modifier.PUBLIC;
-                }
-
-                @Override
-                public IPackageFragment getPackageFragment() {
-                    return JDTHacks.createPackageFragment("");
-                }
-            });
+        for (IndexedClass foundClass : SearchEverywherePopup.CLASS_INDEX.findClasses(name, 20)) {
+            requestor.acceptType(new JIndexResolvedBinaryType(foundClass));
+        }
     }
 
     @Override

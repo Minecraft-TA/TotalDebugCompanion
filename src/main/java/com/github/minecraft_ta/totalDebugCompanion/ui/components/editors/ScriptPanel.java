@@ -4,6 +4,8 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CustomJavaCompletionProvider;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaParser;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
@@ -12,16 +14,16 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
-import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.text.edits.TextEdit;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.autocomplete.AutoCompletion;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.text.*;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -89,7 +91,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private int lastSavedVersion = -1;
 
     public ScriptPanel(ScriptView scriptView) {
-        super();
+        super(scriptView.getURI());
         this.scriptView = scriptView;
 
         var headerBar = Box.createHorizontalBox();
@@ -106,31 +108,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
-        this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
-        CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());
+        this.editorPane.addParser(new CustomJavaParser(scriptView.getURI()));
         this.editorPane.setText(scriptView.getSourceText());
-//        var textArea = this.editorPane;
-//        textArea.setText(scriptView.getSourceText());
-//        CompanionApp.LSP.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(scriptView.getURI(), "java", 0, UIUtils.getText(textArea))));
-
-//        textArea.setBackground(new Color(60, 63, 65));
-//        textArea.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-//            if (e.getType() == DocumentEvent.EventType.CHANGE)
-//                return;
-//
-//            updateHighlighting();
-//        });
-//        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
-//        textArea.getActionMap().put("autoComplete", new AbstractAction() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                handleAutoCompletion();
-//            }
-//        });
 
         setupLogPanel();
-//        setupLSP();
-//        updateHighlighting();
+        setupSaveBehavior();
+        setupAutocompletion();
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, this, (m) -> {
             if (m.getScriptId() != this.scriptId)
@@ -210,29 +193,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
     }
 
-    private void updateHighlighting() {
-        //TODO: Semantic highlighting
-        /*SwingUtilities.invokeLater(() -> {
-            CompanionApp.LSP.semanticsTokenFull(new SemanticTokensParams(new TextDocumentIdentifier(scriptView.getURI())))
-                    .thenAccept(res -> {
-                        var styledDocument = this.editorPane.getStyledDocument();
-                        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), new SimpleAttributeSet(), true);
-                        CodeUtils.highlightJavaCodeJavaParser(this.editorPane);
-                        CodeUtils.highlightJavaCodeSemanticTokens(res.getData(), this.editorPane);
-                    });
-        });*/
-    }
-
-    private void setupLSP() {
+    private void setupSaveBehavior() {
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
-                //TODO: Diagnostics?
-//                CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(this.scriptId));
                 saveScript();
             }
         });
 
+        //TODO: Add Ctrl+S keybind
         this.editorPane.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
@@ -244,40 +213,25 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 });
             }
         });
+    }
 
-        //Document synchronization
-        ((AbstractDocument) this.editorPane.getDocument()).setDocumentFilter(new DocumentFilter() {
+    private void setupAutocompletion() {
+        AutoCompletion ac = new AutoCompletion(new CustomJavaCompletionProvider());
+        ac.setAutoCompleteEnabled(true);
+        ac.setAutoActivationEnabled(true);
+        ac.setAutoActivationDelay(1);
+        ac.setAutoCompleteSingleChoices(false);
+        ac.install(this.editorPane);
+    }
+
+    private void setupAutocompletionOld() {
+       /* this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
+        this.editorPane.getActionMap().put("autoComplete", new AbstractAction() {
             @Override
-            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line = defaultRootElement.getElementIndex(offset);
-//                var pos = UIUtils.offsetToPosition(editorPane, offset);;
-
-                //Add tab indentation
-                if (string.equals("\n")) {
-                    string = string + "\t".repeat(UIUtils.countTabsAtStartOfLine(editorPane, defaultRootElement.getElement(line)));
-                }
-
-//                sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
-
-                didTypeBeforeCaretMove = true;
-                super.insertString(fb, offset, string, attr);
-
-                //Trigger auto-completion
-                var c = string.charAt(string.length() - 1);
-                if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n") || string.length() > 1) {
-                    codeCompletionPopup.setVisible(false);
-                    return;
-                }
+            public void actionPerformed(ActionEvent e) {
                 handleAutoCompletion();
             }
-
-            @Override
-            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-                remove(fb, offset, length);
-                insertString(fb, offset, text, attrs);
-            }
-        });
+        });*/
 
         this.editorPane.getCaret().addChangeListener(e -> {
             if (!this.didTypeBeforeCaretMove)

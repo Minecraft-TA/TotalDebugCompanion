@@ -1,8 +1,10 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.JavaTokenMaker;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.CustomJavaTokenMaker;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.BottomInformationBar;
+import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -37,7 +39,7 @@ public class AbstractCodeViewPanel extends JPanel {
 
     protected JComponent headerComponent;
 
-    public AbstractCodeViewPanel() {
+    public AbstractCodeViewPanel(String identifier) {
         super(new BorderLayout());
 
         this.editorScrollPane.getGutter().setBorder(new Gutter.GutterBorder(0, 5, 0, 0));
@@ -57,15 +59,18 @@ public class AbstractCodeViewPanel extends JPanel {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
                 return;
 
-            try {
-                var document = this.editorPane.getDocument();
-                var field = document.getClass().getDeclaredField("tokenMaker");
-                field.setAccessible(true);
-                ((JavaTokenMaker) field.get(document)).reset(document.getText(0, document.getLength()));
-            } catch (Throwable ex) {
-                throw new RuntimeException(ex);
-            }
+            ASTCache.update(identifier, UIUtils.getText(this.editorPane));
         });
+        this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
+        CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());
+        try {
+            var document = this.editorPane.getDocument();
+            var field = document.getClass().getDeclaredField("tokenMaker");
+            field.setAccessible(true);
+            ((CustomJavaTokenMaker) field.get(document)).setASTKey(identifier, this.editorPane);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
 
         add(this.editorScrollPane, BorderLayout.CENTER);
         add(this.bottomInformationBar, BorderLayout.SOUTH);
@@ -76,6 +81,7 @@ public class AbstractCodeViewPanel extends JPanel {
         GlobalConfig.getInstance().addPropertyChangeListener("fontSize", fontSizeListener);
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
+                ASTCache.removeFromCache(identifier);
                 GlobalConfig.getInstance().removePropertyChangeListener("fontSize", fontSizeListener);
             }
         });

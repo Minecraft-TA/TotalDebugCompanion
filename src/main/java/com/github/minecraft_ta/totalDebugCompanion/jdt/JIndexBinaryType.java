@@ -12,7 +12,6 @@ import java.util.Arrays;
 public class JIndexBinaryType implements IBinaryTypeStub {
 
     private final IndexedClass indexedClass;
-    private int count;
 
     public JIndexBinaryType(IndexedClass indexedClass) {
         this.indexedClass = indexedClass;
@@ -96,8 +95,6 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public IBinaryNestedType[] getMemberTypes() {
-        count++;
-//        System.out.println(count);
         //TODO: Maybe implement this in JIndex instead?
         return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(this.indexedClass.getName(), 500))
                 .filter(c -> c.getName().contains("$"))

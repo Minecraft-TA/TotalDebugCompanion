@@ -9,7 +9,7 @@ public class JIndexResolvedBinaryType extends ResolvedBinaryType {
     private final JIndexBinaryType binaryType;
 
     public JIndexResolvedBinaryType(IndexedClass indexedClass) {
-        super(new CompilationUnit(JDTHacks.createPackageFragment(indexedClass.getPackage()), indexedClass.getName(), null), indexedClass.getName(), "some unique key");
+        super(new CompilationUnit(JDTHacks.createPackageFragment(indexedClass.getPackage().replace('/', '.')), indexedClass.getName(), null), indexedClass.getName(), "some unique key");
         this.binaryType = new JIndexBinaryType(indexedClass);
     }
 

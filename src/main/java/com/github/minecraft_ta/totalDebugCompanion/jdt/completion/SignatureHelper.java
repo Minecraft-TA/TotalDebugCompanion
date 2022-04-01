@@ -1,0 +1,133 @@
+package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
+
+import org.eclipse.jdt.core.Signature;
+
+import java.util.Arrays;
+
+public class SignatureHelper {
+
+    private static final String NULL_TYPE_SIGNATURE = "Tnull;";
+    private static final char[] NULL_TYPE_SIGNATURE_ARRAY = NULL_TYPE_SIGNATURE.toCharArray();
+    private static final String OBJECT_SIGNATURE = "Ljava.lang.Object;";
+    private static final char[] OBJECT_SIGNATURE_ARRAY = OBJECT_SIGNATURE.toCharArray();
+
+    private SignatureHelper() {
+    }
+
+    public static String stripSignatureToFQN(String signature) throws IllegalArgumentException {
+        signature = Signature.getTypeErasure(signature);
+        signature = Signature.getElementType(signature);
+        return Signature.toString(signature);
+    }
+
+    public static char[] fix83600(char[] signature) {
+        if (signature == null || signature.length < 2)
+            return signature;
+
+        return Signature.removeCapture(signature);
+    }
+
+    public static char[] getUpperBound(char[] signature) {
+        if (signature.length < 1)
+            return signature;
+
+        if (signature[0] == Signature.C_STAR)
+            return OBJECT_SIGNATURE_ARRAY;
+
+        int superIndex = indexOf(signature, Signature.C_SUPER);
+        if (superIndex == 0)
+            return OBJECT_SIGNATURE_ARRAY;
+
+        if (superIndex != -1) {
+            char afterSuper = signature[superIndex + 1];
+            if (afterSuper == Signature.C_STAR) {
+                char[] type = new char[signature.length - 1];
+                System.arraycopy(signature, 0, type, 0, superIndex);
+                type[superIndex] = Signature.C_STAR;
+                System.arraycopy(signature, superIndex + 2, type, superIndex + 1, signature.length - superIndex - 2);
+                return getUpperBound(type);
+            }
+
+            if (afterSuper == Signature.C_EXTENDS) {
+                int typeEnd = typeEnd(signature, superIndex + 1);
+                char[] type = new char[signature.length - (typeEnd - superIndex - 1)];
+                System.arraycopy(signature, 0, type, 0, superIndex);
+                type[superIndex] = Signature.C_STAR;
+                System.arraycopy(signature, typeEnd, type, superIndex + 1, signature.length - typeEnd);
+                return getUpperBound(type);
+            }
+
+        }
+
+        if (signature[0] == Signature.C_EXTENDS) {
+            char[] type = new char[signature.length - 1];
+            System.arraycopy(signature, 1, type, 0, signature.length - 1);
+            return type;
+        }
+
+        return signature;
+    }
+
+    public static char[] getLowerBound(char[] signature) {
+        if (signature.length < 1)
+            return signature;
+
+        if (signature.length == 1 && signature[0] == Signature.C_STAR)
+            return signature;
+
+        int superIndex = indexOf(signature, Signature.C_EXTENDS);
+        if (superIndex == 0)
+            return NULL_TYPE_SIGNATURE_ARRAY;
+
+        if (superIndex != -1) {
+            char afterSuper = signature[superIndex + 1];
+            if (afterSuper == Signature.C_STAR || afterSuper == Signature.C_EXTENDS)
+                // impossible captured type
+                return NULL_TYPE_SIGNATURE_ARRAY;
+        }
+
+        for (char[] typeArgument : Signature.getTypeArguments(signature)) {
+            if (Arrays.equals(typeArgument, NULL_TYPE_SIGNATURE_ARRAY)) {
+                return NULL_TYPE_SIGNATURE_ARRAY;
+            }
+        }
+
+        if (signature[0] == Signature.C_SUPER) {
+            char[] type = new char[signature.length - 1];
+            System.arraycopy(signature, 1, type, 0, signature.length - 1);
+            return type;
+        }
+
+        return signature;
+    }
+
+    private static int indexOf(char[] signature, char ch) {
+        for (int i = 0; i < signature.length; i++) {
+            if (signature[i] == ch)
+                return i;
+        }
+        return -1;
+    }
+
+    private static int typeEnd(char[] signature, int pos) {
+        int depth = 0;
+        while (pos < signature.length) {
+            switch (signature[pos]) {
+                case Signature.C_GENERIC_START:
+                    depth++;
+                    break;
+                case Signature.C_GENERIC_END:
+                    if (depth == 0)
+                        return pos;
+                    depth--;
+                    break;
+                case Signature.C_SEMICOLON:
+                    if (depth == 0)
+                        return pos + 1;
+                    break;
+            }
+            pos++;
+        }
+        return pos + 1;
+    }
+}

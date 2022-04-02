@@ -81,7 +81,7 @@ public class PacketViewPanel extends JPanel {
         //Clears the packet map when the clear button is pressed
         clearButton.addActionListener(e -> {
             root.removeAllChildren();
-            tree.updateUI();
+            ((DefaultTreeModel) tree.getModel()).nodeStructureChanged(root);
         });
 
         //Adds a packet and its content to the tree.

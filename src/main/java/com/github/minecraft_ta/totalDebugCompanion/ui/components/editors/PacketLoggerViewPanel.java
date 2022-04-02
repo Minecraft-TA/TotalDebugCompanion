@@ -6,8 +6,10 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
+import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 
 import javax.swing.*;
@@ -221,7 +223,19 @@ public class PacketLoggerViewPanel extends JPanel {
                     popup.show(table, e.getX(), e.getY());
                 } else if (e.getClickCount() == 2 && row != -1) {
                     String packet = (String) table.getValueAt(row, 0);
-                    MainWindow.INSTANCE.getEditorTabs().openEditorTab(new PacketView(packet));
+                    EditorTabs editorTabs = MainWindow.INSTANCE.getEditorTabs();
+                    boolean found = false;
+                    for (IEditorPanel tab : editorTabs.getEditors()) {
+                        if (tab instanceof PacketView packetView && packetView.getPacket().equals(packet)) {
+                            editorTabs.setSelectedIndex(editorTabs.getEditors().indexOf(tab));
+                            found = true;
+                            break;
+                        }
+                    }
+                    //Otherwise, open a new tab
+                    if (!found) {
+                        editorTabs.openEditorTab(new PacketView(packet));
+                    }
                 }
             }
         });

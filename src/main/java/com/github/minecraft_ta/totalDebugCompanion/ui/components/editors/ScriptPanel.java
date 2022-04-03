@@ -18,7 +18,7 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
-import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.text.edits.TextEdit;
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 
@@ -112,6 +112,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
+        this.editorPane.setParserDelay(200);
         this.editorPane.addParser(new CustomJavaParser(scriptView.getURI()));
         this.editorPane.setText(scriptView.getSourceText());
 
@@ -221,6 +222,9 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
     private void setupAutocompletion() {
         this.editorPane.getCaret().addChangeListener(e -> {
+            if (this.completionRequestor != null)
+                this.completionRequestor.setCanceled(true);
+
             if (!this.didTypeBeforeCaretMove)
                 codeCompletionPopup.setVisible(false);
 
@@ -352,12 +356,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private void requestCompletionProposals() {
         if (this.completionRequestor != null)
             this.completionRequestor.setCanceled(true);
-        this.completionRequestor = new CustomCompletionRequestor(this::acceptCompletionList);
+
+        var unit = new CompilationUnitImpl("SomeName", UIUtils.getText(this.editorPane));
+        var newRequestor = new CustomCompletionRequestor(unit, this.editorPane.getCaretPosition(), this::acceptCompletionList);
+        this.completionRequestor = newRequestor;
 
         CompletableFuture.runAsync(() -> {
             try {
-                new CompilationUnitImpl("SomeName", UIUtils.getText(this.editorPane)).codeComplete(this.editorPane.getCaretPosition(), completionRequestor, completionRequestor);
-            } catch (JavaModelException e) {
+                unit.codeComplete(this.editorPane.getCaretPosition(), newRequestor, newRequestor);
+            } catch (OperationCanceledException ignored) {} catch (Throwable e) {
                 e.printStackTrace();
             }
         });
@@ -367,14 +374,20 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         if (codeCompletionPopup.getSelectedIndex() == -1)
             return;
         var item = codeCompletionPopup.getSelectedValue();
+        //The item is outdated
+        if (item.getRequestor().isCanceled())
+            return;
 
-        try {
-            var end = Math.min(item.getReplaceEnd(), this.editorPane.getCaretPosition());
-            this.editorPane.getDocument().remove(item.getReplaceStart(), end - item.getReplaceStart());
-            this.editorPane.getDocument().insertString(item.getReplaceStart(), item.getReplacement(), null);
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-        }
+        item.getTextEdits().forEach(edit -> {
+            var range = edit.getRange();
+            try {
+                ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
+//                (range.getOffset(), range.getLength());
+//                this.editorPane.getDocument().insertString(range.getOffset(), edit.getNewText(), null);
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        });
 
         codeCompletionPopup.setVisible(false);
     }

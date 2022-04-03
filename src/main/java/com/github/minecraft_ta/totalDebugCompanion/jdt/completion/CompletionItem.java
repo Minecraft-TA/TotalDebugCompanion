@@ -1,13 +1,22 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CompletionItem {
 
     private String label;
     private String replacement;
     private CompletionItemKind kind;
+    private boolean isSnippet;
     private int relevance;
-    private int replaceStart;
-    private int replaceEnd;
+    private List<CustomTextEdit> textEdits = new ArrayList<>();
+
+    private final CustomCompletionRequestor requestor;
+
+    public CompletionItem(CustomCompletionRequestor requestor) {
+        this.requestor = requestor;
+    }
 
     public void setLabel(String label) {
         this.label = label;
@@ -25,11 +34,6 @@ public class CompletionItem {
         this.relevance = relevance;
     }
 
-    public void setRange(int replaceStart, int replaceEnd) {
-        this.replaceStart = replaceStart;
-        this.replaceEnd = replaceEnd;
-    }
-
     public String getLabel() {
         return label;
     }
@@ -42,17 +46,23 @@ public class CompletionItem {
         return relevance;
     }
 
-    public int getReplaceStart() {
-        return replaceStart;
+    public boolean isSnippet() {
+        return isSnippet;
     }
 
-    public int getReplaceEnd() {
-        return replaceEnd;
+    public void setSnippet(boolean snippet) {
+        isSnippet = snippet;
     }
 
-    public String getReplacement() {
-        if (this.replacement == null)
-            return this.label;
-        return replacement;
+    public void addTextEdit(CustomTextEdit customTextEdit) {
+        this.textEdits.add(customTextEdit);
+    }
+
+    public List<CustomTextEdit> getTextEdits() {
+        return textEdits;
+    }
+
+    public CustomCompletionRequestor getRequestor() {
+        return requestor;
     }
 }

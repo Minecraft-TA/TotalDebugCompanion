@@ -1,29 +1,36 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CompletionProposalDescriptionProvider;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CompletionProposalReplacementProvider;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.*;
+import org.eclipse.jdt.core.compiler.CharOperation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class CustomCompletionRequestor extends CompletionRequestor implements IProgressMonitor {
 
 
+    private final List<CompletionProposal> proposals = new ArrayList<>();
     private final Consumer<List<CompletionItem>> completionCallback;
+    private final int offset;
+    private final ICompilationUnit unit;
 
-    private List<CompletionProposal> proposals = new ArrayList<>();
-//    private final ICompilationUnit unit;
-    private CompletionContext context;
     private CompletionProposalDescriptionProvider descriptionProvider;
+    private CompletionProposalReplacementProvider proposalProvider;
 
     private boolean cancelled;
     private long startTime;
 
-    public CustomCompletionRequestor(/*ICompilationUnit unit,*/ Consumer<List<CompletionItem>> completionCallback) {
-//        this.unit = unit;
+    public CustomCompletionRequestor(ICompilationUnit unit, int offset, Consumer<List<CompletionItem>> completionCallback) {
+        this.unit = unit;
+        this.offset = offset;
         this.completionCallback = completionCallback;
         this.setRequireExtendedContext(true);
     }
@@ -43,13 +50,11 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     }
 
     private List<CompletionItem> convertProposals() {
-        return proposals.stream().map(this::toCompletionItem).sorted(new CompletionItemComparator()).collect(Collectors.toList());
+        return proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
     }
 
-    public CompletionItem toCompletionItem(CompletionProposal proposal) {
-        final CompletionItem item = new CompletionItem();
-        //TODO: Range?
-        item.setRange(proposal.getReplaceStart(), proposal.getReplaceEnd());
+    private CompletionItem toCompletionItem(CompletionProposal proposal) {
+        final CompletionItem item = new CompletionItem(this);
         item.setRelevance(mapRelevance(proposal));
         item.setKind(mapKind(proposal));
         /*if (Flags.isDeprecated(proposal.getFlags())) {
@@ -60,8 +65,18 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
             }
         }*/
 
-        this.descriptionProvider.updateDescription(proposal, item);
-//        proposalProvider.updateReplacement(proposal, $, '\0');
+        if (!this.descriptionProvider.updateDescription(proposal, item))
+            return null;
+
+        this.proposalProvider.updateReplacement(proposal, item, '\0');
+
+        if (item.getTextEdits().stream().allMatch(edit -> edit.getNewText().isEmpty()))
+            return null;
+
+        //Fix first completion
+        var mainEditRange = item.getTextEdits().get(0).getRange();
+        if (mainEditRange.getEndOffset() > this.offset)
+            mainEditRange.setLength(mainEditRange.getEndOffset() - this.offset + 1);
         return item;
     }
 
@@ -136,17 +151,8 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     @Override
     public void acceptContext(CompletionContext context) {
         super.acceptContext(context);
-        this.context = context;
         this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
-//        this.proposalProvider = new CompletionProposalReplacementProvider(unit, context, response.getOffset(), preferenceManager.getPreferences(), preferenceManager.getClientPreferences());
-    }
-
-    @Override
-    public void setIgnored(int completionProposalKind, boolean ignore) {
-        super.setIgnored(completionProposalKind, ignore);
-        if (completionProposalKind == CompletionProposal.METHOD_DECLARATION && !ignore) {
-            setRequireExtendedContext(true);
-        }
+        this.proposalProvider = new CompletionProposalReplacementProvider(this.unit, context, this.offset);
     }
 
     @Override
@@ -154,10 +160,6 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         return true;
     }
 
-    /**
-     * copied from
-     * org.eclipse.jdt.ui.text.java.CompletionProposalCollector.isFiltered(CompletionProposal)
-     */
     protected boolean isFiltered(CompletionProposal proposal) {
         if (isIgnored(proposal.getKind())) {
             return true;
@@ -181,10 +183,26 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         return false;
     }
 
+    private static final char[][] TYPE_FILTERS = Arrays.stream(new String[]{
+            "com.sun",
+            "sun.",
+            "org.jcp",
+            "org.omg",
+            "org.jline",
+            "oshi"
+    }).map(String::toCharArray).toArray(char[][]::new);
+
     protected boolean isTypeFiltered(CompletionProposal proposal) {
         char[] declaringType = getDeclaringType(proposal);
-        //TODO: Type filter?
-        return declaringType != null && /*TypeFilter.isFiltered(declaringType)*/false;
+        if (declaringType == null)
+            return false;
+
+        for (char[] filter : TYPE_FILTERS) {
+            if (CharOperation.fragmentEquals(filter, declaringType, 0, false))
+                return true;
+        }
+
+        return false;
     }
 
     /**
@@ -253,7 +271,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
 
     @Override
     public boolean isCanceled() {
-        return this.cancelled || (System.nanoTime() - startTime) > 1_000_000_000L;
+        return this.cancelled || (System.nanoTime() - startTime) > 1000_000_000_000L;
     }
 
     @Override

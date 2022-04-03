@@ -1,5 +1,21 @@
-package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
+/*******************************************************************************
+ * Copyright (c) 2000, 2016 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs;
 
+import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 
 import java.util.Arrays;
@@ -18,6 +34,38 @@ public class SignatureHelper {
         signature = Signature.getTypeErasure(signature);
         signature = Signature.getElementType(signature);
         return Signature.toString(signature);
+    }
+
+    public static String qualifySignature(final String signature, final IType context) {
+        if (context == null)
+            return signature;
+
+        String qualifier = Signature.getSignatureQualifier(signature);
+        if (qualifier.length() > 0)
+            return signature;
+
+        String elementType = Signature.getElementType(signature);
+        String erasure = Signature.getTypeErasure(elementType);
+        String simpleName = Signature.getSignatureSimpleName(erasure);
+        String genericSimpleName = Signature.getSignatureSimpleName(elementType);
+
+        int dim = Signature.getArrayCount(signature);
+
+        try {
+            String[][] strings = context.resolveType(simpleName);
+            if (strings != null && strings.length > 0)
+                qualifier = strings[0][0];
+        } catch (JavaModelException e) {
+            // ignore - not found
+        }
+
+        if (qualifier.length() == 0)
+            return signature;
+
+        String qualifiedType = Signature.toQualifiedName(new String[]{qualifier, genericSimpleName});
+        String qualifiedSignature = Signature.createTypeSignature(qualifiedType, true);
+
+        return Signature.createArraySignature(qualifiedSignature, dim);
     }
 
     public static char[] fix83600(char[] signature) {
@@ -129,5 +177,14 @@ public class SignatureHelper {
             pos++;
         }
         return pos + 1;
+    }
+
+    public static String getQualifiedTypeName(CompletionProposal proposal) {
+        return String.valueOf(Signature.toCharArray(Signature
+                .getTypeErasure(proposal.getSignature())));
+    }
+
+    public static String getSimpleTypeName(CompletionProposal proposal) {
+        return Signature.getSimpleName(getQualifiedTypeName(proposal));
     }
 }

@@ -39,7 +39,6 @@ public class Test {
 
 //        unit.codeComplete(5, requestor);
         Thread.sleep(1000);
-        System.out.println();
     }
 
 }

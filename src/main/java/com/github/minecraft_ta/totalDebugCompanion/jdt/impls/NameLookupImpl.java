@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.IJavaElementRequestor;
@@ -35,7 +36,7 @@ public class NameLookupImpl extends NameLookup {
     }
 
     @Override
-    public Answer findType(String typeName, String packageName, boolean partialMatch, int acceptFlags, boolean checkRestrictions, IPackageFragmentRoot[] moduleContext) {
+    public Answer findType(String typeName, String packageName, boolean partialMatch, int acceptFlags, boolean considerSecondaryTypes, boolean waitForIndexes, boolean checkRestrictions, IProgressMonitor monitor, IPackageFragmentRoot[] moduleContext) {
         //Special case for BaseScript resolution
         if (packageName.equals("") && typeName.equals("BaseScript"))
             return JDTHacks.createNameLookupAnswer(new CompilationUnitImpl("BaseScript", BaseScript.getText()).getType("BaseScript"), null, null);
@@ -51,7 +52,10 @@ public class NameLookupImpl extends NameLookup {
     public void seekTypes(String name, IPackageFragment pkg, boolean partialMatch, int acceptFlags, IJavaElementRequestor requestor, boolean considerSecondaryTypes) {
         System.out.println("seekTypes -> name = " + name + ", pkg = " + pkg + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", requestor = " + requestor + ", considerSecondaryTypes = " + considerSecondaryTypes);
         //super.seekTypes(name, pkg, partialMatch, acceptFlags, requestor, considerSecondaryTypes);
-        for (IndexedClass foundClass : SearchEverywherePopup.CLASS_INDEX.findClasses(name, 20)) {
+        for (IndexedClass foundClass : SearchEverywherePopup.CLASS_INDEX.findClasses(name, 300)) {
+            if (foundClass.getName().lastIndexOf('$') != -1)
+                continue;
+
             requestor.acceptType(new JIndexResolvedBinaryType(foundClass));
         }
     }

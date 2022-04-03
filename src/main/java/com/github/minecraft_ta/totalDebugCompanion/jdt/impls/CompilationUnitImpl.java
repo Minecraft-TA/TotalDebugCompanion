@@ -26,6 +26,11 @@ public class CompilationUnitImpl extends CompilationUnit {
     }
 
     @Override
+    public char[] getContents() {
+        return this.buffer.getCharacters();
+    }
+
+    @Override
     public IBuffer getBuffer() {
         return this.buffer;
     }

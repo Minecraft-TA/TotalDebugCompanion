@@ -1,5 +1,20 @@
-package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
+/*******************************************************************************
+ * Copyright (c) 2005, 2016 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *     Pivotal Software, Inc. - adopted for Flux
+ *     Red Hat - adopted for JDT Server
+ *******************************************************************************/
+package com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CompletionItem;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
@@ -23,7 +38,7 @@ public class CompletionProposalDescriptionProvider {
     public StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
         int kind = proposal.getKind();
         StringBuilder description = new StringBuilder();
-        if (kind == CompletionProposal.METHOD_REF || kind == CompletionProposal.METHOD_NAME_REFERENCE ||
+        if (kind == CompletionProposal.METHOD_REF || kind == CompletionProposal.METHOD_NAME_REFERENCE || kind == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER ||
             kind == CompletionProposal.POTENTIAL_METHOD_DECLARATION ||
             kind == CompletionProposal.CONSTRUCTOR_INVOCATION) {// method name
 
@@ -47,13 +62,14 @@ public class CompletionProposalDescriptionProvider {
     private void appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal) {
         char[] signature = SignatureHelper.fix83600(methodProposal.getSignature());
         char[][] parameterNames;
-        try {
-            parameterNames = methodProposal.findParameterNames(null);
-        } catch (Exception e) {
-            e.printStackTrace();
+        //TODO: Maybe provide parameter names
+//        try {
+//            parameterNames = methodProposal.findParameterNames(null);
+//        } catch (Exception e) {
+//            e.printStackTrace();
             parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
             methodProposal.setParameterNames(parameterNames);
-        }
+//        }
 
         char[][] parameterTypes = Signature.getParameterTypes(signature);
 
@@ -299,23 +315,23 @@ public class CompletionProposalDescriptionProvider {
         item.setLabel(label);
     }
 
-    public void updateDescription(CompletionProposal proposal, CompletionItem item) {
+    public boolean updateDescription(CompletionProposal proposal, CompletionItem item) {
         switch (proposal.getKind()) {
-            case CompletionProposal.METHOD_NAME_REFERENCE, CompletionProposal.METHOD_REF, CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER, CompletionProposal.POTENTIAL_METHOD_DECLARATION -> {
+            case CompletionProposal.METHOD_NAME_REFERENCE, CompletionProposal.METHOD_REF, CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER -> {
                 if (context != null && context.isInJavadoc()) {
-                    item.setLabel("Unsupported");
-                    break;
+                    return false;
                 }
                 createMethodProposalLabel(proposal, item);
             }
-            case CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION -> createAnonymousTypeLabel(proposal, item);
             case CompletionProposal.TYPE_REF -> createTypeProposalLabel(proposal, item);
             case CompletionProposal.PACKAGE_REF -> createPackageProposalLabel(proposal, item);
             case CompletionProposal.ANNOTATION_ATTRIBUTE_REF, CompletionProposal.FIELD_REF, CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER -> createLabelWithTypeAndDeclaration(proposal, item);
             case CompletionProposal.LOCAL_VARIABLE_REF, CompletionProposal.VARIABLE_DECLARATION -> createSimpleLabelWithType(proposal, item);
             case CompletionProposal.KEYWORD, CompletionProposal.LABEL_REF -> item.setLabel(createSimpleLabel(proposal).toString());
             case CompletionProposal.LAMBDA_EXPRESSION -> createLabelWithLambdaExpression(proposal, item);
-            default -> item.setLabel("Unsupported");
+            default -> {return false;}
         }
+
+        return true;
     }
 }

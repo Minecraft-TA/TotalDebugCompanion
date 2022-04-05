@@ -6,6 +6,8 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.codeassist.complete.CompletionOnMemberAccess;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +24,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     private final int offset;
     private final ICompilationUnit unit;
 
+    private CompletionContext context;
     private CompletionProposalDescriptionProvider descriptionProvider;
     private CompletionProposalReplacementProvider proposalProvider;
 
@@ -50,7 +53,10 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     }
 
     private List<CompletionItem> convertProposals() {
-        return proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
+        var items = proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
+
+        appendLiveTemplates(items);
+        return items;
     }
 
     private CompletionItem toCompletionItem(CompletionProposal proposal) {
@@ -78,6 +84,31 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         if (mainEditRange.getEndOffset() > this.offset)
             mainEditRange.setLength(mainEditRange.getEndOffset() - this.offset + 1);
         return item;
+    }
+
+    private void appendLiveTemplates(List<CompletionItem> items) {
+        var node = ((InternalCompletionContext) context).getCompletionNode();
+        //TODO: Check for starts with "var" instead of equals
+        if (node instanceof CompletionOnMemberAccess memberAccess && new String(memberAccess.token).equals("var")) {
+            var item = new CompletionItem(this);
+            item.setLabel("var");
+            item.setRelevance(0);
+            item.setKind(CompletionItemKind.KEYWORD);
+            var start = memberAccess.receiver.sourceStart;
+            var variableType = memberAccess.receiver.resolvedType;
+            try {
+                var expressionText = this.unit.getBuffer().getText(start, memberAccess.receiver.sourceEnd - start + 1);
+                item.addTextEdit(new CustomTextEdit(
+                        new Range(start, node.sourceEnd - start + 1),
+                        //TODO: Only add semi-colon if there isn't one already
+                        //TODO: Generate variable name or use snippets
+                        new String(variableType.shortReadableName()) + " test = " + expressionText + ";")
+                );
+                //TODO: Import re-write for generic types?
+                this.proposalProvider.singleImportRewrite(new String(variableType.readableName())).forEach(item::addTextEdit);
+                items.add(item);
+            } catch (Throwable ignored) {}
+        }
     }
 
     public int mapRelevance(CompletionProposal proposal) {
@@ -151,6 +182,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     @Override
     public void acceptContext(CompletionContext context) {
         super.acceptContext(context);
+        this.context = context;
         this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
         this.proposalProvider = new CompletionProposalReplacementProvider(this.unit, context, this.offset);
     }

@@ -6,11 +6,10 @@ import java.util.List;
 public class CompletionItem {
 
     private String label;
-    private String replacement;
     private CompletionItemKind kind;
     private boolean isSnippet;
     private int relevance;
-    private List<CustomTextEdit> textEdits = new ArrayList<>();
+    private final List<CustomTextEdit> textEdits = new ArrayList<>();
 
     private final CustomCompletionRequestor requestor;
 
@@ -20,10 +19,6 @@ public class CompletionItem {
 
     public void setLabel(String label) {
         this.label = label;
-    }
-
-    public void setReplacement(String replacement) {
-        this.replacement = replacement;
     }
 
     public void setKind(CompletionItemKind kind) {

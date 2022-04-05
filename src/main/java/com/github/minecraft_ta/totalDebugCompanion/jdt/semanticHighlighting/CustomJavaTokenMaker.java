@@ -17,16 +17,25 @@ import java.util.Map;
 
 public class CustomJavaTokenMaker extends JavaTokenMaker {
 
-    private final Map<Integer, Integer> overwrittenTokenTypes = new HashMap<>();
+    private final Object tokenTypeLock = new Object();
+    private Map<Integer, Integer> overwrittenTokenTypes;
+
+    private volatile int lastVisitedVersion;
 
     public void setASTKey(String identifier, JComponent textComponent) {
-        ASTCache.addChangeListener(identifier, (ast) -> {
-            synchronized (this.overwrittenTokenTypes) {
-                overwrittenTokenTypes.clear();
-                ast.accept(new SemanticTokensVisitor(overwrittenTokenTypes));
-            }
+        ASTCache.addChangeListener(identifier, (ast, version) -> {
+            lastVisitedVersion = version;
 
-            SwingUtilities.invokeLater(textComponent::repaint);
+            var tokenTypes = new HashMap<Integer, Integer>();
+            ast.accept(new SemanticTokensVisitor(tokenTypes));
+
+            if (version != lastVisitedVersion)
+                return;
+
+            synchronized (this.tokenTypeLock) {
+                this.overwrittenTokenTypes = tokenTypes;
+                SwingUtilities.invokeLater(textComponent::repaint);
+            }
         });
     }
 
@@ -35,7 +44,10 @@ public class CustomJavaTokenMaker extends JavaTokenMaker {
         var firstToken = super.getTokenList(text, initialTokenType, startOffset);
         var currentToken = firstToken;
 
-        synchronized (this.overwrittenTokenTypes) {
+        if (this.overwrittenTokenTypes == null)
+            return firstToken;
+
+        synchronized (this.tokenTypeLock) {
             while (currentToken != null) {
                 if (currentToken.getType() != TokenTypes.NULL) {
                     var token = this.overwrittenTokenTypes.get(currentToken.getOffset());

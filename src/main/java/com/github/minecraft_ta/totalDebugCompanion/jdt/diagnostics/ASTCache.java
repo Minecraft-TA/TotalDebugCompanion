@@ -1,29 +1,29 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics;
 
-import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class ASTCache {
 
-    private static final Map<String, Pair<Integer, CompilationUnit>> CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, List<Consumer<CompilationUnit>>> LISTENERS = new ConcurrentHashMap<>();
+    private static final Map<String, Entry> CACHE = new HashMap<>();
+    private static final Map<String, List<BiConsumer<CompilationUnit, Integer>>> LISTENERS = new ConcurrentHashMap<>();
 
     public static void update(String key, String contents) {
-        var existing = CACHE.get(key);
-        if (existing != null && existing.a == contents.hashCode())
-            return;
+        int version = 0;
+        synchronized (CACHE) {
+            var existing = CACHE.get(key);
+            if (existing != null)
+                version = ++existing.version;
+        }
 
+        int finalVersion = version;
         CompletableFuture.runAsync(() -> {
             ASTParser parser = ASTParser.newParser(AST.JLS8);
             parser.setSource(new CompilationUnitImpl("Test", contents));
@@ -32,31 +32,51 @@ public class ASTCache {
             parser.setKind(ASTParser.K_COMPILATION_UNIT);
             var ast = (CompilationUnit) parser.createAST(null);
 
-            CACHE.put(key, new Pair<>(contents.hashCode(), ast));
+            synchronized (CACHE) {
+                var entry = CACHE.computeIfAbsent(key, (k) -> new Entry());
+                //There's already something newer available
+                if (entry.version > finalVersion)
+                    return;
 
-            notifyListeners(key, ast);
+                entry.version = finalVersion;
+                entry.unit = ast;
+
+                notifyListeners(key, ast, finalVersion);
+            }
         });
     }
 
-    public static void addChangeListener(String key, Consumer<CompilationUnit> listener) {
+    public static void addChangeListener(String key, BiConsumer<CompilationUnit, Integer> listener) {
         LISTENERS.computeIfAbsent(key, (k) -> new ArrayList<>()).add(listener);
-        var existing = CACHE.get(key);
-        if (existing != null)
-            listener.accept(existing.b);
+        synchronized (CACHE) {
+            var existing = CACHE.get(key);
+            if (existing != null)
+                listener.accept(existing.unit, existing.version);
+        }
     }
 
     public static void removeFromCache(String key) {
-        CACHE.remove(key);
+        synchronized (CACHE) {
+            CACHE.remove(key);
+        }
         LISTENERS.remove(key);
     }
 
     public static CompilationUnit getFromCache(String key) {
-        return CACHE.get(key).b;
+        synchronized (CACHE) {
+            return CACHE.get(key).unit;
+        }
     }
 
-    private static void notifyListeners(String key, CompilationUnit ast) {
+    private static void notifyListeners(String key, CompilationUnit ast, int version) {
         for (var listener : LISTENERS.getOrDefault(key, Collections.emptyList())) {
-            listener.accept(ast);
+            listener.accept(ast, version);
         }
+    }
+
+    public static class Entry {
+
+        public int version;
+        public CompilationUnit unit;
     }
 }

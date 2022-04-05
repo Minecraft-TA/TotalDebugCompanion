@@ -3,8 +3,11 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.BufferChangedEvent;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.CompilationUnit;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.internal.core.JavaProject;
@@ -18,6 +21,13 @@ public class CompilationUnitImpl extends CompilationUnit {
         //TODO: is the name relevant?
         super(JDTHacks.createPackageFragment(extractPackageName(contents)), name, DefaultWorkingCopyOwner.PRIMARY);
         this.buffer = new BufferImpl(contents);
+        //Force some model updates
+        bufferChanged(new BufferChangedEvent(this.buffer, 0, 0, ""));
+        try {
+            makeConsistent(new NullProgressMonitor());
+        } catch (JavaModelException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

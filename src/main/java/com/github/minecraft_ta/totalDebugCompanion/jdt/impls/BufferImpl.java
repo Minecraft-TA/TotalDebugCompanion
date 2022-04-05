@@ -29,4 +29,9 @@ public class BufferImpl implements IBufferStub {
     public int getLength() {
         return this.s.length();
     }
+
+    @Override
+    public String getText(int offset, int length) throws IndexOutOfBoundsException {
+        return s.substring(offset, offset + length);
+    }
 }

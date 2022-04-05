@@ -143,6 +143,14 @@ public class CompletionProposalReplacementProvider {
         return new Range(proposal.getReplaceStart(), proposal.getReplaceEnd() - proposal.getReplaceStart());
     }
 
+    public List<CustomTextEdit> singleImportRewrite(String typeName) {
+        this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
+        this.importRewrite.addImport(typeName);
+        var list = new ArrayList<CustomTextEdit>();
+        addImports(list);
+        return list;
+    }
+
     private void addImports(List<CustomTextEdit> additionalEdits) {
         if (this.importRewrite == null)
             return;
@@ -227,7 +235,6 @@ public class CompletionProposalReplacementProvider {
 
             buffer.append(str);
         }
-
     }
 
     private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal) {

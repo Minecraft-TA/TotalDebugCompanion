@@ -62,7 +62,6 @@ public class CompletionProposalDescriptionProvider {
     private void appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal) {
         char[] signature = SignatureHelper.fix83600(methodProposal.getSignature());
         char[][] parameterNames;
-        //TODO: Maybe provide parameter names
 //        try {
 //            parameterNames = methodProposal.findParameterNames(null);
 //        } catch (Exception e) {
@@ -131,7 +130,7 @@ public class CompletionProposalDescriptionProvider {
     private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
         StringBuilder description = this.createMethodProposalDescription(methodProposal);
         item.setLabel(description.toString());
-        item.setReplacement(String.valueOf(methodProposal.getName()));
+//        item.setReplacement(String.valueOf(methodProposal.getName()));
 
         // declaring type
         StringBuilder typeInfo = new StringBuilder();
@@ -187,7 +186,7 @@ public class CompletionProposalDescriptionProvider {
             nameBuffer.append(new String(fullName, 0, qIndex - 1));
         }
 
-        item.setReplacement(name);
+//        item.setReplacement(name);
         item.setLabel(nameBuffer.toString());
 
 //        item.setDetail(new String(fullName));
@@ -209,7 +208,7 @@ public class CompletionProposalDescriptionProvider {
     private void createSimpleLabelWithType(CompletionProposal proposal, CompletionItem item) {
         StringBuilder nameBuffer = new StringBuilder();
         nameBuffer.append(proposal.getCompletion());
-        item.setReplacement(nameBuffer.toString());
+//        item.setReplacement(nameBuffer.toString());
         char[] typeName = Signature.getSignatureSimpleName(proposal.getSignature());
         if (typeName.length > 0) {
             nameBuffer.append(VAR_TYPE_SEPARATOR);
@@ -233,7 +232,7 @@ public class CompletionProposalDescriptionProvider {
         StringBuilder buf = new StringBuilder();
 
         buf.append(name);
-        item.setReplacement(buf.toString());
+//        item.setReplacement(buf.toString());
         char[] typeName = Signature.getSignatureSimpleName(proposal.getSignature());
         if (typeName.length > 0) {
             buf.append(VAR_TYPE_SEPARATOR);
@@ -284,7 +283,7 @@ public class CompletionProposalDescriptionProvider {
         char[] declaringTypeSignature = proposal.getDeclarationSignature();
         declaringTypeSignature = Signature.getTypeErasure(declaringTypeSignature);
         String name = new String(Signature.getSignatureSimpleName(declaringTypeSignature));
-        item.setReplacement(name);
+//        item.setReplacement(name);
         StringBuilder buf = new StringBuilder();
         buf.append(name);
         buf.append('(');

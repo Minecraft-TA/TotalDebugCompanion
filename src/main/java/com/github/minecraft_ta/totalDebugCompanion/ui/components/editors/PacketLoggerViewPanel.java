@@ -13,9 +13,7 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTa
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -99,7 +97,22 @@ public class PacketLoggerViewPanel extends JPanel {
         add(header, BorderLayout.NORTH);
 
         //Creates the table
-        JTable table = new JTable();
+        JTable table = new JTable() {
+            private final DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+
+            {
+                rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+            }
+
+            @Override
+            public TableCellRenderer getCellRenderer(int row, int column) {
+                if (column == 2) {
+                    return rightRenderer;
+                }
+                return super.getCellRenderer(row, column);
+            }
+        };
+
         table.setModel(new DefaultTableModel(new Object[][]{}, new String[]{"Packet Name", "Amount", "Bytes"}) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -108,7 +121,11 @@ public class PacketLoggerViewPanel extends JPanel {
 
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                return columnIndex == 0 ? String.class : Integer.class;
+                return switch (columnIndex) {
+                    case 0 -> String.class;
+                    case 1 -> Integer.class;
+                    default -> ByteWrapper.class;
+                };
             }
         });
         //Adds a sorter to the table
@@ -254,13 +271,13 @@ public class PacketLoggerViewPanel extends JPanel {
             Pair<Integer, Integer> packetData = packets.remove(value);
             if (packetData != null) {
                 table.setValueAt(packetData.a, i, 1);
-                table.setValueAt(packetData.b, i, 2);
+                table.setValueAt(new ByteWrapper(packetData.b), i, 2);
             }
         }
 
         //Adds any new packets to the table
         for (Map.Entry<String, Pair<Integer, Integer>> entry : packets.entrySet()) {
-            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue().a, entry.getValue().b});
+            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue().a, new ByteWrapper(entry.getValue().b)});
         }
     }
 
@@ -272,5 +289,33 @@ public class PacketLoggerViewPanel extends JPanel {
         CompanionApp.SERVER.getMessageBus().unregister(OutgoingPacketsMessage.class, this);
         CompanionApp.SERVER.getMessageBus().unregister(ChannelListMessage.class, this);
         return true;
+    }
+
+    record ByteWrapper(int bytes) implements Comparable<ByteWrapper> {
+
+        @Override
+        public int compareTo(ByteWrapper o) {
+            return Integer.compare(bytes, o.bytes);
+        }
+
+        /**
+         * Converts the amount of bytes to a human-readable format
+         *
+         * @return A string representing the amount of bytes
+         */
+        @Override
+        public String toString() {
+            if (bytes < 1024) {
+                return bytes + " B";
+            } else if (bytes < 1024 * 1024) {
+                return formatBytes(bytes / 1024.0) + " KB";
+            } else {
+                return formatBytes(bytes / (1024.0 * 1024.0)) + " MB";
+            }
+        }
+
+        private String formatBytes(double bytes) {
+            return String.format("%.2f", bytes);
+        }
     }
 }

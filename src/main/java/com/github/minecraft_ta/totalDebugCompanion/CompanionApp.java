@@ -11,10 +11,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.UpdateFoll
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.IncomingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.OutgoingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.SaveIncomingPacketsMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.SaveOutgoingPacketsMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ClassPathMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
@@ -87,10 +84,14 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, ClassPathMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, StopScriptMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, FocusWindowMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, SaveIncomingPacketsMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, SaveOutgoingPacketsMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, PacketLoggerStateChangeMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, IncomingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OutgoingPacketsMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ClearPacketsMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, ChannelListMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, SetChannelMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, PacketContentMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, CapturePacketMessage.class);
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();
@@ -174,7 +175,12 @@ public class CompanionApp {
 
         SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1))));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1));
+            SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
+            SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
+            SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage("All channels"));
+        }));
 
         MainWindow.INSTANCE.setSize(1280, 720);
         MainWindow.INSTANCE.setVisible(true);

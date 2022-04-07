@@ -221,7 +221,10 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
             "org.jcp",
             "org.omg",
             "org.jline",
-            "oshi"
+            "oshi",
+            "javassist.",
+            "com.ibm",
+            "com.jcraft"
     }).map(String::toCharArray).toArray(char[][]::new);
 
     protected boolean isTypeFiltered(CompletionProposal proposal) {

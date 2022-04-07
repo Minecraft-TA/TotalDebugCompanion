@@ -1,6 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting;
 
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Token;
@@ -16,6 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CustomJavaTokenMaker extends JavaTokenMaker {
+
+    private static final char[] VAR_CHAR_ARRAY = {'v', 'a', 'r'};
 
     private final Object tokenTypeLock = new Object();
     private Map<Integer, Integer> overwrittenTokenTypes;
@@ -49,7 +52,10 @@ public class CustomJavaTokenMaker extends JavaTokenMaker {
 
         synchronized (this.tokenTypeLock) {
             while (currentToken != null) {
-                if (currentToken.getType() != TokenTypes.NULL) {
+                //Exclude "var" from being highlighted
+                if (currentToken.getType() == TokenTypes.DATA_TYPE && CharOperation.equals(VAR_CHAR_ARRAY, currentToken.getTextArray(), currentToken.getTextOffset(), currentToken.getTextOffset() + currentToken.length())) {
+                    currentToken.setType(TokenTypes.IDENTIFIER);
+                } else if (currentToken.getType() != TokenTypes.NULL) {
                     var token = this.overwrittenTokenTypes.get(currentToken.getOffset());
                     if (token != null)
                         currentToken.setType(token);

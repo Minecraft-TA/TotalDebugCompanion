@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt.impls;
 
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
@@ -28,6 +29,11 @@ public class CompilationUnitImpl extends CompilationUnit {
         } catch (JavaModelException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected IBuffer openBuffer(IProgressMonitor pm, Object info) throws JavaModelException {
+        return getBuffer();
     }
 
     @Override

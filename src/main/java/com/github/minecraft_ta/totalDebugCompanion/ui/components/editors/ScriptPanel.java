@@ -112,7 +112,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
-        this.editorPane.setParserDelay(200);
+        this.editorPane.setParserDelay(400);
         this.editorPane.addParser(new CustomJavaParser(scriptView.getURI()));
         this.editorPane.setText(scriptView.getSourceText());
 
@@ -378,6 +378,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         if (item.getRequestor().isCanceled())
             return;
 
+        this.editorPane.beginAtomicEdit();
         item.getTextEdits().forEach(edit -> {
             var range = edit.getRange();
             try {
@@ -388,6 +389,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 e.printStackTrace();
             }
         });
+        this.editorPane.endAtomicEdit();
 
         codeCompletionPopup.setVisible(false);
     }

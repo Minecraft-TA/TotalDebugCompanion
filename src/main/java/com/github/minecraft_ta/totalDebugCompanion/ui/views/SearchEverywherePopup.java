@@ -45,7 +45,7 @@ public class SearchEverywherePopup extends JFrame {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var indexedClass = (IndexedClass) value;
-                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ", indexedClass.getPackage().replace('/', '.'));
+                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ", indexedClass.getPackage().getNameWithParentsDot());
 
                 var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));

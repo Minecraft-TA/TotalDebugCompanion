@@ -12,7 +12,6 @@ import org.eclipse.jdt.internal.core.IJavaElementRequestor;
 import org.eclipse.jdt.internal.core.NameLookup;
 import org.eclipse.jdt.internal.core.util.Util;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class NameLookupImpl extends NameLookup {
@@ -23,16 +22,7 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public boolean isPackage(String[] pkgName) {
-        //Hack, because JIndex has no actual isPackage function, causing unresolved types to be seen as packages
-        // sometimes
-        if (Character.isUpperCase(pkgName[0].charAt(0)))
-            return false;
-
-        var packageName = pkgName.length == 1 ? "" : Util.concatWith(Arrays.copyOf(pkgName, pkgName.length - 1), '/');
-        var className = pkgName[pkgName.length - 1];
-
-        //If it's not a class, it's a package. For now.
-        return SearchEverywherePopup.CLASS_INDEX.findClass(packageName, className) == null;
+        return SearchEverywherePopup.CLASS_INDEX.findPackage(Util.concatWith(pkgName, '/')) != null;
     }
 
     @Override
@@ -50,9 +40,22 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public void seekTypes(String name, IPackageFragment pkg, boolean partialMatch, int acceptFlags, IJavaElementRequestor requestor, boolean considerSecondaryTypes) {
-        System.out.println("seekTypes -> name = " + name + ", pkg = " + pkg + ", partialMatch = " + partialMatch + ", acceptFlags = " + acceptFlags + ", requestor = " + requestor + ", considerSecondaryTypes = " + considerSecondaryTypes);
-        //super.seekTypes(name, pkg, partialMatch, acceptFlags, requestor, considerSecondaryTypes);
-        for (IndexedClass foundClass : SearchEverywherePopup.CLASS_INDEX.findClasses(name, 300)) {
+        IndexedClass[] classes;
+        if (name == null || name.isBlank()) {
+            var packageName = pkg.getElementName();
+            if (packageName.isBlank())
+                return;
+
+            var indexedPackage = SearchEverywherePopup.CLASS_INDEX.findPackage(packageName);
+            if (indexedPackage == null)
+                return;
+
+            classes = indexedPackage.getClasses();
+        } else {
+            classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, 300);
+        }
+
+        for (IndexedClass foundClass : classes) {
             if (foundClass.getName().lastIndexOf('$') != -1)
                 continue;
 
@@ -64,5 +67,6 @@ public class NameLookupImpl extends NameLookup {
     public void seekPackageFragments(String name, boolean partialMatch, IJavaElementRequestor requestor) {
         System.out.println("seekPackageFragments -> name = " + name + ", partialMatch = " + partialMatch + ", requestor = " + requestor);
         //super.seekPackageFragments(name, partialMatch, requestor);
+        requestor.acceptPackageFragment(JDTHacks.createPackageFragment("java.lang"));
     }
 }

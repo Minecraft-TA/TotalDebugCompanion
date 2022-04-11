@@ -4,8 +4,12 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CompletionItem;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CustomCompletionRequestor;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CustomTextEdit;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.Range;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CodeFormatterUtil;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaParser;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
@@ -19,6 +23,8 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jdt.core.formatter.CodeFormatter;
+import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 
@@ -119,6 +125,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         setupLogPanel();
         setupSaveBehavior();
         setupAutocompletion();
+        setupFormatting();
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, this, (m) -> {
             if (m.getScriptId() != this.scriptId)
@@ -242,7 +249,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     e.consume();
                     doAutoCompletion();
                 } else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    //TODO: Completion popup up and down
                     var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
                     if (selectedIndex > codeCompletionPopup.getModel().getSize() - 1)
                         selectedIndex = 0;
@@ -296,6 +302,28 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
 
         codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
+    }
+
+    private void setupFormatting() {
+        this.editorPane.getActionMap().put("formatFile", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                var edit = CodeFormatterUtil.format2(CodeFormatter.K_COMPILATION_UNIT, editorPane.getText(), 0, "\n", JDTHacks.DUMMY_JAVA_PROJECT.getOptions(false));
+                var children = edit.getChildren();
+
+                editorPane.beginAtomicEdit();
+                for (int i = children.length - 1; i >= 0; i--) {
+                    TextEdit child = children[i];
+                    if (!(child instanceof ReplaceEdit replaceEdit))
+                        continue;
+
+                    applyTextEdit(new CustomTextEdit(new Range(replaceEdit.getOffset(), replaceEdit.getLength()), replaceEdit.getText()));
+                }
+                editorPane.endAtomicEdit();
+                bottomInformationBar.setDefaultInfoText("Successfully formatted the file.");
+            }
+        });
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
     }
 
     private void setupAutocompletionOld() {
@@ -379,16 +407,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             return;
 
         this.editorPane.beginAtomicEdit();
-        item.getTextEdits().forEach(edit -> {
-            var range = edit.getRange();
-            try {
-                ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
-//                (range.getOffset(), range.getLength());
-//                this.editorPane.getDocument().insertString(range.getOffset(), edit.getNewText(), null);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-            }
-        });
+        item.getTextEdits().forEach(this::applyTextEdit);
         this.editorPane.endAtomicEdit();
 
         codeCompletionPopup.setVisible(false);
@@ -429,11 +448,11 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         }
     }
 
-    private void applyTextEdit(TextEdit edit) {
+    private void applyTextEdit(CustomTextEdit edit) {
         applyTextEdit(edit, false);
     }
 
-    private void applyTextEdit(TextEdit edit, boolean snippet) {
+    private void applyTextEdit(CustomTextEdit edit, boolean snippet) {
         //TODO: Apply text edit, what about snippets?
         /*var forceSelectionOffset = -1;
         var forceSelectionLength = -1;
@@ -458,20 +477,14 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 }
             }
         }
+         */
 
+        var range = edit.getRange();
         try {
-            var range = edit.getRange();
-            var offset1 = UIUtils.posToOffset(this.editorPane, range.getStart());
-            var offset2 = UIUtils.posToOffset(this.editorPane, range.getEnd());
-            this.editorPane.getDocument().remove(offset1, offset2 - offset1);
-            this.editorPane.getDocument().insertString(offset1, text.toString(), null);
-
-            if (forceSelectionOffset != -1 && forceSelectionLength != -1) {
-                this.editorPane.select(offset1 + forceSelectionOffset, offset1 + forceSelectionOffset + forceSelectionLength);
-            }
-        } catch (BadLocationException ex) {
-            ex.printStackTrace();
-        }*/
+            ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 
 }

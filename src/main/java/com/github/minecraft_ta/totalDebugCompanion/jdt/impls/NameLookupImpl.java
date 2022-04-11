@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
+import com.github.tth05.jindex.SearchOptions;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -52,7 +53,7 @@ public class NameLookupImpl extends NameLookup {
 
             classes = indexedPackage.getClasses();
         } else {
-            classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, 300);
+            classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.MATCH_CASE_FIRST_CHAR_ONLY, 300));
         }
 
         for (IndexedClass foundClass : classes) {

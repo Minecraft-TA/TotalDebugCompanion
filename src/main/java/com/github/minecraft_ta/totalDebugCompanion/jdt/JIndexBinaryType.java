@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IBinaryTypeStub;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
+import com.github.tth05.jindex.SearchOptions;
 import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
@@ -96,7 +97,7 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public IBinaryNestedType[] getMemberTypes() {
         //TODO: Maybe implement this in JIndex instead?
-        return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(this.indexedClass.getName(), 500))
+        return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(this.indexedClass.getName(), SearchOptions.defaultWith(SearchOptions.MatchMode.MATCH_CASE)))
                 .filter(c -> c.getName().contains("$"))
                 .filter(c -> c.getName().substring(0, c.getName().indexOf('$')).equals(this.indexedClass.getName()))
                 .map(c -> new IBinaryNestedType() {

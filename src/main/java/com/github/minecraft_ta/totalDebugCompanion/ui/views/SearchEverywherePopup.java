@@ -9,6 +9,7 @@ import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.jindex.ClassIndex;
 import com.github.tth05.jindex.IndexedClass;
+import com.github.tth05.jindex.SearchOptions;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -78,6 +79,7 @@ public class SearchEverywherePopup extends JFrame {
     private final JScrollPane resultListScrollPane = new JScrollPane(this.resultList);
     {
         resultListScrollPane.setPreferredSize(new Dimension(500, 500));
+        resultListScrollPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY));
     }
 
     private final FlatIconTextField searchTextField = new FlatIconTextField(Icons.SEARCH_ICON);
@@ -90,7 +92,7 @@ public class SearchEverywherePopup extends JFrame {
                 return;
             }
 
-            var classes = CLASS_INDEX.findClasses(query, 40);
+            var classes = CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, 200));
             var selectedClass = resultList.getSelectedIndex() == -1 ? null : model.get(resultList.getSelectedIndex()).getNameWithPackage();
 
             model.clear();
@@ -134,6 +136,8 @@ public class SearchEverywherePopup extends JFrame {
 
         add(this.searchTextField, BorderLayout.NORTH);
         add(this.resultListScrollPane, BorderLayout.CENTER);
+
+        ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1,1,1,1, Color.GRAY.darker()));
 
         setUndecorated(true);
         pack();

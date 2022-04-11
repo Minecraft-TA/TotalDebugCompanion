@@ -20,17 +20,16 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
-import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.event.DocumentEvent;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -121,6 +120,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.setParserDelay(400);
         this.editorPane.addParser(new CustomJavaParser(scriptView.getURI()));
         this.editorPane.setText(scriptView.getSourceText());
+        this.editorPane.getActionMap().put(DefaultEditorKit.deletePrevCharAction, new CustomDeletePrevCharAction());
 
         setupLogPanel();
         setupSaveBehavior();
@@ -320,27 +320,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                     applyTextEdit(new CustomTextEdit(new Range(replaceEdit.getOffset(), replaceEdit.getLength()), replaceEdit.getText()));
                 }
                 editorPane.endAtomicEdit();
-                bottomInformationBar.setDefaultInfoText("Successfully formatted the file.");
+                bottomInformationBar.setDefaultInfoText("Successfully applied %d edit(s).".formatted(children.length));
             }
         });
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
     }
 
     private void setupAutocompletionOld() {
-
-        this.editorPane.getActionMap().put("formatFile", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //TODO: Format the file
-             /*   Collections.reverse(res);
-                SwingUtilities.invokeLater(() -> res.forEach(ScriptPanel.this::applyTextEdit));
-                bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
-                        .formatted(Stream.concat(
-                                        res.stream().map(t -> t.getRange().getEnd().getLine()),
-                                        res.stream().map(t -> t.getRange().getStart().getLine()))
-                                .distinct().count()));*/
-            }
-        });
         this.editorPane.getActionMap().put("showSignatureHelp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -360,25 +346,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                         });*/
             }
         });
-        this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                codeCompletionPopup.setVisible(false);
-            }
-        });
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl P"), "showSignatureHelp");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
-
-        codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
-
-        this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            if (e.getType() == DocumentEvent.EventType.CHANGE)
-                return;
-
-            //TODO: Diagnostics clear?
-//            CompanionApp.LSP.getDiagnosticsManager().clearAllHighlights(this.scriptView.getURI());
-        });
     }
 
     private void requestCompletionProposals() {
@@ -487,4 +455,63 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         }
     }
 
+    private static class CustomDeletePrevCharAction extends TextAction {
+
+        public CustomDeletePrevCharAction() {
+            super(DefaultEditorKit.deletePrevCharAction);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            var area = (RSyntaxTextArea) getTextComponent(e);
+
+            //Base implementation copied from org.fife.ui.rtextarea.RTextAreaEditorKit$DeletePrevCharAction
+            try {
+                var document = area.getDocument();
+                var caret = area.getCaret();
+                int dot = caret.getDot();
+                int mark = caret.getMark();
+                if (dot != mark) {
+                    document.remove(Math.min(dot, mark), Math.abs(dot - mark));
+                } else if (dot > 0) {
+                    int delChars = 1;
+                    if (dot > 1) {
+                        delChars = fixDelCharsCount(caret, document);
+                    }
+                    document.remove(dot - delChars, delChars);
+                }
+            } catch (BadLocationException ignored) {
+            }
+        }
+
+        private int fixDelCharsCount(Caret caret, Document document) {
+            int dot = caret.getDot();
+
+            var root = document.getDefaultRootElement();
+            var line = root.getElement(root.getElementIndex(dot));
+            var start = line.getStartOffset();
+            var len = line.getEndOffset() - 1 - start;
+            try {
+                var lineText = document.getText(start, len);
+
+                if (lineText.isEmpty())
+                    return 1;
+
+                if (lineText.isBlank())
+                    return dot - len < 1 ? len : len + 1;
+
+                if (lineText.length() < 2)
+                    return 1;
+
+                char c0 = lineText.charAt(0);
+                char c1 = lineText.charAt(1);
+                if (c0 >= '\uD800' && c0 <= '\uDBFF' &&
+                    c1 >= '\uDC00' && c1 <= '\uDFFF') {
+                    return 2;
+                }
+            } catch (BadLocationException ignored) {}
+
+            return 1;
+        }
+    }
 }

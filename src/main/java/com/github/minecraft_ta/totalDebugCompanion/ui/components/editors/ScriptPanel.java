@@ -121,6 +121,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         this.editorPane.addParser(new CustomJavaParser(scriptView.getURI()));
         this.editorPane.setText(scriptView.getSourceText());
         this.editorPane.getActionMap().put(DefaultEditorKit.deletePrevCharAction, new CustomDeletePrevCharAction());
+        //TODO: Snippet insertion support
+        // SnippetCompletionContext -> activate(String snippet), deactive() etc. -> Should support `method(${p2:val}, ${p1:val2}); ${cursor}`
+        // - Hook Tab/Enter key to go to next placeholder (save and restore old binding)
+        // - Add highlights with highlight painter (they automatically update their positions
+        // - Deactivate when a newline is inserted or any char is typed outside of any highlight
+        // - Work together with autocompletion popup
+        // - Support copy placeholders which update in multiple positions when you type
 
         setupLogPanel();
         setupSaveBehavior();

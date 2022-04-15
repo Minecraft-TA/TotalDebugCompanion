@@ -98,8 +98,6 @@ public class CompletionProposalReplacementProvider {
             range = toReplacementRange(proposal);
 
         switch (proposal.getKind()) {
-//            case CompletionProposal.METHOD_DECLARATION -> throw new RuntimeException("Hello yeet");
-//            case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.ANONYMOUS_CLASS_DECLARATION -> throw new RuntimeException("Hello yeet2");
             case CompletionProposal.LAMBDA_EXPRESSION -> appendLambdaExpressionReplacement(completionBuffer, proposal);
             default -> appendReplacementString(completionBuffer, proposal);
         }

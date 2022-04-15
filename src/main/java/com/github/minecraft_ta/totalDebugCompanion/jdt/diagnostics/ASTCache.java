@@ -64,7 +64,11 @@ public class ASTCache {
 
     public static CompilationUnit getFromCache(String key) {
         synchronized (CACHE) {
-            return CACHE.get(key).unit;
+            var entry = CACHE.get(key);
+            if (entry == null)
+                return null;
+
+            return entry.unit;
         }
     }
 

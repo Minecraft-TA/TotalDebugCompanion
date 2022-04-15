@@ -5,6 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JIndexResolvedBinaryType;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
+import com.github.tth05.jindex.IndexedPackage;
 import com.github.tth05.jindex.SearchOptions;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -66,8 +67,13 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public void seekPackageFragments(String name, boolean partialMatch, IJavaElementRequestor requestor) {
-        System.out.println("seekPackageFragments -> name = " + name + ", partialMatch = " + partialMatch + ", requestor = " + requestor);
-        //super.seekPackageFragments(name, partialMatch, requestor);
-        requestor.acceptPackageFragment(JDTHacks.createPackageFragment("java.lang"));
+        seekPackageFragments(name, partialMatch, requestor, null);
+    }
+
+    @Override
+    public void seekPackageFragments(String name, boolean partialMatch, IJavaElementRequestor requestor, IPackageFragmentRoot[] moduleContext) {
+        for (IndexedPackage pkg : SearchEverywherePopup.CLASS_INDEX.findPackages(name)) {
+            requestor.acceptPackageFragment(JDTHacks.createPackageFragment(pkg.getNameWithParentsDot()));
+        }
     }
 }

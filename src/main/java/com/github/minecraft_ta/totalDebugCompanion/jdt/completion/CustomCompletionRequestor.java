@@ -82,8 +82,8 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
 
         //Fix first completion
         var mainEditRange = item.getTextEdits().get(0).getRange();
-        if (mainEditRange.getEndOffset() > this.offset)
-            mainEditRange.setLength(mainEditRange.getEndOffset() - this.offset + 1);
+        if (mainEditRange.getEndOffset() > this.offset && !item.getTextEdits().get(0).getNewText().endsWith(";"))
+            mainEditRange.setLength(mainEditRange.getLength() - (mainEditRange.getEndOffset() - this.offset));
         return item;
     }
 

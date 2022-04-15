@@ -4,6 +4,7 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IBinaryTypeStub;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
 import com.github.tth05.jindex.SearchOptions;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
@@ -30,8 +31,13 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public char[] getEnclosingTypeName() {
-        //TODO: Return enclosing type name
-        return null;
+        //TODO: Return real enclosing type name
+        var name = getName();
+        var index = CharOperation.lastIndexOf('$', name);
+        if (index == -1)
+            return null;
+
+        return CharOperation.subarray(name, 0, index);
     }
 
     @Override
@@ -61,7 +67,8 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public char[] getSourceName() {
         var name = this.indexedClass.getName();
-        var dollarIndex = name.indexOf('$');
+        //TODO: Return real source name
+        var dollarIndex = name.lastIndexOf('$');
 
         return name.substring(dollarIndex == -1 ? 0 : dollarIndex + 1).toCharArray();
     }
@@ -97,9 +104,12 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public IBinaryNestedType[] getMemberTypes() {
         //TODO: Maybe implement this in JIndex instead?
-        return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(this.indexedClass.getName(), SearchOptions.defaultWith(SearchOptions.MatchMode.MATCH_CASE)))
-                .filter(c -> c.getName().contains("$"))
-                .filter(c -> c.getName().substring(0, c.getName().indexOf('$')).equals(this.indexedClass.getName()))
+        var name = this.indexedClass.getName();
+        return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.defaultWith(SearchOptions.MatchMode.MATCH_CASE)))
+                .filter(c -> {
+                    var innerName = c.getName();
+                    return innerName.contains("$") && innerName.length() > name.length() && innerName.startsWith(name);
+                })
                 .map(c -> new IBinaryNestedType() {
                     @Override
                     public char[] getEnclosingTypeName() {

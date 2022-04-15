@@ -5,10 +5,7 @@ import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CompletionItem;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CustomCompletionRequestor;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.CustomTextEdit;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.Range;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.*;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CodeFormatterUtil;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaParser;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
@@ -95,6 +92,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     };
     private final JScrollPane logPanelScrollPane = new JScrollPane(logPanelTextPane);
 
+    private final SnippetCompletionAdapter snippetCompletionAdapter = new SnippetCompletionAdapter(this.editorPane);
     private CustomCompletionRequestor completionRequestor;
     private boolean didTypeBeforeCaretMove;
     private int lastSavedVersion = -1;
@@ -382,7 +380,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             return;
 
         this.editorPane.beginAtomicEdit();
-        item.getTextEdits().forEach(this::applyTextEdit);
+        item.getTextEdits().forEach(i -> this.applyTextEdit(i, item.isSnippet()));
         this.editorPane.endAtomicEdit();
 
         codeCompletionPopup.setVisible(false);
@@ -455,6 +453,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
          */
 
         var range = edit.getRange();
+        if (range.getLength() == 0 && edit.getNewText().isEmpty())
+            return;
+
+        if (snippet && this.snippetCompletionAdapter.insert(edit))
+            return;
+
         try {
             ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
         } catch (BadLocationException e) {

@@ -104,6 +104,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
             var item = new CompletionItem(this);
             item.setLabel("var");
             item.setRelevance(0);
+            item.setSnippet(true);
             item.setKind(CompletionItemKind.KEYWORD);
             var start = memberAccess.receiver.sourceStart;
             try {
@@ -112,7 +113,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                         new Range(start, node.sourceEnd - start + 1),
                         //TODO: Only add semi-colon if there isn't one already
                         //TODO: Generate variable name or use snippets
-                        new String(variableType.shortReadableName()) + " test = " + expressionText + ";")
+                        new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + ";")
                 );
                 //TODO: Import re-write for generic types?
                 this.proposalProvider.singleImportRewrite(new String(variableType.readableName())).forEach(item::addTextEdit);

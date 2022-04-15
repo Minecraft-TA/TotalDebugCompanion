@@ -31,10 +31,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.text.edits.TextEdit;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CompletionProposalReplacementProvider {
 
@@ -73,7 +70,8 @@ public class CompletionProposalReplacementProvider {
             if (requiredProposals != null) {
                 for (CompletionProposal requiredProposal : requiredProposals) {
                     switch (requiredProposal.getKind()) {
-                        case CompletionProposal.TYPE_IMPORT, CompletionProposal.METHOD_IMPORT, CompletionProposal.FIELD_IMPORT -> appendImportProposal(completionBuffer, requiredProposal, proposal.getKind());
+                        case CompletionProposal.TYPE_IMPORT, CompletionProposal.METHOD_IMPORT, CompletionProposal.FIELD_IMPORT ->
+                                appendImportProposal(completionBuffer, requiredProposal, proposal.getKind());
                         case CompletionProposal.TYPE_REF -> {
                             CustomTextEdit edit = toRequiredTypeEdit(requiredProposal, trigger, proposal.canUseDiamond(context));
                             if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION) {
@@ -84,10 +82,10 @@ public class CompletionProposalReplacementProvider {
                             }
                         }
                         default ->
-                                /*
-                                 * In 3.3 we only support the above required proposals, see
-                                 * CompletionProposal#getRequiredProposals()
-                                 */
+                            /*
+                             * In 3.3 we only support the above required proposals, see
+                             * CompletionProposal#getRequiredProposals()
+                             */
                                 Assert.isTrue(false);
                     }
                 }
@@ -123,18 +121,6 @@ public class CompletionProposalReplacementProvider {
         if (SNIPPETS_SUPPORTED) {
             completionBuffer.append(CURSOR_POSITION);
         }
-    }
-
-    private void appendBody(StringBuilder completionBuffer) {
-        if (SNIPPETS_SUPPORTED) {
-            String replace = sanitizeCompletion(completionBuffer.toString());
-            completionBuffer.replace(0, completionBuffer.toString().length(), replace);
-        }
-        completionBuffer.append(" {\n\t");
-        if (SNIPPETS_SUPPORTED) {
-            completionBuffer.append(CURSOR_POSITION);
-            completionBuffer.append("\n}");
-        }//if Snippets not supported, we leave an open bracket so users can type in directly
     }
 
     private Range toReplacementRange(CompletionProposal proposal) {
@@ -201,13 +187,11 @@ public class CompletionProposalReplacementProvider {
 
         if (SNIPPETS_SUPPORTED) {
             buffer.append(RPAREN);
+            buffer.append("${0}");
             // add semicolons only if there are parentheses
             if (canAutomaticallyAppendSemicolon(proposal))
                 buffer.append(SEMICOLON);
         }
-
-        if (proposal.getKind() == CompletionProposal.METHOD_DECLARATION)
-            appendBody(buffer);
     }
 
     private boolean hasParameters(CompletionProposal proposal) throws IllegalArgumentException {
@@ -539,9 +523,7 @@ public class CompletionProposalReplacementProvider {
         }
 
         String[] keys = new String[chKeys.length];
-        for (int i = 0; i < keys.length; i++) {
-            keys[i] = String.valueOf(chKeys[0]);
-        }
+        Arrays.fill(keys, String.valueOf(chKeys[0]));
 
         final ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setProject(compilationUnit.getJavaProject());
@@ -604,7 +586,7 @@ public class CompletionProposalReplacementProvider {
             IDocument document = new DocumentAdapter(this.compilationUnit.getBuffer());
             org.eclipse.jface.text.IRegion region = document.getLineInformationOfOffset(proposal.getReplaceEnd());
             prefix = document.get(region.getOffset(), proposal.getReplaceEnd() - region.getOffset()).trim();
-        } catch (BadLocationException | JavaModelException e) {
+        } catch (BadLocationException | JavaModelException ignored) {
 
         }
         int dotIndex = prefix.lastIndexOf('.');

@@ -426,32 +426,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void applyTextEdit(CustomTextEdit edit, boolean snippet) {
-        //TODO: Apply text edit, what about snippets?
-        /*var forceSelectionOffset = -1;
-        var forceSelectionLength = -1;
-        var text = new StringBuilder(edit.getNewText());
-        if (snippet) {
-            var lowest = 100;
-            var matches = Pattern.compile("(\\$[^{].*?)?\\$\\{(?<index>\\d{1,2}):?(?<variableName>\\w+)?(.*?)}").matcher(text).results().collect(Collectors.toList());
-            Collections.reverse(matches);
-            for (MatchResult match : matches) {
-                var variableName = match.group(3);
-                if (variableName == null)
-                    variableName = "";
-                text.replace(match.start(), match.end(), variableName);
-
-                var index = Integer.parseInt(match.group(2));
-                if (index < lowest) {
-                    lowest = index;
-                    forceSelectionOffset = match.start();
-                    forceSelectionLength = variableName.length();
-                } else {
-                    forceSelectionOffset -= match.end() - match.start() - variableName.length();
-                }
-            }
-        }
-         */
-
         var range = edit.getRange();
         if (range.getLength() == 0 && edit.getNewText().isEmpty())
             return;
@@ -460,7 +434,9 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             return;
 
         try {
+            this.snippetCompletionAdapter.beginIgnoredDocumentChange();
             ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
+            this.snippetCompletionAdapter.endIgnoredDocumentChange();
         } catch (BadLocationException e) {
             e.printStackTrace();
         }

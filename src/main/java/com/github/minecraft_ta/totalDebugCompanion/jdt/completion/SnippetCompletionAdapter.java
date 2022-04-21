@@ -101,6 +101,14 @@ public class SnippetCompletionAdapter {
         return false;
     }
 
+    public void beginIgnoredDocumentChange() {
+        this.listener.ignoreDocumentChanges = true;
+    }
+
+    public void endIgnoredDocumentChange() {
+        this.listener.ignoreDocumentChanges = false;
+    }
+
     private void moveToNextParam() {
         var p = getPlaceholderAt(this.textComponent.getCaretPosition());
         if (p == null) {
@@ -185,17 +193,25 @@ public class SnippetCompletionAdapter {
 
     private class Listener implements DocumentListener {
 
+        private boolean ignoreDocumentChanges;
+
         @Override
         public void changedUpdate(DocumentEvent e) {
         }
 
         @Override
         public void insertUpdate(DocumentEvent e) {
+            if (this.ignoreDocumentChanges)
+                return;
+
             handleDocumentChange(textComponent.getCaretPosition());
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
+            if (this.ignoreDocumentChanges)
+                return;
+
             handleDocumentChange(e.getOffset());
         }
 

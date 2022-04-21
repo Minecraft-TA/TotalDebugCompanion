@@ -1,10 +1,8 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
 import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IBinaryTypeStub;
-import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.tth05.jindex.IndexedClass;
-import com.github.tth05.jindex.SearchOptions;
-import org.eclipse.jdt.core.compiler.CharOperation;
+import com.github.tth05.jindex.InnerClassType;
 import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment;
@@ -30,24 +28,21 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     }
 
     @Override
-    public char[] getEnclosingTypeName() {
-        //TODO: Return real enclosing type name
-        var name = getName();
-        var index = CharOperation.lastIndexOf('$', name);
-        if (index == -1)
-            return null;
+    public char[] getEnclosingMethod() {
+        var desc = this.indexedClass.getEnclosingMethodNameAndDesc();
+        return desc == null ? null : desc.toCharArray();
+    }
 
-        return CharOperation.subarray(name, 0, index);
+    @Override
+    public char[] getEnclosingTypeName() {
+        var enclosingClass = this.indexedClass.getEnclosingClass();
+        return enclosingClass == null ? null : enclosingClass.getNameWithPackage().toCharArray();
     }
 
     @Override
     public char[] getSuperclassName() {
         var superClass = this.indexedClass.getSuperClass();
-        if (superClass == null) {
-            return null;
-        }
-
-        return superClass.getNameWithPackage().toCharArray();
+        return superClass == null ? null : superClass.getNameWithPackage().toCharArray();
     }
 
     @Override
@@ -76,9 +71,7 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public char[] getGenericSignature() {
         var str = this.indexedClass.getGenericSignatureString();
-        if (str == null)
-            return null;
-        return str.toCharArray();
+        return str == null ? null : str.toCharArray();
     }
 
     @Override
@@ -103,29 +96,24 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public IBinaryNestedType[] getMemberTypes() {
-        //TODO: Maybe implement this in JIndex instead?
-        var name = this.indexedClass.getName();
-        return Arrays.stream(SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.defaultWith(SearchOptions.MatchMode.MATCH_CASE)))
-                .filter(c -> {
-                    var innerName = c.getName();
-                    return innerName.contains("$") && innerName.length() > name.length() && innerName.startsWith(name);
-                })
-                .map(c -> new IBinaryNestedType() {
-                    @Override
-                    public char[] getEnclosingTypeName() {
-                        return JIndexBinaryType.this.getName();
-                    }
+        var memberClasses = this.indexedClass.getMemberClasses();
+        var enclosingName = this.indexedClass.getNameWithPackage().toCharArray();
+        return memberClasses.length == 0 ? null : Arrays.stream(memberClasses).map(c -> new IBinaryNestedType() {
+            @Override
+            public char[] getEnclosingTypeName() {
+                return enclosingName;
+            }
 
-                    @Override
-                    public int getModifiers() {
-                        return c.getAccessFlags();
-                    }
+            @Override
+            public int getModifiers() {
+                return c.getAccessFlags();
+            }
 
-                    @Override
-                    public char[] getName() {
-                        return c.getNameWithPackage().toCharArray();
-                    }
-                }).toArray(IBinaryNestedType[]::new);
+            @Override
+            public char[] getName() {
+                return c.getNameWithPackage().toCharArray();
+            }
+        }).toArray(IBinaryNestedType[]::new);
     }
 
     @Override
@@ -146,5 +134,20 @@ public class JIndexBinaryType implements IBinaryTypeStub {
     @Override
     public boolean isBinaryType() {
         return true;
+    }
+
+    @Override
+    public boolean isAnonymous() {
+        return this.indexedClass.getInnerClassType() == InnerClassType.ANONYMOUS;
+    }
+
+    @Override
+    public boolean isLocal() {
+        return this.indexedClass.getInnerClassType() == InnerClassType.LOCAL;
+    }
+
+    @Override
+    public boolean isMember() {
+        return this.indexedClass.getInnerClassType() == InnerClassType.MEMBER;
     }
 }

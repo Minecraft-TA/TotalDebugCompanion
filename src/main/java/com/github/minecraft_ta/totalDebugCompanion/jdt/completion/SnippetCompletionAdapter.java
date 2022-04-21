@@ -44,6 +44,8 @@ public class SnippetCompletionAdapter {
     private final JTextComponent textComponent;
 
     private Object oldTabKey;
+    private Object oldEnterKey;
+    private Action oldEnterAction;
 
     public SnippetCompletionAdapter(JTextComponent textComponent) {
         this.textComponent = textComponent;
@@ -126,6 +128,12 @@ public class SnippetCompletionAdapter {
         inputMap.put(tabKeyStroke, SNIPPET_NEXT_ACTION_KEY);
         actionMap.put(SNIPPET_NEXT_ACTION_KEY, new NextParamAction());
 
+        var enterKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        oldEnterKey = inputMap.get(enterKeyStroke);
+        inputMap.put(enterKeyStroke, SNIPPET_NEXT_ACTION_KEY);
+        oldEnterAction = actionMap.get(oldEnterKey);
+        actionMap.put(SNIPPET_NEXT_ACTION_KEY, new NextParamAction());
+
         this.textComponent.getDocument().addDocumentListener(this.listener);
     }
 
@@ -141,8 +149,15 @@ public class SnippetCompletionAdapter {
 
         var tabKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0);
         inputMap.put(tabKeyStroke, oldTabKey);
-        oldTabKey = null;
         actionMap.remove(SNIPPET_NEXT_ACTION_KEY);
+
+        var enterKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        inputMap.put(enterKeyStroke, oldEnterKey);
+        actionMap.put(oldEnterKey, oldEnterAction);
+
+        oldTabKey = null;
+        oldEnterKey = null;
+        oldEnterAction = null;
 
         this.textComponent.getDocument().removeDocumentListener(this.listener);
     }

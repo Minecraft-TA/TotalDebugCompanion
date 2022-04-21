@@ -298,7 +298,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
                 //Trigger auto-completion
                 var c = text.charAt(text.length() - 1);
-                if ((!Character.isAlphabetic(c) && c != '.') || text.contains("\n") || text.length() > 1) {
+                if ((!Character.isLetterOrDigit(c) && c != '.') || text.contains("\n") || text.length() > 1) {
                     codeCompletionPopup.setVisible(false);
                     return;
                 }

@@ -56,7 +56,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     private List<CompletionItem> convertProposals() {
         var items = proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
 
-        appendLiveTemplates(items);
+        prependLiveTemplates(items);
         return items;
     }
 
@@ -87,7 +87,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         return item;
     }
 
-    private void appendLiveTemplates(List<CompletionItem> items) {
+    private void prependLiveTemplates(List<CompletionItem> items) {
         var node = ((InternalCompletionContext) context).getCompletionNode();
         if (!(node instanceof CompletionOnMemberAccess memberAccess))
             return;
@@ -112,14 +112,13 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                 item.addTextEdit(new CustomTextEdit(
                         new Range(start, node.sourceEnd - start + 1),
                         //TODO: Only add semi-colon if there isn't one already
-                        //TODO: Generate variable name or use snippets
                         new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + ";")
                 );
                 //TODO: Import re-write for generic types?
                 this.proposalProvider.singleImportRewrite(new String(variableType.readableName())).forEach(item::addTextEdit);
             } catch (Throwable ignored) {}
 
-            items.add(item);
+            items.add(0, item);
         }
     }
 

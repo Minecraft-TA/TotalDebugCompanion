@@ -90,9 +90,9 @@ public class SnippetCompletionAdapter {
                     return 1;
                 return Integer.compare(a.n, b.n);
             });
-            focusHighlightInfo(this.highlights.get(0));
 
             activate();
+            focusHighlightInfo(this.highlights.get(0));
             return true;
         } catch (BadLocationException e) {
             e.printStackTrace();
@@ -117,7 +117,6 @@ public class SnippetCompletionAdapter {
         }
 
         removeHighlightInfo(p);
-        this.highlights.remove(p);
 
         if (this.highlights.isEmpty()) {
             deactivate();
@@ -149,7 +148,7 @@ public class SnippetCompletionAdapter {
         if (this.oldTabKey == null)
             return;
 
-        this.highlights.forEach(this::removeHighlightInfo);
+        this.highlights.forEach(this::removeHighlightInfoFromHighlighter);
         this.highlights.clear();
 
         var inputMap = this.textComponent.getInputMap();
@@ -173,9 +172,22 @@ public class SnippetCompletionAdapter {
     private void focusHighlightInfo(HighlightInfo highlightInfo) {
         this.textComponent.setSelectionStart(highlightInfo.reference().getStartOffset() + 1);
         this.textComponent.setSelectionEnd(highlightInfo.reference().getEndOffset());
+
+        //We're not needed anymore for the last placeholder
+        if (this.highlights.size() < 2)
+            deactivate();
     }
 
     private void removeHighlightInfo(HighlightInfo highlightInfo) {
+        this.highlights.removeIf(h -> {
+            var remove = h.n == highlightInfo.n();
+            if (remove)
+                removeHighlightInfoFromHighlighter(h);
+            return remove;
+        });
+    }
+
+    private void removeHighlightInfoFromHighlighter(HighlightInfo highlightInfo) {
         this.textComponent.getHighlighter().removeHighlight(highlightInfo.reference());
     }
 
@@ -194,6 +206,7 @@ public class SnippetCompletionAdapter {
     private class Listener implements DocumentListener {
 
         private boolean ignoreDocumentChanges;
+        private boolean updatingClonedHighlights;
 
         @Override
         public void changedUpdate(DocumentEvent e) {
@@ -201,24 +214,59 @@ public class SnippetCompletionAdapter {
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            if (this.ignoreDocumentChanges)
-                return;
-
             handleDocumentChange(textComponent.getCaretPosition());
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            if (this.ignoreDocumentChanges)
-                return;
-
             handleDocumentChange(e.getOffset());
         }
 
         private void handleDocumentChange(int pos) {
             var p = getPlaceholderAt(pos);
-            if (p == null || p.n == 0)
+
+            //Update linked placeholders
+            if (p != null && !this.updatingClonedHighlights)
+                possiblyUpdateLinkedPlaceholders(p);
+
+            if (!this.ignoreDocumentChanges && (p == null || p.n == 0))
                 deactivate();
+        }
+
+        private void possiblyUpdateLinkedPlaceholders(HighlightInfo p) {
+            String text;
+            try {
+                text = textComponent.getText(p.reference.getStartOffset() + 1, p.reference.getEndOffset() - p.reference.getStartOffset() - 1);
+            } catch (BadLocationException e) {
+                throw new RuntimeException(e);
+            }
+
+            SwingUtilities.invokeLater(() -> {
+                final int[] caretPos = {textComponent.getCaretPosition()};
+                highlights.forEach(h -> {
+                    if (h == p || h.n != p.n)
+                        return;
+
+                    try {
+                        this.updatingClonedHighlights = true;
+                        this.ignoreDocumentChanges = true;
+                        //Fix the cursor position by diffing the change
+                        if (h.reference.getEndOffset() < p.reference.getStartOffset())
+                            caretPos[0] += text.length() - (h.reference.getEndOffset() - h.reference.getStartOffset() - 1);
+
+                        ((AbstractDocument) textComponent.getDocument()).replace(
+                                h.reference.getStartOffset() + 1,
+                                h.reference.getEndOffset() - h.reference.getStartOffset() - 1,
+                                text, null
+                        );
+                        this.ignoreDocumentChanges = false;
+                        this.updatingClonedHighlights = false;
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                    }
+                });
+                textComponent.setCaretPosition(caretPos[0]);
+            });
         }
     }
 

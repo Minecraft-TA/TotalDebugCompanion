@@ -57,6 +57,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         var items = proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
 
         prependLiveTemplates(items);
+        items.addAll(SnippetCompletionProposalProvider.getSnippets(this.unit, this));
         return items;
     }
 
@@ -295,6 +296,10 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                 Assert.isTrue(false);
                 return null;
         }
+    }
+
+    public CompletionContext getContext() {
+        return this.context;
     }
 
     @Override

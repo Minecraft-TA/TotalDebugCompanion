@@ -205,7 +205,7 @@ public class CompletionProposalReplacementProvider {
             if (SNIPPETS_SUPPORTED) {
                 coreCompletion = sanitizeCompletion(coreCompletion);
             }
-            String lineDelimiter = "\\";
+            String lineDelimiter = "\n";
             String replacement = CodeFormatterUtil.format(CodeFormatter.K_EXPRESSION, coreCompletion, 0, lineDelimiter, JDTHacks.DUMMY_JAVA_PROJECT.getOptions(true));
             buffer.append(replacement, 0, replacement.lastIndexOf('.') + 1);
         }

@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaLinkGenerator;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.CustomJavaTokenMaker;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.BottomInformationBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
@@ -39,7 +40,7 @@ public class AbstractCodeViewPanel extends JPanel {
 
     protected JComponent headerComponent;
 
-    public AbstractCodeViewPanel(String identifier) {
+    public AbstractCodeViewPanel(String identifier, String className) {
         super(new BorderLayout());
 
         this.editorScrollPane.getGutter().setBorder(new Gutter.GutterBorder(0, 5, 0, 0));
@@ -55,11 +56,13 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorPane.setBackground(UIManager.getColor("TextPane.background"));
         this.editorPane.setForeground(UIManager.getColor("EditorPane.foreground"));
         this.editorPane.setSelectionColor(UIManager.getColor("EditorPane.selectionBackground"));
+        this.editorPane.setLinkGenerator(new CustomJavaLinkGenerator(identifier));
+        this.editorPane.addHyperlinkListener(e -> {}); //Empty listener to circumvent RSyntaxTextArea bug
         this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
                 return;
 
-            ASTCache.update(identifier, UIUtils.getText(this.editorPane));
+            ASTCache.update(identifier,  className,UIUtils.getText(this.editorPane));
         });
         this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
         CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());

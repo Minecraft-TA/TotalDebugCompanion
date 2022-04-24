@@ -37,8 +37,23 @@ public class CompilationUnitImpl extends CompilationUnit {
     }
 
     @Override
+    public IResource getResource() {
+        return resource(null);
+    }
+
+    @Override
+    public IResource resource() {
+        return getResource();
+    }
+
+    @Override
+    public char[] getFileName() {
+        return getResource().getName().toCharArray();
+    }
+
+    @Override
     public IResource resource(PackageFragmentRoot root) {
-        return new FileImpl(this.buffer);
+        return new FileImpl(this.name, this.buffer);
     }
 
     @Override
@@ -58,7 +73,7 @@ public class CompilationUnitImpl extends CompilationUnit {
 
     @Override
     public boolean isWorkingCopy() {
-        return false;
+        return true;
     }
 
     @Override

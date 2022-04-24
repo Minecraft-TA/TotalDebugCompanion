@@ -14,6 +14,7 @@ import org.eclipse.jdt.internal.core.IJavaElementRequestor;
 import org.eclipse.jdt.internal.core.NameLookup;
 import org.eclipse.jdt.internal.core.util.Util;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class NameLookupImpl extends NameLookup {
@@ -41,9 +42,19 @@ public class NameLookupImpl extends NameLookup {
     }
 
     @Override
+    public IPackageFragment[] findPackageFragments(String name, boolean partialMatch, boolean patternMatch) {
+        if (patternMatch || partialMatch)
+            throw new IllegalArgumentException();
+        var pkg = SearchEverywherePopup.CLASS_INDEX.findPackage(name);
+        if (pkg == null)
+            return null;
+        return new IPackageFragment[]{JDTHacks.createPackageFragment(pkg.getNameWithParentsDot())};
+    }
+
+    @Override
     public void seekTypes(String name, IPackageFragment pkg, boolean partialMatch, int acceptFlags, IJavaElementRequestor requestor, boolean considerSecondaryTypes) {
         IndexedClass[] classes;
-        if (name == null || name.isBlank()) {
+        if (pkg != null) {
             var packageName = pkg.getElementName();
             if (packageName.isBlank())
                 return;
@@ -52,7 +63,12 @@ public class NameLookupImpl extends NameLookup {
             if (indexedPackage == null)
                 return;
 
-            classes = indexedPackage.getClasses();
+            if (name == null || name.isBlank())
+                classes = indexedPackage.getClasses();
+            else if (partialMatch)
+                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().contains(name)).toArray(IndexedClass[]::new);
+            else
+                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().equals(name)).toArray(IndexedClass[]::new);
         } else {
             classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.MATCH_CASE_FIRST_CHAR_ONLY, 300));
         }

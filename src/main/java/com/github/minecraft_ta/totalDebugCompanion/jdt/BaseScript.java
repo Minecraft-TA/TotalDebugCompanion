@@ -34,8 +34,8 @@ public class BaseScript {
                 
                 /*
                 ---- MC stuff
-                */        
-               
+                */
+                               
                 public MinecraftServer getServer() {
                     return FMLCommonHandler.instance().getMinecraftServerInstance();
                 }

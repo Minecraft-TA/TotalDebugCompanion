@@ -98,7 +98,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private int lastSavedVersion = -1;
 
     public ScriptPanel(ScriptView scriptView) {
-        super(scriptView.getURI());
+        super(scriptView.getURI(), scriptView.getTitle().replace(".java", ""));
         this.scriptView = scriptView;
 
         var headerBar = Box.createHorizontalBox();

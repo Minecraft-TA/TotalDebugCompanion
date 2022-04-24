@@ -10,10 +10,17 @@ import java.nio.charset.StandardCharsets;
 
 public class FileImpl implements IFileStub {
 
+    private final String className;
     private final IBuffer contents;
 
-    public FileImpl(IBuffer contents) {
+    public FileImpl(String className, IBuffer contents) {
+        this.className = className;
         this.contents = contents;
+    }
+
+    @Override
+    public String getName() {
+        return className + ".java";
     }
 
     @Override

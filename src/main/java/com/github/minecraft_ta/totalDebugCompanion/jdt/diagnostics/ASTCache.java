@@ -15,7 +15,7 @@ public class ASTCache {
     private static final Map<String, Entry> CACHE = new HashMap<>();
     private static final Map<String, List<BiConsumer<CompilationUnit, Integer>>> LISTENERS = new ConcurrentHashMap<>();
 
-    public static void update(String key, String contents) {
+    public static void update(String key, String className, String contents) {
         int version = 0;
         synchronized (CACHE) {
             var existing = CACHE.get(key);
@@ -26,7 +26,7 @@ public class ASTCache {
         int finalVersion = version;
         CompletableFuture.runAsync(() -> {
             ASTParser parser = ASTParser.newParser(AST.JLS8);
-            parser.setSource(new CompilationUnitImpl("Test", contents));
+            parser.setSource(new CompilationUnitImpl(className, contents));
             parser.setResolveBindings(true);
             parser.setStatementsRecovery(true);
             parser.setKind(ASTParser.K_COMPILATION_UNIT);

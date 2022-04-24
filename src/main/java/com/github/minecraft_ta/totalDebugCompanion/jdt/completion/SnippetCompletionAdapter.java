@@ -226,7 +226,7 @@ public class SnippetCompletionAdapter {
             var p = getPlaceholderAt(pos);
 
             //Update linked placeholders
-            if (p != null && !this.updatingClonedHighlights)
+            if (!this.updatingClonedHighlights && p != null)
                 possiblyUpdateLinkedPlaceholders(p);
 
             if (!this.ignoreDocumentChanges && (p == null || p.n == 0))

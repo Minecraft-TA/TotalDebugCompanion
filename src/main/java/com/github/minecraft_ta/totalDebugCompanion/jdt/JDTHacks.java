@@ -2,14 +2,12 @@ package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.BundleContextImpl;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.ContentTypeManagerImpl;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.DummyJarPackageFragmentRoot;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.JavaProjectImpl;
-import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.RootResourceImpl;
-import org.eclipse.core.internal.resources.Folder;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.internal.runtime.DataArea;
 import org.eclipse.core.internal.runtime.InternalPlatform;
 import org.eclipse.core.internal.runtime.MetaDataKeeper;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -45,7 +43,7 @@ public class JDTHacks {
         }
 
         DUMMY_JAVA_PROJECT = new JavaProjectImpl();
-        PACKAGE_FRAGMENT_ROOT = createPackageFragmentRoot();
+        PACKAGE_FRAGMENT_ROOT = new DummyJarPackageFragmentRoot();
     }
 
     public static PackageFragment createPackageFragment(String name) {
@@ -53,6 +51,7 @@ public class JDTHacks {
             var instance = (PackageFragment) UNSAFE.allocateInstance(PackageFragment.class);
             instance.names = Util.getTrimmedSimpleNames(name);
             setField(instance, "isValidPackageName", true);
+            setField(JavaElement.class, instance, "project", DUMMY_JAVA_PROJECT);
             setField(JavaElement.class, instance, "parent", PACKAGE_FRAGMENT_ROOT);
             return instance;
         } catch (Throwable e) {
@@ -64,15 +63,7 @@ public class JDTHacks {
         return createInstance(NameLookup.Answer.class, new Class[]{IType.class, AccessRestriction.class, IClasspathEntry.class}, type, res, entry);
     }
 
-    private static Folder createFolder(String path) {
-        return createInstance(Folder.class, new Class<?>[]{IPath.class, Workspace.class}, new Path(path), null);
-    }
-
-    private static PackageFragmentRoot createPackageFragmentRoot() {
-        return createInstance(PackageFragmentRoot.class, new Class<?>[]{IResource.class, JavaProject.class}, new RootResourceImpl(), DUMMY_JAVA_PROJECT);
-    }
-
-    private static <T> T createInstance(Class<T> clazz, Class<?>[] argClasses, Object... args) {
+    public static <T> T createInstance(Class<T> clazz, Class<?>[] argClasses, Object... args) {
         try {
             var ctor = clazz.getDeclaredConstructor(argClasses);
             ctor.setAccessible(true);
@@ -82,11 +73,21 @@ public class JDTHacks {
         }
     }
 
-    private static void setField(Object o, String fieldName, Object value) {
+    public static <T> T invokeMethod(Object obj, String methodName, Class<?>[] argClasses, Object... args) {
+        try {
+            var method = obj.getClass().getDeclaredMethod(methodName, argClasses);
+            method.setAccessible(true);
+            return (T) method.invoke(obj, args);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void setField(Object o, String fieldName, Object value) {
         setField(o.getClass(), o, fieldName, value);
     }
 
-    private static void setField(Class<?> clazz, Object o, String fieldName, Object value) {
+    public static void setField(Class<?> clazz, Object o, String fieldName, Object value) {
         try {
             var field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);

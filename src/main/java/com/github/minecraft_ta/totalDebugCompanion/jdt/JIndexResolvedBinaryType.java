@@ -1,18 +1,25 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.ClassFileImpl;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.stubs.IOrdinaryClassFileStub;
 import com.github.tth05.jindex.IndexedClass;
+import org.eclipse.jdt.core.IOrdinaryClassFile;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.core.*;
+import org.eclipse.jdt.internal.core.JavaElement;
+import org.eclipse.jdt.internal.core.ResolvedBinaryType;
+import org.eclipse.jdt.internal.core.TypeParameter;
+import org.eclipse.jdt.internal.core.TypeParameterElementInfo;
 
 public class JIndexResolvedBinaryType extends ResolvedBinaryType {
 
     private final JIndexBinaryType binaryType;
 
     public JIndexResolvedBinaryType(IndexedClass indexedClass) {
-        super(new CompilationUnit(JDTHacks.createPackageFragment(indexedClass.getPackage().getNameWithParentsDot()), indexedClass.getName(), null), indexedClass.getName(), "some unique key");
+        super(null, indexedClass.getName(), indexedClass.getNameWithPackage());
         this.binaryType = new JIndexBinaryType(indexedClass);
+        setParent(new ClassFileImpl(this, indexedClass));
     }
 
     @Override
@@ -60,9 +67,23 @@ public class JIndexResolvedBinaryType extends ResolvedBinaryType {
         return this.binaryType;
     }
 
-   /* @Override
-    public IType getDeclaringType() {
-        //TODO: Declaring type
-        return null;
-    }*/
+    @Override
+    public boolean isBinary() {
+        return true;
+    }
+
+    @Override
+    public IOrdinaryClassFile getClassFile() {
+        return new IOrdinaryClassFileStub() {
+            @Override
+            public boolean isOpen() {
+                return true;
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return true;
+            }
+        };
+    }
 }

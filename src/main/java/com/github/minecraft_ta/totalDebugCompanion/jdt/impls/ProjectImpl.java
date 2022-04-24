@@ -9,7 +9,7 @@ import org.eclipse.core.runtime.Path;
 
 public class ProjectImpl implements IProjectStub {
 
-    private static final FileImpl CLASSPATH_FILE = new FileImpl(new BufferImpl("""
+    private static final FileImpl CLASSPATH_FILE = new FileImpl(".classpath", new BufferImpl("""
             <?xml version="1.0" encoding="UTF-8"?>
             <classpath>
                 <classpathentry kind="src" path="src"/>

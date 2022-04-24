@@ -15,6 +15,8 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -218,6 +220,7 @@ public class PacketLoggerViewPanel extends JPanel {
             }
         });
 
+        //Adds a popup menu to the table that allows to decompile the selected packet
         JPopupMenu popup = new JPopupMenu();
         JMenuItem decompile = new JMenuItem("Decompile");
         decompile.setIcon(Icons.DECOMPILE);
@@ -229,6 +232,33 @@ public class PacketLoggerViewPanel extends JPanel {
             }
         });
         popup.add(decompile);
+
+        //Adds a popup menu to the table that allows the user to copy the selected packet to the clipboard
+        JMenuItem copy = new JMenuItem("Copy");
+        copy.setIcon(Icons.COPY);
+        copy.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                String packet = (String) table.getValueAt(row, 0);
+                StringSelection selection = new StringSelection(packet);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(selection, selection);
+            }
+        });
+        popup.add(copy);
+
+        //Adds a popup menu to block the selected packet
+        JMenuItem block = new JMenuItem("Block Packet");
+        block.setIcon(Icons.BLOCK);
+        block.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                String packet = (String) table.getValueAt(row, 0);
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new BlockPacketMessage(packet));
+            }
+        });
+        popup.add(block);
+
 
         //Adds a right click menu to the table
         table.addMouseListener(new MouseAdapter() {

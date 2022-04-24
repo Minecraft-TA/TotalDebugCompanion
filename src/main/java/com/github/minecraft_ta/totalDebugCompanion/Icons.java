@@ -45,6 +45,8 @@ public class Icons {
     public static final FlatSVGIcon CLEAR = new FlatSVGIcon("icons/clear.svg");
     public static final FlatSVGIcon CLOCK = new FlatSVGIcon("icons/clock.svg");
     public static final FlatSVGIcon DECOMPILE = new FlatSVGIcon("icons/decompile.svg");
+    public static final FlatSVGIcon COPY = new FlatSVGIcon("icons/copy.svg");
+    public static final FlatSVGIcon BLOCK = new FlatSVGIcon("icons/block.svg");
     public static final FlatSVGIcon FIELD = new FlatSVGIcon("icons/field.svg");
 
     public static final FlatSVGIcon UP_DOWN = new FlatSVGIcon("icons/upDown.svg");

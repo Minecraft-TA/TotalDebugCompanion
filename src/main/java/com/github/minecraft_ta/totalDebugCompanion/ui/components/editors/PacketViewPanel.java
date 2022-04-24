@@ -91,7 +91,7 @@ public class PacketViewPanel extends JPanel {
             if (!isCapturing || root.getChildCount() >= (int) packetCountSelector.getSelectedItem()) return;
 
             if (message.getPacketName().equals(packetView.getPacket())) {
-                String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel());
+                String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel() + ", size: " + message.getBytes() + "B");
                 DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), packetName, Type.VALUE);
                 DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
                 model.insertNodeInto(packetNode, root, root.getChildCount());

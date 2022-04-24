@@ -7,13 +7,14 @@ public class PacketContentMessage extends AbstractMessageIncoming {
 
     private String packetName;
     private String channel;
-
+    private int bytes;
     private String packetData;
 
     @Override
     public void read(ByteBufferInputStream messageStream) {
         packetName = messageStream.readString();
         channel = messageStream.readString();
+        bytes = messageStream.readInt();
         packetData = messageStream.readString();
     }
 
@@ -27,5 +28,9 @@ public class PacketContentMessage extends AbstractMessageIncoming {
 
     public String getPacketData() {
         return packetData;
+    }
+
+    public int getBytes() {
+        return bytes;
     }
 }

@@ -6,6 +6,7 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.CodeVie
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -16,19 +17,17 @@ public class CodeView implements IEditorPanel {
     private final Path path;
     private final CodeViewPanel codeViewPanel;
 
-    public CodeView(Path path, int focusLine) {
+    public CodeView(Path path, int line) {
         this.path = path;
         this.codeViewPanel = new CodeViewPanel(this);
 
         CompletableFuture.runAsync(() -> {
             try {
-                String code = Files.readString(this.path);
-                code = StringUtils.removeTrailing(code, "\n");
+                var code = readCode(this.path);
 
-                String finalCode = code;
                 SwingUtilities.invokeLater(() -> {
-                    codeViewPanel.setCode(finalCode);
-                    focusLine(focusLine);
+                    codeViewPanel.setCode(code);
+                    codeViewPanel.focusLine(line);
                 });
             } catch (Exception e) {
                 throw new CompletionException(e);
@@ -72,5 +71,15 @@ public class CodeView implements IEditorPanel {
 
     public Path getPath() {
         return this.path;
+    }
+
+    public static String readCode(Path path) {
+        try {
+            String code = Files.readString(path);
+            code = StringUtils.removeTrailing(code, "\n");
+            return code;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

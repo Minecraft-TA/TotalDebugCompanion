@@ -10,9 +10,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridD
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ChunkGridRequestInfoUpdateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.ReceiveDataStateMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.chunkGrid.UpdateFollowPlayerStateMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.OpenFileMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
@@ -58,10 +56,8 @@ public class CompanionApp {
 
         int id = 1;
         SERVER.getMessageProcessor().registerMessage((short) id++, ReadyMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, OpenFileMessage.class);
+        SERVER.getMessageProcessor().registerMessage((short) id++, DecompileOrOpenMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OpenSearchResultsMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, DecompileAndOpenRequestMessage.class);
-        SERVER.getMessageProcessor().registerMessage((short) id++, CodeViewClickMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ReceiveDataStateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridDataMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridRequestInfoUpdateMessage.class);
@@ -106,7 +102,7 @@ public class CompanionApp {
         UIManager.put("TitlePane.unifiedBackground", false);
         UIManager.put("MenuBar.border", new SimpleMenuBarBorder());
 
-        SERVER.getMessageBus().listenAlways(OpenFileMessage.class, OpenFileMessage::handle);
+        SERVER.getMessageBus().listenAlways(DecompileOrOpenMessage.class, DecompileOrOpenMessage::handle);
         SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, OpenSearchResultsMessage::handle);
         SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(MainWindow.INSTANCE));
         SERVER.addOnConnectionListener(() -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));

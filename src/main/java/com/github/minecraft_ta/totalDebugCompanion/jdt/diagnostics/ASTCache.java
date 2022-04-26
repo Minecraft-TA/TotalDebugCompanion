@@ -25,12 +25,7 @@ public class ASTCache {
 
         int finalVersion = version;
         CompletableFuture.runAsync(() -> {
-            ASTParser parser = ASTParser.newParser(AST.JLS8);
-            parser.setSource(new CompilationUnitImpl(className, contents));
-            parser.setResolveBindings(true);
-            parser.setStatementsRecovery(true);
-            parser.setKind(ASTParser.K_COMPILATION_UNIT);
-            var ast = (CompilationUnit) parser.createAST(null);
+            var ast = rawParse(className, contents);
 
             synchronized (CACHE) {
                 var entry = CACHE.computeIfAbsent(key, (k) -> new Entry());
@@ -44,6 +39,15 @@ public class ASTCache {
                 notifyListeners(key, ast, finalVersion);
             }
         });
+    }
+
+    public static CompilationUnit rawParse(String className, String contents) {
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
+        parser.setSource(new CompilationUnitImpl(className, contents));
+        parser.setResolveBindings(true);
+        parser.setStatementsRecovery(true);
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
+        return (CompilationUnit) parser.createAST(null);
     }
 
     public static void addChangeListener(String key, BiConsumer<CompilationUnit, Integer> listener) {

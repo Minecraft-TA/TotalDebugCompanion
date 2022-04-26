@@ -1,20 +1,13 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
-import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SearchHeaderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 
 public class CodeViewPanel extends AbstractCodeViewPanel {
 
@@ -23,28 +16,6 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
     public CodeViewPanel(CodeView codeView) {
         super(codeView.getPath().toString(), codeView.getTitle());
         this.editorPane.setEditable(false);
-        this.editorPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int offset = editorPane.viewToModel2D(e.getPoint());
-                Rectangle2D modelView;
-                try {
-                    modelView = editorPane.modelToView2D(offset);
-                    //Did we click to the right of a line, and the cursor got adjusted to the left?
-                    if (modelView.getX() < e.getX() && offset == Utilities.getRowEnd(editorPane, offset))
-                        return;
-                } catch (BadLocationException ex) {
-                    throw new RuntimeException("Offset not in view", ex);
-                }
-
-                int line = editorPane.getDocument().getDefaultRootElement().getElementIndex(offset);
-                int column = (offset - editorPane.getDocument().getDefaultRootElement().getElement(line).getStartOffset());
-
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(
-                        new CodeViewClickMessage(codeView.getPath().getFileName().toString(), line, column)
-                );
-            }
-        });
 
         //Ctrl+F keybind for search
         this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed F"), "openSearchPopup");

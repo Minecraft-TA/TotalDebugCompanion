@@ -61,11 +61,7 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public char[] getSourceName() {
-        var name = this.indexedClass.getName();
-        //TODO: Return real source name
-        var dollarIndex = name.lastIndexOf('$');
-
-        return name.substring(dollarIndex == -1 ? 0 : dollarIndex + 1).toCharArray();
+        return this.indexedClass.getSourceName().toCharArray();
     }
 
     @Override

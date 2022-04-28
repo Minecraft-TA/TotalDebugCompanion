@@ -9,12 +9,12 @@ import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.beans.PropertyChangeListener;
@@ -33,7 +33,12 @@ public class AbstractCodeViewPanel extends JPanel {
         }
     }
 
-    protected final RSyntaxTextArea editorPane = new RSyntaxTextArea();
+    protected final RSyntaxTextArea editorPane = new RSyntaxTextArea() {
+        @Override
+        public boolean getUnderlineForToken(Token t) {
+            return false;
+        }
+    };
     protected final RTextScrollPane editorScrollPane = new RTextScrollPane(editorPane);
 
     protected final BottomInformationBar bottomInformationBar = new BottomInformationBar();
@@ -56,7 +61,8 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorPane.setBackground(UIManager.getColor("TextPane.background"));
         this.editorPane.setForeground(UIManager.getColor("EditorPane.foreground"));
         this.editorPane.setSelectionColor(UIManager.getColor("EditorPane.selectionBackground"));
-        this.editorPane.setLinkGenerator(new CustomJavaLinkGenerator(identifier));
+        this.editorPane.setHyperlinkForeground(Color.decode("#7cc0f7"));
+        this.editorPane.setLinkGenerator(new CustomJavaLinkGenerator(identifier, this.bottomInformationBar));
         this.editorPane.addHyperlinkListener(e -> {}); //Empty listener to circumvent RSyntaxTextArea bug
         this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
@@ -64,6 +70,8 @@ public class AbstractCodeViewPanel extends JPanel {
 
             ASTCache.update(identifier,  className,UIUtils.getText(this.editorPane));
         });
+        this.editorPane.addCaretListener(e -> this.editorPane.getCaret().setVisible(true));
+
         this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
         CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());
         try {
@@ -90,31 +98,8 @@ public class AbstractCodeViewPanel extends JPanel {
         });
     }
 
-    public void focusLine(int line) {
-        SwingUtilities.invokeLater(() -> {
-            var verticalScrollBar = this.editorScrollPane.getVerticalScrollBar();
-            verticalScrollBar.setValue((int) ((line - 1) * ((double) verticalScrollBar.getMaximum() / this.editorPane.getDocument().getDefaultRootElement().getElementCount())));
-        });
-    }
-
-    public void focusRange(int offsetStart, int offsetEnd) {
-        try {
-            var rect = this.editorPane.modelToView2D(offsetStart);
-            var viewport = this.editorScrollPane.getViewport();
-
-            var viewSize = viewport.getViewSize();
-            var extentSize = viewport.getExtentSize();
-
-            int rangeWidth = UIUtils.getFontWidth(this.editorPane, "9".repeat(offsetEnd - offsetStart));
-            int x = (int) Math.max(0, rect.getX() - ((extentSize.width - rangeWidth) / 2f));
-            x = Math.min(x, viewSize.width - extentSize.width);
-            int y = (int) Math.max(0, rect.getY() - ((extentSize.height - rect.getHeight()) / 2f));
-            y = Math.min(y, viewSize.height - extentSize.height);
-
-            viewport.setViewPosition(new Point(x, y));
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-        }
+    public void centerViewportOnOffset(int offset) {
+        SwingUtilities.invokeLater(() -> UIUtils.centerViewportOnRange(this.editorScrollPane, offset, offset));
     }
 
     public void setHeaderComponent(JComponent component) {

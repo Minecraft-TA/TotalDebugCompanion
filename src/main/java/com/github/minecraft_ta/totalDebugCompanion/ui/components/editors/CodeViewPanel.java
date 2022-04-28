@@ -4,6 +4,7 @@ import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SearchHeaderBar;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
+import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +47,7 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
             if (this.searchManager.getMatchCount() == 0)
                 return;
 
-            SwingUtilities.invokeLater(() -> focusRange(this.searchManager.getFocusedRangeStart(), this.searchManager.getFocusedRangeEnd()));
+            SwingUtilities.invokeLater(() -> UIUtils.centerViewportOnRange(this.editorScrollPane, this.searchManager.getFocusedRangeStart(), this.searchManager.getFocusedRangeEnd()));
         });
     }
 

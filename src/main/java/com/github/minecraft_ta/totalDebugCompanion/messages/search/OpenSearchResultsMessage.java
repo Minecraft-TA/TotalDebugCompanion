@@ -33,7 +33,7 @@ public class OpenSearchResultsMessage extends AbstractMessageIncoming {
         var editorTabs = window.getEditorTabs();
         editorTabs.openEditorTab(new SearchResultView(
                 message.query, message.results, message.methodSearch, message.classesCount, message.time
-        )).join();
+        ));
 
         UIUtils.focusWindow(window);
     }

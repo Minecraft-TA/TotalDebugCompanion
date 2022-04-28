@@ -17,10 +17,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.regex.Pattern;
 
 public class DecompileOrOpenMessage extends AbstractMessage {
 
     private static final String CU_NAME = "Name";
+    private static final Pattern TYPE_PATTERN = Pattern.compile("(T\\w+;)|(L[\\w/$]+;)");
 
     private String name;
     private int targetType;
@@ -58,7 +60,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         if (!Files.exists(filePath) || !FileUtils.isSubPathOf(CompanionApp.getRootPath(), filePath))
             return;
 
-        int line = 0;
+        int offset = 0;
         if (message.targetType != -1) {
             var ast = ASTCache.rawParse(CU_NAME, CodeView.readCode(filePath));
             var firstType = ast.types().get(0);
@@ -76,7 +78,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
                     return;
                 }
 
-                line = ast.getLineNumber(targetMethod.get().getStartPosition());
+                offset = targetMethod.get().getStartPosition();
             } else if (message.targetType == IJavaElement.FIELD) {
                 var targetField = findTargetField(message, type);
 
@@ -85,7 +87,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
                     return;
                 }
 
-                line = ast.getLineNumber(targetField.getAsInt());
+                offset = targetField.getAsInt();
             } else {
                 System.err.println("Unknown target type");
                 return;
@@ -93,18 +95,13 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         }
 
         var window = MainWindow.INSTANCE;
-        var editorTabs = window.getEditorTabs();
-        int finalLine = line;
-        editorTabs.getEditors().stream()
-                .filter(e -> e instanceof CodeView)
-                .map(e -> (CodeView) e)
-                .filter(e -> e.getPath().equals(filePath))
-                .findFirst()
-                .ifPresentOrElse(c -> {
-                    editorTabs.setSelectedIndex(editorTabs.getEditors().indexOf(c));
-                }, () -> {
-                    editorTabs.openEditorTab(new CodeView(filePath, finalLine)).join();
-                });
+        var finalOffset = offset;
+        var codeView = window.getEditorTabs().focusOrCreateIfAbsent(
+                CodeView.class,
+                (cv) -> cv.getPath().equals(filePath),
+                () -> new CodeView(filePath, finalOffset)
+        ).join();
+        codeView.centerViewportOnOffset(offset);
 
         UIUtils.focusWindow(window);
     }
@@ -150,7 +147,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         var builder = new StringBuilder(key);
 
         // Remove exception data
-        var exceptionIndex = builder.lastIndexOf("|");
+        var exceptionIndex = builder.indexOf("|");
         if (exceptionIndex != -1)
             builder.delete(exceptionIndex, builder.length());
 
@@ -167,14 +164,23 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         // Remove any type parameters
         var genericIndex = -1;
         while ((genericIndex = builder.indexOf("<")) != -1) {
-            var endIndex = builder.indexOf(">", genericIndex);
-            if (endIndex == -1)
+            var endIndex = genericIndex + 1;
+            var count = 1;
+            //Find closing '>'
+            for (; count != 0 && endIndex < builder.length(); endIndex++) {
+                var c = builder.charAt(endIndex);
+                if (c == '<')
+                    count++;
+                else if (c == '>')
+                    count--;
+            }
+            if (count != 0 || endIndex == -1)
                 break;
 
-            builder.delete(genericIndex, endIndex + 1);
+            builder.delete(genericIndex, endIndex);
         }
 
-        // Replace unwanted CU_NAME from JDT and any generic type with a placeholder
-        return builder.toString().replace(CU_NAME + "~", "").replaceAll("T\\w+;", "Ljava/lang/Object;");
+        // Replace unwanted CU_NAME from JDT and reduce any type or generic type to just java.lang.Object
+        return TYPE_PATTERN.matcher(builder.toString().replace(CU_NAME + "~", "")).replaceAll("Ljava/lang/Object;");
     }
 }

@@ -1,12 +1,11 @@
 package com.github.minecraft_ta.totalDebugCompanion.util;
 
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.DocumentEvent;
 import javax.swing.text.*;
-import javax.swing.undo.UndoableEdit;
 import java.awt.*;
 
 public class UIUtils {
@@ -76,43 +75,6 @@ public class UIUtils {
         }
     }
 
-    public static int countTabsAtStartOfLine(JTextComponent c, Element line) {
-        try {
-            var lineContent = c.getDocument().getText(line.getStartOffset(), line.getEndOffset() - line.getStartOffset());
-            var tabs = 0;
-            for (; tabs < lineContent.length(); tabs++)
-                if (lineContent.charAt(tabs) != '\t')
-                    break;
-            return tabs;
-        } catch (BadLocationException e) {
-            return 0;
-        }
-    }
-
-   /* public static int posToOffset(JTextComponent c, org.eclipse.lsp4j.Position pos) {
-        var offset = c.getDocument().getDefaultRootElement().getElement(pos.getLine()).getStartOffset();
-        offset += pos.getCharacter();
-        return offset;
-    }*/
-
-    /*public static org.eclipse.lsp4j.Position offsetToPosition(JTextComponent c, int offset) {
-        var defaultRootElement = c.getDocument().getDefaultRootElement();
-        var line = defaultRootElement.getElementIndex(offset);
-        var lineElement = defaultRootElement.getElement(line);
-        var column = (offset - lineElement.getStartOffset());
-        return new org.eclipse.lsp4j.Position(line, column);
-    }*/
-
-    public static DocumentEvent.EventType getDocumentEventTypeFromEdit(UndoableEdit edit) {
-        try {
-            var field = edit.getClass().getSuperclass().getDeclaredField("type");
-            field.setAccessible(true);
-            return (DocumentEvent.EventType) field.get(edit);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static void focusWindow(JFrame frame) {
         frame.setVisible(true);
         int state = frame.getExtendedState();
@@ -130,9 +92,24 @@ public class UIUtils {
         frame.setLocation(dim.x + (dim.width / 2 - frame.getSize().width / 2), dim.height / 2 - frame.getSize().height / 2);
     }
 
-    public static void centerJFrameOnScreen(JFrame frame) {
-        var gc = frame.getGraphicsConfiguration();
-        var dim = gc.getBounds();
-        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
+    public static void centerViewportOnRange(RTextScrollPane scrollPane, int offsetStart, int offsetEnd) {
+        try {
+            var rect = scrollPane.getTextArea().modelToView2D(offsetStart);
+            var viewport = scrollPane.getViewport();
+
+            var viewSize = viewport.getViewSize();
+            var extentSize = viewport.getExtentSize();
+
+            int rangeWidth = UIUtils.getFontWidth(scrollPane.getTextArea(), "9".repeat(offsetEnd - offsetStart));
+            int x = (int) Math.max(0, rect.getX() - ((extentSize.width - rangeWidth) / 2f));
+            x = Math.min(x, viewSize.width - extentSize.width);
+            int y = (int) Math.max(0, rect.getY() - ((extentSize.height - rect.getHeight()) / 2f));
+            y = Math.min(y, viewSize.height - extentSize.height);
+
+            viewport.setViewPosition(new Point(x, y));
+            scrollPane.getTextArea().setCaretPosition(offsetStart);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 }

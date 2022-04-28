@@ -17,7 +17,7 @@ public class CodeView implements IEditorPanel {
     private final Path path;
     private final CodeViewPanel codeViewPanel;
 
-    public CodeView(Path path, int line) {
+    public CodeView(Path path, int offset) {
         this.path = path;
         this.codeViewPanel = new CodeViewPanel(this);
 
@@ -27,7 +27,7 @@ public class CodeView implements IEditorPanel {
 
                 SwingUtilities.invokeLater(() -> {
                     codeViewPanel.setCode(code);
-                    codeViewPanel.focusLine(line);
+                    codeViewPanel.centerViewportOnOffset(offset);
                 });
             } catch (Exception e) {
                 throw new CompletionException(e);
@@ -39,13 +39,13 @@ public class CodeView implements IEditorPanel {
     }
 
     /**
-     * @param line the line to scroll to, starting at index 1
+     * @param offset the offset to scroll to
      */
-    public void focusLine(int line) {
-        if (line < 1)
+    public void centerViewportOnOffset(int offset) {
+        if (offset < 0)
             throw new IllegalArgumentException();
 
-        this.codeViewPanel.focusLine(line);
+        this.codeViewPanel.centerViewportOnOffset(offset);
     }
 
     @Override

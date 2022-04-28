@@ -51,10 +51,6 @@ public class ScriptView implements IEditorPanel {
         return text;
     }
 
-    public String getURI() {
-        return this.path.toUri().toString();
-    }
-
     public Path getPath() {
         return path;
     }

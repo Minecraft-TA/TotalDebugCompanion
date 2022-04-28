@@ -10,6 +10,8 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class EditorTabs extends JTabbedPane {
 
@@ -68,7 +70,15 @@ public class EditorTabs extends JTabbedPane {
         return future;
     }
 
-    public List<IEditorPanel> getEditors() {
-        return this.editors;
+    public <T extends IEditorPanel> CompletableFuture<T> focusOrCreateIfAbsent(Class<T> clazz, Predicate<T> filter, Supplier<T> supplier) {
+        for (IEditorPanel editor : editors) {
+            if (clazz.isAssignableFrom(editor.getClass()) && filter.test((T) editor)) {
+                setSelectedIndex(this.editors.indexOf(editor));
+                return CompletableFuture.completedFuture((T) editor);
+            }
+        }
+
+        var tab = supplier.get();
+        return openEditorTab(tab).thenApply(v -> tab);
     }
 }

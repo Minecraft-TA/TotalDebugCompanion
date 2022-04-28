@@ -45,12 +45,15 @@ public class FileTreeView extends JScrollPane {
             if (item instanceof FileSystemFileItem fileItem) {
                 if (node.getParent().getUserObject().getName().equals("scripts")) {
                     var name = fileItem.getName().replace(".java", "");
-                    if (name.equals("BaseScript"))
-                        tabs.openEditorTab(new BaseScriptView(name));
-                    else
-                        tabs.openEditorTab(new ScriptView(name));
+
+                    tabs.focusOrCreateIfAbsent(ScriptView.class, sv -> sv.getTitle().equals(name + ".java"), () -> {
+                        if (name.equals("BaseScript"))
+                            return new BaseScriptView(name);
+                        else
+                            return new ScriptView(name);
+                    });
                 } else {
-                    tabs.openEditorTab(new CodeView(fileItem.getPath(), 0));
+                    tabs.focusOrCreateIfAbsent(CodeView.class, cv -> cv.getPath().equals(fileItem.getPath()), () -> new CodeView(fileItem.getPath(), 0));
                 }
             } else if (item instanceof ZipFileRootItem.Entry) {
                 if (!item.getName().endsWith(".class"))

@@ -89,18 +89,22 @@ public class CustomJavaLinkGenerator implements LinkGenerator {
                 String className;
                 int targetMemberType = -1;
                 String targetMemberIdentifier = "";
-                if (el instanceof ResolvedBinaryMethod method) {
-                    className = method.getDeclaringType().getFullyQualifiedName();
-                    targetMemberType = method.getElementType();
-                    targetMemberIdentifier = method.getKey();
-                } else if (el instanceof ResolvedBinaryField field) {
-                    className = field.getDeclaringType().getFullyQualifiedName();
-                    targetMemberType = field.getElementType();
-                    targetMemberIdentifier = field.getElementName();
-                } else if (el instanceof ResolvedBinaryType type) {
-                    className = type.getFullyQualifiedName();
-                } else {
-                    return null;
+                switch (el) {
+                    case ResolvedBinaryMethod method:
+                        className = method.getDeclaringType().getFullyQualifiedName();
+                        targetMemberType = method.getElementType();
+                        targetMemberIdentifier = method.getKey();
+                        break;
+                    case ResolvedBinaryField field:
+                        className = field.getDeclaringType().getFullyQualifiedName();
+                        targetMemberType = field.getElementType();
+                        targetMemberIdentifier = field.getElementName();
+                        break;
+                    case ResolvedBinaryType type:
+                        className = type.getFullyQualifiedName();
+                        break;
+                    default:
+                        return null;
                 }
 
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileOrOpenMessage(className, targetMemberType, targetMemberIdentifier));

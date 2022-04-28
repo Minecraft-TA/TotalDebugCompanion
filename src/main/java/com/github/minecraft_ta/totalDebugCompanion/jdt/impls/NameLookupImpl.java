@@ -34,7 +34,7 @@ public class NameLookupImpl extends NameLookup {
         if (packageName.equals("") && typeName.equals("BaseScript"))
             return JDTHacks.createNameLookupAnswer(new CompilationUnitImpl("BaseScript", BaseScript.getText()).getType("BaseScript"), null, null);
 
-        var foundClass = SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName);
+        var foundClass = SearchEverywherePopup.CLASS_INDEX.findClass(packageName, typeName.replace('.', '$'));
         if (foundClass != null) {
             return JDTHacks.createNameLookupAnswer(new JIndexResolvedBinaryType(foundClass), null, null);
         }
@@ -53,6 +53,9 @@ public class NameLookupImpl extends NameLookup {
 
     @Override
     public void seekTypes(String name, IPackageFragment pkg, boolean partialMatch, int acceptFlags, IJavaElementRequestor requestor, boolean considerSecondaryTypes) {
+        if (name != null)
+            name = name.replace('.', '$');
+
         IndexedClass[] classes;
         if (pkg != null) {
             var packageName = pkg.getElementName();
@@ -63,18 +66,19 @@ public class NameLookupImpl extends NameLookup {
             if (indexedPackage == null)
                 return;
 
+            var finalName = name;
             if (name == null || name.isBlank())
                 classes = indexedPackage.getClasses();
             else if (partialMatch)
-                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().contains(name)).toArray(IndexedClass[]::new);
+                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().contains(finalName)).toArray(IndexedClass[]::new);
             else
-                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().equals(name)).toArray(IndexedClass[]::new);
+                classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().equals(finalName)).toArray(IndexedClass[]::new);
         } else {
             classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.MATCH_CASE_FIRST_CHAR_ONLY, 300));
         }
 
         for (IndexedClass foundClass : classes) {
-            if (foundClass.getName().lastIndexOf('$') != -1)
+            if (!considerSecondaryTypes && foundClass.getName().lastIndexOf('$') != -1)
                 continue;
 
             requestor.acceptType(new JIndexResolvedBinaryType(foundClass));

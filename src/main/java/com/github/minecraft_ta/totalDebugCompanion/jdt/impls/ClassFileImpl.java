@@ -53,7 +53,7 @@ public class ClassFileImpl extends Openable implements IOrdinaryClassFileStub {
 
     @Override
     public String getElementName() {
-        return this.indexedClass.getNameWithPackageDot() + ".class";
+        return this.indexedClass.getName() + ".class";
     }
 
     @Override

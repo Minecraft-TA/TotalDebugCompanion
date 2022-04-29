@@ -1,13 +1,19 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaLinkGenerator;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.semanticHighlighting.CustomJavaTokenMaker;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.BottomInformationBar;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
+import com.github.tth05.jindex.IndexedMethod;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.SourceMethod;
+import org.eclipse.jdt.internal.core.SourceType;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rtextarea.Gutter;
@@ -15,10 +21,13 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.TextAction;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class AbstractCodeViewPanel extends JPanel {
@@ -42,11 +51,13 @@ public class AbstractCodeViewPanel extends JPanel {
     protected final RTextScrollPane editorScrollPane = new RTextScrollPane(editorPane);
 
     protected final BottomInformationBar bottomInformationBar = new BottomInformationBar();
+    private final String identifier;
 
     protected JComponent headerComponent;
 
     public AbstractCodeViewPanel(String identifier, String className) {
         super(new BorderLayout());
+        this.identifier = identifier;
 
         this.editorScrollPane.getGutter().setBorder(new Gutter.GutterBorder(0, 5, 0, 0));
         this.editorScrollPane.getGutter().setForeground(Color.GRAY);
@@ -68,7 +79,7 @@ public class AbstractCodeViewPanel extends JPanel {
             if (e.getType() == DocumentEvent.EventType.CHANGE)
                 return;
 
-            ASTCache.update(identifier,  className,UIUtils.getText(this.editorPane));
+            ASTCache.update(identifier, className, UIUtils.getText(this.editorPane));
         });
         this.editorPane.addCaretListener(e -> this.editorPane.getCaret().setVisible(true));
 
@@ -82,6 +93,9 @@ public class AbstractCodeViewPanel extends JPanel {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+
+        this.editorPane.getActionMap().put(FindImplementationsAction.KEY, new FindImplementationsAction());
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl T"), FindImplementationsAction.KEY);
 
         add(this.editorScrollPane, BorderLayout.CENTER);
         add(this.bottomInformationBar, BorderLayout.SOUTH);
@@ -144,5 +158,80 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorPane.setFont(newFont);
 
         this.editorScrollPane.getGutter().setLineNumberFont(newFont);
+    }
+
+    private class FindImplementationsAction extends TextAction {
+
+        private static final String KEY = "findImplementations";
+
+        public FindImplementationsAction() {
+            super(KEY);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if (!CompanionApp.SERVER.isClientConnected()) {
+                bottomInformationBar.setFailureInfoText("Not connected to game client!");
+                return;
+            }
+
+            var textArea = (RSyntaxTextArea) getTextComponent(event);
+
+            try {
+                var fromCache = ASTCache.getFromCache(identifier);
+                if (fromCache == null)
+                    return;
+
+                var offset = textArea.getCaretPosition();
+                var elements = fromCache.getTypeRoot().codeSelect(offset, 0);
+                if (elements == null || elements.length == 0)
+                    return;
+                if (elements.length > 1) {
+                    System.err.println("Multiple elements found at offset " + offset + ": " + Arrays.toString(elements));
+                    return;
+                }
+
+                var el = elements[0];
+                if (el.getClass() == SourceMethod.class || el.getClass() == SourceType.class) {
+                    switch (el) {
+                        case SourceMethod sr -> {
+                            var className = CodeUtils.splitTypeName(sr.getDeclaringType().getFullyQualifiedName());
+                            var declaringClass = SearchEverywherePopup.CLASS_INDEX.findClass(className[0], className[1]);
+                            if (declaringClass == null)
+                                return;
+
+                            var targetDescriptor = CodeUtils.minimalizeMethodIdentifier(sr.getSignature());
+                            for (IndexedMethod method : declaringClass.getMethods()) {
+                                if (method.getName().equals(sr.getElementName()) && CodeUtils.minimalizeMethodIdentifier(method.getDescriptorString()).equals(targetDescriptor)) {
+                                    var implementations = method.findImplementations(false);
+                                    System.out.println(Arrays.stream(implementations).map(m -> m.getDeclaringClass().getNameWithPackage() + "." + m.getName()).toList());
+                                    return;
+                                }
+                            }
+
+                            System.err.println("Method not found: " + sr.getSignature());
+                            return;
+                        }
+                        case SourceType st -> {
+                            var className = CodeUtils.splitTypeName(st.getFullyQualifiedName());
+                            var indexedClass = SearchEverywherePopup.CLASS_INDEX.findClass(className[0], className[1]);
+                            if (indexedClass == null)
+                                return;
+
+                            var list = Arrays.stream(indexedClass.findImplementations(false)).map(c -> c.getNameWithPackage()).toList();
+                            System.out.println(list.size() + " - "
+                            );
+                        }
+                        default -> {
+
+                        }
+                    }
+                    ;
+
+                }
+            } catch (JavaModelException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

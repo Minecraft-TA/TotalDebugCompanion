@@ -12,8 +12,11 @@ import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class CodeUtils {
+
+    private static final Pattern TYPE_PATTERN = Pattern.compile("([TQ]\\w+;)|(L[\\w/$]+;)");
 
     private static final SimpleAttributeSet KEYWORD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet LITERAL_ATTRIBUTES = new SimpleAttributeSet();
@@ -83,5 +86,65 @@ public class CodeUtils {
     public static void initSyntaxScheme(RSyntaxTextArea component) {
         component.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
         CodeUtils.initJavaColors(component.getSyntaxScheme());
+    }
+
+    public static String[] splitTypeName(String typeStr) {
+        var endIndex = typeStr.lastIndexOf('/');
+        if (endIndex == -1)
+            endIndex = typeStr.lastIndexOf('.');
+        if (endIndex == -1)
+            return new String[]{"", typeStr};
+
+        var packageName = typeStr.substring(0, endIndex);
+        var typeName = typeStr.substring(packageName.length() + 1);
+        return new String[]{packageName, typeName};
+    }
+
+    /**
+     * Fix the identifier for a method. This removes the most amount of information possible from the given method
+     * identifier without loosing any uniqueness. Can be used to make comparisons between method identifiers easier.
+     *
+     * @param key the original key
+     * @return the fixed key
+     */
+    public static String minimalizeMethodIdentifier(String key) {
+        var builder = new StringBuilder(key);
+
+        // Remove exception data
+        var exceptionIndex = builder.indexOf("|");
+        if (exceptionIndex != -1)
+            builder.delete(exceptionIndex, builder.length());
+
+        // Remove useless super class data
+        var percentIndex = builder.lastIndexOf("%");
+        if (percentIndex != -1)
+            builder.delete(percentIndex, builder.length());
+
+        // Remove class name, class type parameters
+        var dotIndex = builder.indexOf(".");
+        if (dotIndex != -1)
+            builder.delete(0, dotIndex + 1);
+
+        // Remove any type parameters
+        var genericIndex = -1;
+        while ((genericIndex = builder.indexOf("<")) != -1) {
+            var endIndex = genericIndex + 1;
+            var count = 1;
+            //Find closing '>'
+            for (; count != 0 && endIndex < builder.length(); endIndex++) {
+                var c = builder.charAt(endIndex);
+                if (c == '<')
+                    count++;
+                else if (c == '>')
+                    count--;
+            }
+            if (count != 0 || endIndex == -1)
+                break;
+
+            builder.delete(genericIndex, endIndex);
+        }
+
+        // Replace unwanted CU_NAME from JDT and reduce any type or generic type to just java.lang.Object
+        return TYPE_PATTERN.matcher(builder.toString()).replaceAll("Ljava/lang/Object;");
     }
 }

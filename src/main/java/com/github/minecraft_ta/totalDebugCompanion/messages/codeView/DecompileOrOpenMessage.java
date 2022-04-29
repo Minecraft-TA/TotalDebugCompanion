@@ -4,6 +4,7 @@ import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.message.AbstractMessage;
@@ -17,12 +18,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.regex.Pattern;
 
 public class DecompileOrOpenMessage extends AbstractMessage {
 
     private static final String CU_NAME = "Name";
-    private static final Pattern TYPE_PATTERN = Pattern.compile("(T\\w+;)|(L[\\w/$]+;)");
 
     private String name;
     private int targetType;
@@ -52,7 +51,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
     public void read(ByteBufferInputStream messageStream) {
         this.name = messageStream.readString();
         this.targetType = messageStream.readInt();
-        this.targetIdentifier = fixMethodIdentifier(messageStream.readString());
+        this.targetIdentifier = CodeUtils.minimalizeMethodIdentifier(messageStream.readString());
     }
 
     public static void handle(DecompileOrOpenMessage message) {
@@ -111,7 +110,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         return ((List<BodyDeclaration>) type.bodyDeclarations()).stream()
                 .filter(decl -> decl instanceof MethodDeclaration)
                 .map(decl -> (MethodDeclaration) decl)
-                .filter((m) -> fixMethodIdentifier(m.resolveBinding().getKey()).equals(message.targetIdentifier))
+                .filter((m) -> removeCUNameFromIdentifier(CodeUtils.minimalizeMethodIdentifier(m.resolveBinding().getKey())).equals(message.targetIdentifier))
                 .findFirst();
     }
 
@@ -136,51 +135,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
                 }).findFirst();
     }
 
-    /**
-     * Fix the identifier for a method. This removes the most amount of information possible from the given method
-     * identifier without loosing any uniqueness. Can be used to make comparisons between method identifiers easier.
-     *
-     * @param key the original key
-     * @return the fixed key
-     */
-    private static String fixMethodIdentifier(String key) {
-        var builder = new StringBuilder(key);
-
-        // Remove exception data
-        var exceptionIndex = builder.indexOf("|");
-        if (exceptionIndex != -1)
-            builder.delete(exceptionIndex, builder.length());
-
-        // Remove useless super class data
-        var percentIndex = builder.lastIndexOf("%");
-        if (percentIndex != -1)
-            builder.delete(percentIndex, builder.length());
-
-        // Remove class name, class type parameters
-        var dotIndex = builder.indexOf(".");
-        if (dotIndex != -1)
-            builder.delete(0, dotIndex + 1);
-
-        // Remove any type parameters
-        var genericIndex = -1;
-        while ((genericIndex = builder.indexOf("<")) != -1) {
-            var endIndex = genericIndex + 1;
-            var count = 1;
-            //Find closing '>'
-            for (; count != 0 && endIndex < builder.length(); endIndex++) {
-                var c = builder.charAt(endIndex);
-                if (c == '<')
-                    count++;
-                else if (c == '>')
-                    count--;
-            }
-            if (count != 0 || endIndex == -1)
-                break;
-
-            builder.delete(genericIndex, endIndex);
-        }
-
-        // Replace unwanted CU_NAME from JDT and reduce any type or generic type to just java.lang.Object
-        return TYPE_PATTERN.matcher(builder.toString().replace(CU_NAME + "~", "")).replaceAll("Ljava/lang/Object;");
+    private static String removeCUNameFromIdentifier(String identifier) {
+        return identifier.replace(DecompileOrOpenMessage.CU_NAME + "~", "");
     }
 }

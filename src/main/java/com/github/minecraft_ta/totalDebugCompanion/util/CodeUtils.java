@@ -16,7 +16,8 @@ import java.util.regex.Pattern;
 
 public class CodeUtils {
 
-    private static final Pattern TYPE_PATTERN = Pattern.compile("([TQ]\\w+;)|(L[\\w/$]+;)");
+    private static final Pattern GENERIC_PATTERN = Pattern.compile("T\\w+;");
+    private static final Pattern TYPE_PATTERN = Pattern.compile("[LQ][\\w/]*?/?([\\w$]+);");
 
     private static final SimpleAttributeSet KEYWORD_ATTRIBUTES = new SimpleAttributeSet();
     private static final SimpleAttributeSet LITERAL_ATTRIBUTES = new SimpleAttributeSet();
@@ -144,7 +145,8 @@ public class CodeUtils {
             builder.delete(genericIndex, endIndex);
         }
 
-        // Replace unwanted CU_NAME from JDT and reduce any type or generic type to just java.lang.Object
-        return TYPE_PATTERN.matcher(builder.toString()).replaceAll("Ljava/lang/Object;");
+        var result = GENERIC_PATTERN.matcher(builder.toString()).replaceAll("Ljava/lang/Object;");
+        result = TYPE_PATTERN.matcher(result).replaceAll("L$1;");
+        return result;
     }
 }

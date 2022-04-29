@@ -16,6 +16,8 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.HierarchyEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -73,6 +75,12 @@ public class AbstractCodeViewPanel extends JPanel {
             ASTCache.update(identifier, className, UIUtils.getText(this.editorPane));
         });
         this.editorPane.addCaretListener(e -> this.editorPane.getCaret().setVisible(true));
+        this.editorPane.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                editorPane.getCaret().setVisible(true);
+            }
+        });
 
         this.editorPane.setSyntaxEditingStyle(RSyntaxTextArea.SYNTAX_STYLE_JAVA);
         CodeUtils.initJavaColors(this.editorPane.getSyntaxScheme());
@@ -146,5 +154,9 @@ public class AbstractCodeViewPanel extends JPanel {
         this.editorPane.setFont(newFont);
 
         this.editorScrollPane.getGutter().setLineNumberFont(newFont);
+    }
+
+    public BottomInformationBar getBottomInformationBar() {
+        return this.bottomInformationBar;
     }
 }

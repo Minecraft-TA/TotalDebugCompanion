@@ -24,6 +24,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
 
     private JList<ITEM> list;
     private Component invoker;
+    private int minimumListWidth = 200;
 
     public BaseListPopup(Window owner) {
         super(owner);
@@ -37,7 +38,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     public void show(JTextComponent invoker, Alignment alignment) {
         try {
             var cursorRect = invoker.modelToView2D(invoker.getCaretPosition());
-            show(invoker, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
+            show(invoker, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()), alignment);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
@@ -47,6 +48,8 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     public void show(Component invoker, int x, int y, Alignment alignment) {
         if (!(invoker instanceof JTextComponent))
             throw new IllegalArgumentException("invoker must be a JTextComponent");
+        if (this.list.getModel().getSize() == 0)
+            return;
 
         super.show(invoker, x, y, alignment);
         removeKeyListener();
@@ -104,13 +107,19 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
         var longestItemLength = items.isEmpty() ? 0 : this.list.getFontMetrics(this.list.getFont()).stringWidth(
                 "9".repeat(items.stream().mapToInt(ListItem::getLabelLength).max().getAsInt())
         );
-        this.scrollPane.setPreferredSize(new Dimension(longestItemLength + 35, Math.min(200, this.list.getPreferredSize().height)));
+        var preferredSize = new Dimension(longestItemLength + 35, Math.min(this.minimumListWidth, this.list.getPreferredSize().height));
+        this.scrollPane.setPreferredSize(preferredSize);
+        setMinimumSize(new Dimension(this.minimumListWidth, 20));
         pack();
     }
 
     @Override
     public void setFont(Font f) {
         this.list.setFont(f);
+    }
+
+    public void setMinimumListWidth(int minimumListWidth) {
+        this.minimumListWidth = minimumListWidth;
     }
 
     public void addKeyEnterListener(Consumer<ITEM> r) {

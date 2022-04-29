@@ -13,6 +13,7 @@ public class BasePopup extends JFrame {
         setLayout(new BorderLayout());
         setUndecorated(true);
         setAlwaysOnTop(true);
+        setFocusableWindowState(false);
     }
 
     public void show(Component invoker, int x, int y) {
@@ -32,9 +33,7 @@ public class BasePopup extends JFrame {
         }
 
         setLocation(x, y);
-        setFocusableWindowState(false);
         setVisible(true);
-        setFocusableWindowState(true);
 
         //Detect focus lost
         invoker.addFocusListener(new FocusAdapter() {

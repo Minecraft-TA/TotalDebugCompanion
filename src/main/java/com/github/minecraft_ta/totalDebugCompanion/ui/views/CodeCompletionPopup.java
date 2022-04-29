@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -57,6 +59,15 @@ public class CodeCompletionPopup extends BasePopup {
                 } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     enterKeyListeners.forEach(Runnable::run);
                 }
+            }
+        });
+        completionItemList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() != 2)
+                    return;
+
+                enterKeyListeners.forEach(Runnable::run);
             }
         });
     }

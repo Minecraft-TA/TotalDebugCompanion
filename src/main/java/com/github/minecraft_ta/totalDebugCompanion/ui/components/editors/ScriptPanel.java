@@ -16,6 +16,7 @@ import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -29,7 +30,10 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.HierarchyEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -41,8 +45,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final int scriptId = SCRIPT_ID++;
     private final ScriptView scriptView;
 
-    private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
-    private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
+    private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup(MainWindow.INSTANCE);
+    private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup(MainWindow.INSTANCE);
 
     private final FlatIconButton runButton = new FlatIconButton(Icons.RUN, false);
     private final FlatIconButton runServerButton = new FlatIconButton(Icons.RUN_SERVER, false);
@@ -244,29 +248,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             signatureHelpPopup.setVisible(false);
         });
 
-        this.editorPane.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (!codeCompletionPopup.isVisible())
-                    return;
-
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    e.consume();
-                    doAutoCompletion();
-                } else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
-                    if (selectedIndex > codeCompletionPopup.getModel().getSize() - 1)
-                        selectedIndex = 0;
-                    else if (selectedIndex < 0)
-                        selectedIndex = codeCompletionPopup.getModel().getSize() - 1;
-
-                    codeCompletionPopup.setSelectedIndex(selectedIndex);
-                    codeCompletionPopup.scrollRectToVisible(codeCompletionPopup.getCellBounds(selectedIndex, selectedIndex));
-                    e.consume();
-                }
-            }
-        });
-
         this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
         this.editorPane.getActionMap().put("autoComplete", new AbstractAction() {
             @Override
@@ -274,14 +255,6 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 requestCompletionProposals();
             }
         });
-
-        this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                codeCompletionPopup.setVisible(false);
-            }
-        });
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
 
         //Document synchronization
         ((RSyntaxDocument) this.editorPane.getDocument()).setDocumentFilter(new DocumentFilter() {
@@ -371,10 +344,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
     }
 
-    private void doAutoCompletion() {
-        if (codeCompletionPopup.getSelectedIndex() == -1)
-            return;
-        var item = codeCompletionPopup.getSelectedValue();
+    private void doAutoCompletion(CompletionItem item) {
         //The item is outdated
         if (item.getRequestor().isCanceled())
             return;
@@ -394,9 +364,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         SwingUtilities.invokeLater(() -> {
             try {
-                var cursorRect = editorPane.modelToView2D(editorPane.getCaretPosition());
                 codeCompletionPopup.setItems(completions);
-                codeCompletionPopup.show(editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
+                codeCompletionPopup.show(this.editorPane);
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }

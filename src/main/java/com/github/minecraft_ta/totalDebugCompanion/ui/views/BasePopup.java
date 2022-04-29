@@ -7,11 +7,11 @@ import java.awt.event.FocusEvent;
 import java.awt.event.HierarchyBoundsAdapter;
 import java.awt.event.HierarchyEvent;
 
-public class BasePopup extends JFrame {
+public class BasePopup extends JWindow {
 
-    public BasePopup() {
+    public BasePopup(Window owner) {
+        super(owner);
         setLayout(new BorderLayout());
-        setUndecorated(true);
         setAlwaysOnTop(true);
         setFocusableWindowState(false);
     }
@@ -26,6 +26,7 @@ public class BasePopup extends JFrame {
         y = base.y + y;
         switch (alignment) {
             case BOTTOM_RIGHT -> {}
+            case BOTTOM_CENTER -> x -= getWidth() / 2;
             case TOP_CENTER -> {
                 x -= getWidth() / 2;
                 y -= getHeight();
@@ -61,6 +62,7 @@ public class BasePopup extends JFrame {
 
     public enum Alignment {
         TOP_CENTER,
-        BOTTOM_RIGHT;
+        BOTTOM_RIGHT,
+        BOTTOM_CENTER
     }
 }

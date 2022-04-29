@@ -71,13 +71,14 @@ public class DecompileOrOpenMessage extends AbstractMessage {
             var type = (AbstractTypeDeclaration) firstType;
 
             if (message.targetType == IJavaElement.METHOD) {
+                var isDefaultConstructor = message.targetIdentifier.equals("()V");
                 var targetMethod = findTargetMethod(message, type);
-                if (targetMethod.isEmpty()) {
+                if (targetMethod.isEmpty() && !isDefaultConstructor) {
                     System.err.println("Failed to find target method");
                     return;
                 }
 
-                offset = targetMethod.get().getStartPosition();
+                offset = targetMethod.map(ASTNode::getStartPosition).orElse(0);
             } else if (message.targetType == IJavaElement.FIELD) {
                 var targetField = findTargetField(message, type);
 

@@ -10,7 +10,8 @@ public class SignatureHelpPopup extends BasePopup {
         this.label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
 
-    public SignatureHelpPopup() {
+    public SignatureHelpPopup(Window owner) {
+        super(owner);
         add(this.label, BorderLayout.CENTER);
         ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY.darker()));
         pack();

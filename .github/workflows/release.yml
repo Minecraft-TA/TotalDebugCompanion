@@ -34,8 +34,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           body: |
             Changes in this Release
-            - Added packet blocking
-            - Minor changes in packet logger gui
+            - Fix crash when starting for the first time
           draft: false
           prerelease: false
       - name: Upload zip to release

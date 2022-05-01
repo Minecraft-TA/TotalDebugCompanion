@@ -25,6 +25,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     private JList<ITEM> list;
     private Component invoker;
     private int minimumListWidth = 200;
+    private int boundXPos = -1;
 
     public BaseListPopup(Window owner) {
         super(owner);
@@ -53,6 +54,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
 
         super.show(invoker, x, y, alignment);
         removeKeyListener();
+        this.boundXPos = x;
         this.invoker = invoker;
         this.invoker.addKeyListener(this.listener);
     }
@@ -60,8 +62,10 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     @Override
     public void setVisible(boolean b) {
         super.setVisible(b);
-        if (!b)
+        if (!b) {
             removeKeyListener();
+            this.boundXPos = -1;
+        }
     }
 
     private void removeKeyListener() {
@@ -98,6 +102,8 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     }
 
     public void setItems(List<? extends ITEM> items) {
+        var prevWidth = getWidth();
+
         var model = ((DefaultListModel<ITEM>) this.list.getModel());
         model.removeAllElements();
         model.addAll(items);
@@ -111,6 +117,10 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
         this.scrollPane.setPreferredSize(preferredSize);
         setMinimumSize(new Dimension(this.minimumListWidth, 20));
         pack();
+
+        if(this.boundXPos != -1) {
+            setLocation(getX() - (getWidth() - prevWidth)  / 2, getY());
+        }
     }
 
     @Override

@@ -52,7 +52,7 @@ public class DownloadProgressWindow extends JFrame {
     public void setVisible(boolean b) {
         super.setVisible(b);
         if (b) {
-            UIUtils.centerJFrame(this);
+            UIUtils.centerJFrameOnScreen(this);
         }
     }
 

@@ -129,4 +129,10 @@ public class UIUtils {
         var dim = gc.getBounds();
         frame.setLocation(dim.x + (dim.width / 2 - frame.getSize().width / 2), dim.height / 2 - frame.getSize().height / 2);
     }
+
+    public static void centerJFrameOnScreen(JFrame frame) {
+        var gc = frame.getGraphicsConfiguration();
+        var dim = gc.getBounds();
+        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
+    }
 }

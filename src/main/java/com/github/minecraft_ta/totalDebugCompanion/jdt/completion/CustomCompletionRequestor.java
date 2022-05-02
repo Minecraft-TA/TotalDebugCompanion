@@ -8,6 +8,8 @@ import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
 import org.eclipse.jdt.internal.codeassist.complete.CompletionOnMemberAccess;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 
 import java.util.ArrayList;
@@ -116,12 +118,23 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                         new Range(start, node.sourceEnd - start + 1),
                         new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + terminator)
                 );
-                //TODO: Import re-write for generic types?
-                this.proposalProvider.singleImportRewrite(new String(variableType.readableName())).forEach(item::addTextEdit);
+                addAllImportsForType(variableType, item);
+
+                items.add(0, item);
             } catch (Throwable ignored) {}
 
-            items.add(0, item);
         }
+    }
+
+    private void addAllImportsForType(TypeBinding variableType, CompletionItem item) {
+        List<String> names = new ArrayList<>(2);
+        names.add(new String(variableType.readableName()));
+        if (variableType instanceof ParameterizedTypeBinding parameterizedTypeBinding) {
+            for (TypeBinding argument : parameterizedTypeBinding.typeArguments())
+                names.add(new String(argument.readableName()));
+        }
+
+        this.proposalProvider.singleImportRewrite(names.toArray(new String[0])).forEach(item::addTextEdit);
     }
 
     public int mapRelevance(CompletionProposal proposal) {
@@ -129,8 +142,10 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         return switch (proposal.getKind()) {
             case CompletionProposal.LABEL_REF -> baseRelevance + 1;
             case CompletionProposal.KEYWORD -> baseRelevance + 2;
-            case CompletionProposal.TYPE_REF, CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION -> baseRelevance + 3;
-            case CompletionProposal.METHOD_REF, CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.METHOD_NAME_REFERENCE, CompletionProposal.METHOD_DECLARATION, CompletionProposal.ANNOTATION_ATTRIBUTE_REF, CompletionProposal.POTENTIAL_METHOD_DECLARATION -> baseRelevance + 4;
+            case CompletionProposal.TYPE_REF, CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION ->
+                    baseRelevance + 3;
+            case CompletionProposal.METHOD_REF, CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.METHOD_NAME_REFERENCE, CompletionProposal.METHOD_DECLARATION, CompletionProposal.ANNOTATION_ATTRIBUTE_REF, CompletionProposal.POTENTIAL_METHOD_DECLARATION ->
+                    baseRelevance + 4;
             case CompletionProposal.FIELD_REF -> baseRelevance + 5;
             case CompletionProposal.LOCAL_VARIABLE_REF, CompletionProposal.VARIABLE_DECLARATION -> baseRelevance + 6;
             default -> baseRelevance;

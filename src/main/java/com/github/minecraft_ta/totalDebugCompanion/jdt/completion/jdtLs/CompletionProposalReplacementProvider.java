@@ -127,9 +127,11 @@ public class CompletionProposalReplacementProvider {
         return new Range(proposal.getReplaceStart(), proposal.getReplaceEnd() - proposal.getReplaceStart());
     }
 
-    public List<CustomTextEdit> singleImportRewrite(String typeName) {
+    public List<CustomTextEdit> singleImportRewrite(String... typeNames) {
         this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
-        this.importRewrite.addImport(typeName);
+        for (var typeName : typeNames)
+            this.importRewrite.addImport(typeName);
+
         var list = new ArrayList<CustomTextEdit>();
         addImports(list);
         return list;

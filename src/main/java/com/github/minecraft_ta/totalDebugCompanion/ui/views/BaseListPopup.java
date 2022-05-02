@@ -118,8 +118,8 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
         setMinimumSize(new Dimension(this.minimumListWidth, 20));
         pack();
 
-        if(this.boundXPos != -1) {
-            setLocation(getX() - (getWidth() - prevWidth)  / 2, getY());
+        if (this.boundXPos != -1) {
+            setLocation(getX() - (getWidth() - prevWidth) / 2, getY());
         }
     }
 

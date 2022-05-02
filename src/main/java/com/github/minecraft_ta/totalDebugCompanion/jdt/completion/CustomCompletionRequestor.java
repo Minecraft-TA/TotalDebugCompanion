@@ -110,10 +110,11 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
             var start = memberAccess.receiver.sourceStart;
             try {
                 var expressionText = this.unit.getBuffer().getText(start, memberAccess.receiver.sourceEnd - start + 1);
+                var terminator = isStatementSemicolonTerminated(this.unit.getBuffer(), this.offset) ? "" : ";";
+
                 item.addTextEdit(new CustomTextEdit(
                         new Range(start, node.sourceEnd - start + 1),
-                        //TODO: Only add semi-colon if there isn't one already
-                        new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + ";")
+                        new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + terminator)
                 );
                 //TODO: Import re-write for generic types?
                 this.proposalProvider.singleImportRewrite(new String(variableType.readableName())).forEach(item::addTextEdit);
@@ -348,5 +349,17 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     @Override
     public boolean isAllowingRequiredProposals(int proposalKind, int requiredProposalKind) {
         return true;
+    }
+
+    private static boolean isStatementSemicolonTerminated(IBuffer buffer, int statementEnd) {
+        while (statementEnd < buffer.getLength()) {
+            char c = buffer.getChar(statementEnd++);
+            if (c == '\n' || c == '}')
+                return false;
+            else if (c == ';')
+                return true;
+        }
+
+        return false;
     }
 }

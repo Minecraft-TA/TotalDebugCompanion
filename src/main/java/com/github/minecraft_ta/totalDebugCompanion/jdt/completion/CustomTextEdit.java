@@ -21,4 +21,8 @@ public class CustomTextEdit {
     public void setNewText(String newText) {
         this.text = newText;
     }
+
+    public boolean isSnippet() {
+        return SnippetCompletionAdapter.isSnippet(this.text);
+    }
 }

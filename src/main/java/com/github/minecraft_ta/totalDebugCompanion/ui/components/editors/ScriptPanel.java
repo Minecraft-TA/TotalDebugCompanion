@@ -350,7 +350,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             return;
 
         this.editorPane.beginAtomicEdit();
-        item.getTextEdits().forEach(i -> this.applyTextEdit(i, item.isSnippet()));
+        var snippetEdits = item.getTextEdits().stream().filter(CustomTextEdit::isSnippet).toArray(CustomTextEdit[]::new);
+        if (snippetEdits.length != 0)
+            this.snippetCompletionAdapter.insert(snippetEdits);
+        item.getTextEdits().stream().filter(e -> !e.isSnippet()).forEach(this::applyTextEdit);
         this.editorPane.endAtomicEdit();
 
         codeCompletionPopup.setVisible(false);
@@ -391,16 +394,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     }
 
     private void applyTextEdit(CustomTextEdit edit) {
-        applyTextEdit(edit, false);
-    }
-
-    private void applyTextEdit(CustomTextEdit edit, boolean snippet) {
         var range = edit.getRange();
-        if (range.getLength() == 0 && edit.getNewText().isEmpty())
-            return;
-
-        if (snippet && this.snippetCompletionAdapter.insert(edit))
-            return;
 
         try {
             this.snippetCompletionAdapter.beginIgnoredDocumentChange();

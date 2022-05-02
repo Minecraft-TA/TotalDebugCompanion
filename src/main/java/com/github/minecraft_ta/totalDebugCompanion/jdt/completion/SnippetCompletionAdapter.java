@@ -7,9 +7,8 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,54 +50,59 @@ public class SnippetCompletionAdapter {
         this.textComponent = textComponent;
     }
 
-    public boolean insert(CustomTextEdit textEdit) {
-        var snippetText = textEdit.getNewText();
-        SNIPPET_MATCHER.reset(snippetText);
-        var results = SNIPPET_MATCHER.results().collect(Collectors.toCollection(ArrayList::new));
-        if (results.isEmpty())
-            return false;
-
+    public void insert(CustomTextEdit... textEdits) {
         deactivate();
-        Collections.reverse(results);
 
-        try {
-            record ReplacementInfo(int n, int start, int end, int offset, String placeholder) {}
-            var highlightInfo = new ArrayList<ReplacementInfo>();
+        Arrays.sort(textEdits, Comparator.<CustomTextEdit>comparingInt(a -> a.getRange().getOffset()).thenComparingInt(a -> a.getRange().getLength()));
 
-            var newText = new StringBuilder(snippetText);
-            for (var match : results) {
-                var replacement = match.group(3) == null ? "" : match.group(3);
-                newText.replace(match.start(), match.end(), replacement);
+        var totalOffset = 0;
+        for (CustomTextEdit textEdit : textEdits) {
+            var snippetText = textEdit.getNewText();
+            SNIPPET_MATCHER.reset(snippetText);
+            var results = SNIPPET_MATCHER.results().collect(Collectors.toCollection(ArrayList::new));
+            if (results.isEmpty())
+                throw new IllegalArgumentException("Snippet text must contain at least one placeholder");
 
-                highlightInfo.add(0, new ReplacementInfo(Integer.parseInt(match.group(1)), match.start(), match.end(), match.end() - match.start() - replacement.length(), replacement));
+            Collections.reverse(results);
+
+            try {
+                record ReplacementInfo(int n, int start, int end, int offset, String placeholder) {}
+                var highlightInfo = new ArrayList<ReplacementInfo>();
+
+                var newText = new StringBuilder(snippetText);
+                for (var match : results) {
+                    var replacement = match.group(3) == null ? "" : match.group(3);
+                    newText.replace(match.start(), match.end(), replacement);
+
+                    highlightInfo.add(0, new ReplacementInfo(Integer.parseInt(match.group(1)), match.start(), match.end(), match.end() - match.start() - replacement.length(), replacement));
+                }
+
+                ((AbstractDocument) this.textComponent.getDocument()).replace(textEdit.getRange().getOffset() + totalOffset, textEdit.getRange().getLength(), newText.toString(), null);
+
+                var offset = 0;
+                for (var match : highlightInfo) {
+                    var pos = textEdit.getRange().getOffset() + totalOffset + match.start() - offset - 1;
+                    this.highlights.add(new HighlightInfo(
+                            match.n,
+                            (Highlighter.Highlight) this.textComponent.getHighlighter().addHighlight(pos, pos + match.placeholder().length() + 1, match.n == 0 ? EMPTY_HIGHLIGHT_PAINTER : SNIPPET_HIGHLIGHT_PAINTER)
+                    ));
+                    offset += match.offset();
+                }
+
+                totalOffset += newText.length();
+            } catch (BadLocationException e) {
+                e.printStackTrace();
             }
-
-            ((AbstractDocument) this.textComponent.getDocument()).replace(textEdit.getRange().getOffset(), textEdit.getRange().getLength(), newText.toString(), null);
-
-            var offset = 0;
-            for (var match : highlightInfo) {
-                var pos = textEdit.getRange().getOffset() + match.start() - offset - 1;
-                this.highlights.add(new HighlightInfo(
-                        match.n,
-                        (Highlighter.Highlight) this.textComponent.getHighlighter().addHighlight(pos, pos + match.placeholder().length() + 1, match.n == 0 ? EMPTY_HIGHLIGHT_PAINTER : SNIPPET_HIGHLIGHT_PAINTER)
-                ));
-                offset += match.offset();
-            }
-
-            this.highlights.sort((a, b) -> {
-                if (a.n == 0)
-                    return 1;
-                return Integer.compare(a.n, b.n);
-            });
-
-            activate();
-            focusHighlightInfo(this.highlights.get(0));
-            return true;
-        } catch (BadLocationException e) {
-            e.printStackTrace();
         }
 
-        return false;
+        this.highlights.sort((a, b) -> {
+            if (a.n == 0)
+                return 1;
+            return Integer.compare(a.n, b.n);
+        });
+
+        activate();
+        focusHighlightInfo(this.highlights.get(0));
     }
 
     public void beginIgnoredDocumentChange() {
@@ -107,6 +111,11 @@ public class SnippetCompletionAdapter {
 
     public void endIgnoredDocumentChange() {
         this.listener.ignoreDocumentChanges = false;
+    }
+
+    public static boolean isSnippet(String text) {
+        SNIPPET_MATCHER.reset(text);
+        return SNIPPET_MATCHER.find();
     }
 
     private void moveToNextParam() {

@@ -100,10 +100,6 @@ public class CompletionProposalReplacementProvider {
             default -> appendReplacementString(completionBuffer, proposal);
         }
 
-        //select insertTextFormat.
-        if (SNIPPETS_SUPPORTED)
-            item.setSnippet(true);
-
         String text = completionBuffer.toString();
         item.addTextEdit(new CustomTextEdit(range, text));
 

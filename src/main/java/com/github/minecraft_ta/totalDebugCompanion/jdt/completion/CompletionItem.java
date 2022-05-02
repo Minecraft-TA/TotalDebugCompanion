@@ -9,7 +9,6 @@ public class CompletionItem implements BaseListPopup.ListItem {
 
     private String label;
     private CompletionItemKind kind;
-    private boolean isSnippet;
     private int relevance;
     private final List<CustomTextEdit> textEdits = new ArrayList<>();
 
@@ -43,15 +42,10 @@ public class CompletionItem implements BaseListPopup.ListItem {
         return relevance;
     }
 
-    public boolean isSnippet() {
-        return isSnippet;
-    }
-
-    public void setSnippet(boolean snippet) {
-        isSnippet = snippet;
-    }
-
     public void addTextEdit(CustomTextEdit customTextEdit) {
+        if (customTextEdit.getRange().getLength() == 0 && customTextEdit.getNewText().isEmpty())
+            return;
+
         this.textEdits.add(customTextEdit);
     }
 

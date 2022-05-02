@@ -107,22 +107,36 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
             var item = new CompletionItem(this);
             item.setLabel("var");
             item.setRelevance(0);
-            item.setSnippet(true);
             item.setKind(CompletionItemKind.KEYWORD);
             var start = memberAccess.receiver.sourceStart;
             try {
                 var expressionText = this.unit.getBuffer().getText(start, memberAccess.receiver.sourceEnd - start + 1);
-                var terminator = isStatementSemicolonTerminated(this.unit.getBuffer(), this.offset) ? "" : ";";
+                var preStatementTerminationChar = getStatementTerminationChar(this.unit.getBuffer(), memberAccess.receiver.sourceStart - 1, false);
+                var postStatementTerminationChar = getStatementTerminationChar(this.unit.getBuffer(), this.offset, true);
+                var terminator = postStatementTerminationChar != ';' ? ";" : "";
+
+                var declarationText = new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + terminator;
+                Range declarationReplacementRange;
+                if ((postStatementTerminationChar != '\n' && postStatementTerminationChar != ';') || (preStatementTerminationChar != '\n' && preStatementTerminationChar != ';')) {
+                    declarationReplacementRange = new Range(getLineStartOffsetWithoutWhitespace(this.unit.getBuffer(), this.offset), 0);
+                    declarationText += "\n" + "\t".repeat(getTabsAtStartOfLine(this.unit.getBuffer(), this.offset));
+
+                    item.addTextEdit(new CustomTextEdit(
+                            new Range(start, node.sourceEnd - start + 1),
+                            "${1:name}"
+                    ));
+                } else {
+                    declarationReplacementRange = new Range(start, node.sourceEnd - start + 1);
+                }
 
                 item.addTextEdit(new CustomTextEdit(
-                        new Range(start, node.sourceEnd - start + 1),
-                        new String(variableType.shortReadableName()) + " ${1:name} = " + expressionText + terminator)
-                );
+                        declarationReplacementRange,
+                        declarationText
+                ));
                 addAllImportsForType(variableType, item);
 
                 items.add(0, item);
             } catch (Throwable ignored) {}
-
         }
     }
 
@@ -366,15 +380,51 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
         return true;
     }
 
-    private static boolean isStatementSemicolonTerminated(IBuffer buffer, int statementEnd) {
-        while (statementEnd < buffer.getLength()) {
-            char c = buffer.getChar(statementEnd++);
-            if (c == '\n' || c == '}')
-                return false;
-            else if (c == ';')
-                return true;
+    private static int getTabsAtStartOfLine(IBuffer buffer, int offset) {
+        var count = 0;
+        while (offset >= 0) {
+            var c = buffer.getChar(offset);
+            if (c == '\n')
+                break;
+            else if (c == '\t')
+                count += 1;
+            else
+                count = 0;
+
+            offset--;
         }
 
-        return false;
+        return count;
+    }
+
+    private static int getLineStartOffsetWithoutWhitespace(IBuffer buffer, int offset) {
+        var whitespace = 0;
+        while (offset >= 0) {
+            var c = buffer.getChar(offset);
+            if (c == '\n')
+                break;
+            else if (Character.isWhitespace(c))
+                whitespace++;
+            else
+                whitespace = 0;
+
+            offset--;
+        }
+
+        return offset + whitespace + 1;
+    }
+
+    private static char getStatementTerminationChar(IBuffer buffer, int start, boolean suffix) {
+        while (suffix ? (start < buffer.getLength()) : (start >= 0)) {
+            char c = buffer.getChar(start);
+            if (c == '\n' || c == ';')
+                return c;
+            else if (!Character.isWhitespace(c))
+                return c;
+
+            start += (suffix ? 1 : -1);
+        }
+
+        throw new IllegalStateException();
     }
 }

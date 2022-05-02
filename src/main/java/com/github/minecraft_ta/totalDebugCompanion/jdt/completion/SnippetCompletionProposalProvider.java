@@ -22,7 +22,6 @@ public class SnippetCompletionProposalProvider {
             var item = new CompletionItem(requestor);
 
             item.setLabel(s.getKey());
-            item.setSnippet(true);
             item.setKind(CompletionItemKind.KEYWORD);
             item.addTextEdit(new CustomTextEdit(
                     new Range(context.getTokenStart(), token.length()),

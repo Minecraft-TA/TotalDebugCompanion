@@ -25,6 +25,8 @@ import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameReference;
 import org.eclipse.jdt.internal.core.DocumentAdapter;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -111,7 +113,14 @@ public class CompletionProposalReplacementProvider {
 
     private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
         completionBuffer.append(LPAREN);
-        appendGuessingCompletion(completionBuffer, proposal);
+
+        var completionNode = ((InternalCompletionContext) this.context).getCompletionNode();
+        if (completionNode instanceof CompletionOnSingleNameReference && this.context.getToken().length != 0) {
+            completionBuffer.append(this.context.getToken());
+        } else {
+            appendGuessingCompletion(completionBuffer, proposal);
+        }
+
         completionBuffer.append(RPAREN);
         completionBuffer.append(" -> ");
         if (SNIPPETS_SUPPORTED) {

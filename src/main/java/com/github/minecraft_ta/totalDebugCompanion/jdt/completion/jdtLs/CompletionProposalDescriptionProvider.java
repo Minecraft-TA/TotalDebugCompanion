@@ -21,6 +21,8 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameReference;
 
 public class CompletionProposalDescriptionProvider {
 
@@ -66,8 +68,8 @@ public class CompletionProposalDescriptionProvider {
 //            parameterNames = methodProposal.findParameterNames(null);
 //        } catch (Exception e) {
 //            e.printStackTrace();
-            parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
-            methodProposal.setParameterNames(parameterNames);
+        parameterNames = CompletionEngine.createDefaultParameterNames(Signature.getParameterCount(signature));
+        methodProposal.setParameterNames(parameterNames);
 //        }
 
         char[][] parameterTypes = Signature.getParameterTypes(signature);
@@ -304,7 +306,13 @@ public class CompletionProposalDescriptionProvider {
     private void createLabelWithLambdaExpression(CompletionProposal proposal, CompletionItem item) {
         StringBuilder buffer = new StringBuilder();
         buffer.append('(');
-        appendUnboundedParameterList(buffer, proposal);
+        var completionNode = ((InternalCompletionContext) this.context).getCompletionNode();
+        if (completionNode instanceof CompletionOnSingleNameReference && this.context.getToken().length != 0) {
+            buffer.append(this.context.getToken());
+        } else {
+            appendUnboundedParameterList(buffer, proposal);
+        }
+
         buffer.append(')');
         buffer.append(" ->");
         char[] returnType = createTypeDisplayName(SignatureHelper.getUpperBound(Signature.getReturnType(SignatureHelper.fix83600(proposal.getSignature()))));
@@ -324,9 +332,12 @@ public class CompletionProposalDescriptionProvider {
             }
             case CompletionProposal.TYPE_REF -> createTypeProposalLabel(proposal, item);
             case CompletionProposal.PACKAGE_REF -> createPackageProposalLabel(proposal, item);
-            case CompletionProposal.ANNOTATION_ATTRIBUTE_REF, CompletionProposal.FIELD_REF, CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER -> createLabelWithTypeAndDeclaration(proposal, item);
-            case CompletionProposal.LOCAL_VARIABLE_REF, CompletionProposal.VARIABLE_DECLARATION -> createSimpleLabelWithType(proposal, item);
-            case CompletionProposal.KEYWORD, CompletionProposal.LABEL_REF -> item.setLabel(createSimpleLabel(proposal).toString());
+            case CompletionProposal.ANNOTATION_ATTRIBUTE_REF, CompletionProposal.FIELD_REF, CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER ->
+                    createLabelWithTypeAndDeclaration(proposal, item);
+            case CompletionProposal.LOCAL_VARIABLE_REF, CompletionProposal.VARIABLE_DECLARATION ->
+                    createSimpleLabelWithType(proposal, item);
+            case CompletionProposal.KEYWORD, CompletionProposal.LABEL_REF ->
+                    item.setLabel(createSimpleLabel(proposal).toString());
             case CompletionProposal.LAMBDA_EXPRESSION -> createLabelWithLambdaExpression(proposal, item);
             default -> {return false;}
         }

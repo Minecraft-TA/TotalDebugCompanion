@@ -55,18 +55,6 @@ public class BaseScript {
             	public List<EntityPlayerMP> getServerPlayers() {
             		return getServer().getPlayerList().getPlayers();
             	}
-                        
-                public <T> T getClientInstance() {
-                    try {
-                        return (T) ObfuscationReflectionHelper.findField(Class.forName("net.minecraft.client.Minecraft"), "R").get(null);
-                    } catch (Throwable t) {
-                        try {
-                            return (T) Class.forName("net.minecraft.client.Minecraft").getMethod("getMinecraft").invoke(null);
-                        } catch (Throwable t2) {
-                        	return null;
-                        }
-                    }
-                }
                 
                 /*
                 ---- Reflection
@@ -160,11 +148,11 @@ public class BaseScript {
                 private StringWriter logWriter = new StringWriter();
                         
                 public void logln(Object s) {
-                    this.log(String.format("%s%n", s == null ? null : s.toString()));
+                    this.log(String.format("%s%n", s));
                 }
                         
                 public void log(Object s) {
-                    this.logWriter.append(s == null ? null : s.toString());
+                    this.logWriter.append(String.valueOf(s));
                 }
                         
                 public abstract void run() throws Throwable;

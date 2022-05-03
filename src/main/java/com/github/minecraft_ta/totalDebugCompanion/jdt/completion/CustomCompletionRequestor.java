@@ -1,5 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.completion;
 
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CodeFormatterUtil;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CompletionProposalDescriptionProvider;
 import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CompletionProposalReplacementProvider;
 import org.eclipse.core.runtime.Assert;
@@ -119,7 +120,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                 Range declarationReplacementRange;
                 if ((postStatementTerminationChar != '\n' && postStatementTerminationChar != ';') || (preStatementTerminationChar != '\n' && preStatementTerminationChar != ';')) {
                     declarationReplacementRange = new Range(getLineStartOffsetWithoutWhitespace(this.unit.getBuffer(), this.offset), 0);
-                    declarationText += "\n" + "\t".repeat(getTabsAtStartOfLine(this.unit.getBuffer(), this.offset));
+                    declarationText += "\n" + "\t".repeat(CodeFormatterUtil.getIndentationLevelAtOffset(this.unit, this.offset));
 
                     item.addTextEdit(new CustomTextEdit(
                             new Range(start, node.sourceEnd - start + 1),
@@ -129,10 +130,7 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
                     declarationReplacementRange = new Range(start, node.sourceEnd - start + 1);
                 }
 
-                item.addTextEdit(new CustomTextEdit(
-                        declarationReplacementRange,
-                        declarationText
-                ));
+                item.addTextEdit(new CustomTextEdit(declarationReplacementRange, declarationText));
                 addAllImportsForType(variableType, item);
 
                 items.add(0, item);
@@ -378,23 +376,6 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     @Override
     public boolean isAllowingRequiredProposals(int proposalKind, int requiredProposalKind) {
         return true;
-    }
-
-    private static int getTabsAtStartOfLine(IBuffer buffer, int offset) {
-        var count = 0;
-        while (offset >= 0) {
-            var c = buffer.getChar(offset);
-            if (c == '\n')
-                break;
-            else if (c == '\t')
-                count += 1;
-            else
-                count = 0;
-
-            offset--;
-        }
-
-        return count;
     }
 
     private static int getLineStartOffsetWithoutWhitespace(IBuffer buffer, int offset) {

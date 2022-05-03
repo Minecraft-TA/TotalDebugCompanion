@@ -16,9 +16,7 @@ public class SnippetCompletionProposalProvider {
             return Collections.emptyList();
 
         var token = new String(context.getToken());
-        return Arrays.stream(Snippets.values()).filter(s -> {
-            return s.getKey().startsWith(token);
-        }).map(s -> {
+        return Arrays.stream(Snippets.values()).filter(s -> s.getKey().startsWith(token)).map(s -> {
             var item = new CompletionItem(requestor);
 
             item.setLabel(s.getKey());
@@ -34,7 +32,11 @@ public class SnippetCompletionProposalProvider {
 
     private enum Snippets {
         SOUT("sout", "logln(${0});"),
-        FORI("fori", "for (int ${1:i} = ${2:0}; ${1:i} < ${3}; ${1:i}++) {\n\t${4}\n}");
+        LOG("log", "log(${0});"),
+        LOGLN("logln", "logln(${0});"),
+        FORI("fori", "for (int ${1:i} = ${2:0}; ${1:i} < ${3}; ${1:i}++) {\n\t${4}\n}"),
+        IF("iftrue", "if (${1:condition}) {\n\t${0}\n}"),
+        IF_NOTNULL("ifnotnull", "if (${1:var} != null) {\n\t${0}\n}");
 
         private final String key;
         private final String text;

@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
-import org.eclipse.jdt.internal.core.DocumentAdapter;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.text.edits.TextEdit;
@@ -28,21 +27,27 @@ import java.util.Map;
 public class CodeFormatterUtil {
 
     public static int getIndentationLevelAtOffset(ICompilationUnit cu, int offset) {
+        var count = 0;
+        IBuffer buffer;
         try {
-            var document = new DocumentAdapter(cu.getBuffer());
-            var lineInfo = document.getLineInformationOfOffset(offset);
-            var line = document.get(lineInfo.getOffset(), lineInfo.getLength());
-
-            int i = 0;
-            for (; i < line.length(); i++) {
-                if (line.charAt(i) != '\t')
-                    break;
-            }
-
-            return i;
-        } catch (BadLocationException | JavaModelException e) {
-            return 0;
+            buffer = cu.getBuffer();
+        } catch (JavaModelException e) {
+            throw new RuntimeException(e);
         }
+
+        while (offset >= 0) {
+            var c = buffer.getChar(offset);
+            if (c == '\n')
+                break;
+            else if (c == '\t')
+                count += 1;
+            else
+                count = 0;
+
+            offset--;
+        }
+
+        return count;
     }
 
     /**

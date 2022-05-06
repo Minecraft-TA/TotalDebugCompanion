@@ -1,10 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
-import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.PacketLoggerStateChangeMessage;
-import com.github.minecraft_ta.totalDebugCompanion.model.IEditorPanel;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketLoggerView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeView;
@@ -66,19 +62,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
         toolsMenu.add(new AbstractAction("Packet Logger", Icons.UP_DOWN) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Focus on the packet logger tab if it's already open
-                boolean found = false;
-                for (IEditorPanel tab : editorTabs.getEditors()) {
-                    if (tab instanceof PacketLoggerView) {
-                        editorTabs.setSelectedIndex(editorTabs.getEditors().indexOf(tab));
-                        found = true;
-                        break;
-                    }
-                }
-                //Otherwise, open a new tab
-                if (!found) {
-                    editorTabs.openEditorTab(new PacketLoggerView());
-                }
+                editorTabs.focusOrCreateIfAbsent(PacketLoggerView.class, v -> true, PacketLoggerView::new);
             }
         });
 

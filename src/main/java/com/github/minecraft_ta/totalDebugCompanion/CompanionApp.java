@@ -137,6 +137,7 @@ public class CompanionApp {
         }).start();
 
         FileUtils.createIfNotExists(ROOT_PATH.resolve("scripts"), true);
+        FileUtils.createIfNotExists(ROOT_PATH.resolve("decompiled-files"), true);
         BaseScript.writeToFileIfNotExists();
     }
 

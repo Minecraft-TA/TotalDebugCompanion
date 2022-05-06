@@ -25,6 +25,7 @@ dependencies {
 
     implementation('com.github.javaparser:javaparser-core:3.24.0')
     implementation("org.apache.commons:commons-compress:1.21")
+    implementation("com.google.code.gson:gson:2.9.0")
     implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.28.0") {
         exclude group: "org.eclipse.platform", module: "org.eclipse.equinox.app"
         exclude group: "org.eclipse.platform", module: "org.eclipse.core.filesystem"
@@ -49,6 +50,10 @@ runtime {
             'jdk.unsupported',
             'java.datatransfer'
     ]
+}
+
+compileJava {
+    options.compilerArgs << '--enable-preview'
 }
 
 application {

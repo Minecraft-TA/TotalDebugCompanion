@@ -3,41 +3,41 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.BaseScript;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.JDTHacks;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.*;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.completion.jdtLs.CodeFormatterUtil;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.CustomJavaParser;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.CompilationUnitImpl;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.RunScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.ScriptStatusMessage;
 import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.CloseButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
-import com.github.minecraft_ta.totalDebugCompanion.ui.views.BasePopup;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.CodeCompletionPopup;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SignatureHelpPopup;
-import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
-import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.jdt.core.formatter.CodeFormatter;
+import org.eclipse.text.edits.ReplaceEdit;
+import org.eclipse.text.edits.TextEdit;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.DocumentFilter;
 import javax.swing.text.*;
-import java.awt.Color;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.HierarchyEvent;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.MatchResult;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ScriptPanel extends AbstractCodeViewPanel {
 
@@ -45,8 +45,8 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private final int scriptId = SCRIPT_ID++;
     private final ScriptView scriptView;
 
-    private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup();
-    private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup();
+    private static final CodeCompletionPopup codeCompletionPopup = new CodeCompletionPopup(MainWindow.INSTANCE);
+    private static final SignatureHelpPopup signatureHelpPopup = new SignatureHelpPopup(MainWindow.INSTANCE);
 
     private final FlatIconButton runButton = new FlatIconButton(Icons.RUN, false);
     private final FlatIconButton runServerButton = new FlatIconButton(Icons.RUN_SERVER, false);
@@ -96,11 +96,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     };
     private final JScrollPane logPanelScrollPane = new JScrollPane(logPanelTextPane);
 
+    private final SnippetCompletionAdapter snippetCompletionAdapter = new SnippetCompletionAdapter(this.editorPane);
+    private CustomCompletionRequestor completionRequestor;
     private boolean didTypeBeforeCaretMove;
     private int lastSavedVersion = -1;
 
     public ScriptPanel(ScriptView scriptView) {
-        super();
+        super(scriptView.getPath().toString(), scriptView.getTitle().replace(".java", ""));
         this.scriptView = scriptView;
 
         var headerBar = Box.createHorizontalBox();
@@ -117,28 +119,22 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         headerBar.add(executionEnvironmentComboBox);
         setHeaderComponent(headerBar);
 
-        var textArea = this.editorPane;
-        textArea.setText(scriptView.getSourceText());
-        CompanionApp.LSP.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(scriptView.getURI(), "java", 0, UIUtils.getText(textArea))));
-
-        textArea.setBackground(new Color(60, 63, 65));
-        textArea.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            if (e.getType() == DocumentEvent.EventType.CHANGE)
-                return;
-
-            updateHighlighting();
-        });
-        textArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
-        textArea.getActionMap().put("autoComplete", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleAutoCompletion();
-            }
-        });
+        this.editorPane.setParserDelay(400);
+        this.editorPane.addParser(new CustomJavaParser(scriptView.getPath().toString()));
+        this.editorPane.setText(scriptView.getSourceText());
+        this.editorPane.getActionMap().put(DefaultEditorKit.deletePrevCharAction, new CustomDeletePrevCharAction());
+        //TODO: Snippet insertion support
+        // SnippetCompletionContext -> activate(String snippet), deactive() etc. -> Should support `method(${p2:val}, ${p1:val2}); ${cursor}`
+        // - Hook Tab/Enter key to go to next placeholder (save and restore old binding)
+        // - Add highlights with highlight painter (they automatically update their positions
+        // - Deactivate when a newline is inserted or any char is typed outside of any highlight
+        // - Work together with autocompletion popup
+        // - Support copy placeholders which update in multiple positions when you type
 
         setupLogPanel();
-        setupLSP();
-        updateHighlighting();
+        setupSaveBehavior();
+        setupAutocompletion();
+        setupFormatting();
 
         CompanionApp.SERVER.getMessageBus().listenAlways(ScriptStatusMessage.class, this, (m) -> {
             if (m.getScriptId() != this.scriptId)
@@ -175,7 +171,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
         setRunButtonsState(false);
         this.bottomInformationBar.setProcessInfoText("Compiling...");
-        String fullScript = CompanionApp.LSP.getBaseScript().mergeWithNormalScript(UIUtils.getText(this.editorPane));
+        String fullScript = BaseScript.mergeWithNormalScript(UIUtils.getText(this.editorPane));
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new RunScriptMessage(this.scriptId, fullScript, server, (RunScriptMessage.ExecutionEnvironment) this.executionEnvironmentComboBox.getSelectedItem()));
     }
 
@@ -218,28 +214,15 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         });
     }
 
-    private void updateHighlighting() {
-        SwingUtilities.invokeLater(() -> {
-            CompanionApp.LSP.semanticsTokenFull(new SemanticTokensParams(new TextDocumentIdentifier(scriptView.getURI())))
-                    .thenAccept(res -> {
-                        var styledDocument = this.editorPane.getStyledDocument();
-                        styledDocument.setCharacterAttributes(0, styledDocument.getLength(), new SimpleAttributeSet(), true);
-                        CodeUtils.highlightJavaCodeJavaParser(this.editorPane);
-                        CodeUtils.highlightJavaCodeSemanticTokens(res.getData(), this.editorPane);
-                    });
-        });
-    }
-
-    private void setupLSP() {
+    private void setupSaveBehavior() {
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
-                CompanionApp.LSP.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(this.scriptView.getURI())));
-                CompanionApp.LSP.getDiagnosticsManager().unregister(this.scriptView.getURI());
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(this.scriptId));
                 saveScript();
             }
         });
 
+        //TODO: Add Ctrl+S keybind
         this.editorPane.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
@@ -251,71 +234,13 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                 });
             }
         });
+    }
 
-        //Document synchronization
-        ((AbstractDocument) this.editorPane.getDocument()).setDocumentFilter(new DocumentFilter() {
-            @Override
-            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line = defaultRootElement.getElementIndex(offset);
-                var pos = UIUtils.offsetToPosition(editorPane, offset);
-                ;
-
-                //Add tab indentation
-                if (string.equals("\n")) {
-                    string = string + "\t".repeat(UIUtils.countTabsAtStartOfLine(editorPane, defaultRootElement.getElement(line)));
-                }
-
-                sendChanges(new TextDocumentContentChangeEvent(new Range(pos, pos), 0, string));
-
-                didTypeBeforeCaretMove = true;
-                super.insertString(fb, offset, string, attr);
-
-                //Trigger auto-completion
-                var c = string.charAt(string.length() - 1);
-                if ((!Character.isAlphabetic(c) && c != '.') || string.contains("\n") || string.length() > 1) {
-                    codeCompletionPopup.setVisible(false);
-                    return;
-                }
-                handleAutoCompletion();
-            }
-
-            @Override
-            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-                remove(fb, offset, length);
-                insertString(fb, offset, text, attrs);
-            }
-
-            @Override
-            public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
-                if (length == 0)
-                    return;
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line1 = defaultRootElement.getElementIndex(offset);
-                var pos1 = new Position(line1, (offset - defaultRootElement.getElement(line1).getStartOffset()));
-                var pos2 = new Position(line1, pos1.getCharacter() + length);
-                var oldText = fb.getDocument().getText(offset, length);
-
-                var fullSync = oldText.contains("\n");
-                super.remove(fb, offset, length);
-
-                if (!fullSync)
-                    sendChanges(new TextDocumentContentChangeEvent(new Range(pos1, pos2), length, ""));
-                else
-                    sendChanges(new TextDocumentContentChangeEvent(UIUtils.getText(editorPane)));
-            }
-
-            private void sendChanges(TextDocumentContentChangeEvent... changes) {
-                CompanionApp.LSP.didChange(
-                        new DidChangeTextDocumentParams(
-                                new VersionedTextDocumentIdentifier(scriptView.getURI(), 0),
-                                List.of(changes)
-                        )
-                );
-            }
-        });
-
+    private void setupAutocompletion() {
         this.editorPane.getCaret().addChangeListener(e -> {
+            if (this.completionRequestor != null)
+                this.completionRequestor.setCanceled(true);
+
             if (!this.didTypeBeforeCaretMove)
                 codeCompletionPopup.setVisible(false);
 
@@ -323,78 +248,68 @@ public class ScriptPanel extends AbstractCodeViewPanel {
             signatureHelpPopup.setVisible(false);
         });
 
-        this.editorPane.addKeyListener(new KeyAdapter() {
+        this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl SPACE"), "autoComplete");
+        this.editorPane.getActionMap().put("autoComplete", new AbstractAction() {
             @Override
-            public void keyPressed(KeyEvent e) {
-                if (!codeCompletionPopup.isVisible())
-                    return;
-
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    e.consume();
-                    doAutoCompletion();
-                } else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    var selectedIndex = codeCompletionPopup.getSelectedIndex() + (e.getKeyCode() == KeyEvent.VK_UP ? -1 : 1);
-                    if (selectedIndex > codeCompletionPopup.getModel().getSize() - 1)
-                        selectedIndex = 0;
-                    else if (selectedIndex < 0)
-                        selectedIndex = codeCompletionPopup.getModel().getSize() - 1;
-
-                    codeCompletionPopup.setSelectedIndex(selectedIndex);
-                    codeCompletionPopup.scrollRectToVisible(codeCompletionPopup.getCellBounds(selectedIndex, selectedIndex));
-                    e.consume();
-                }
+            public void actionPerformed(ActionEvent e) {
+                requestCompletionProposals();
             }
         });
 
+        //Document synchronization
+        ((RSyntaxDocument) this.editorPane.getDocument()).setDocumentFilter(new DocumentFilter() {
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                if (text == null || text.isEmpty()) {
+                    super.replace(fb, offset, length, text, attrs);
+                    return;
+                }
+
+                didTypeBeforeCaretMove = true;
+                super.replace(fb, offset, length, text, attrs);
+
+                //Trigger auto-completion
+                var c = text.charAt(text.length() - 1);
+                if ((!Character.isLetterOrDigit(c) && c != '.') || text.contains("\n") || text.length() > 1) {
+                    codeCompletionPopup.setVisible(false);
+                    return;
+                }
+                requestCompletionProposals();
+            }
+        });
+
+        codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
+    }
+
+    private void setupFormatting() {
         this.editorPane.getActionMap().put("formatFile", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompanionApp.LSP.formatting(new DocumentFormattingParams(new TextDocumentIdentifier(scriptView.getURI()), new FormattingOptions(4, false)))
-                        .thenAccept(res -> {
-                            Collections.reverse(res);
-                            SwingUtilities.invokeLater(() -> res.forEach(ScriptPanel.this::applyTextEdit));
-                            bottomInformationBar.setDefaultInfoText("Formatted %d line(s)"
-                                    .formatted(Stream.concat(
-                                                    res.stream().map(t -> t.getRange().getEnd().getLine()),
-                                                    res.stream().map(t -> t.getRange().getStart().getLine()))
-                                            .distinct().count()));
-                        });
-            }
-        });
-        this.editorPane.getActionMap().put("deleteLine", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                var offset = editorPane.getCaretPosition();
-                var defaultRootElement = editorPane.getDocument().getDefaultRootElement();
-                var line = defaultRootElement.getElementIndex(offset);
-                var element = defaultRootElement.getElement(line);
-                var inLineCaretPos = offset - element.getStartOffset();
+                var edit = CodeFormatterUtil.format2(CodeFormatter.K_COMPILATION_UNIT, editorPane.getText(), 0, "\n", JDTHacks.DUMMY_JAVA_PROJECT.getOptions(false));
+                var children = edit.getChildren();
 
-                try {
-                    editorPane.getDocument().remove(Math.max(element.getStartOffset() - 1, 0), Math.min(element.getEndOffset() - element.getStartOffset(), editorPane.getDocument().getLength()));
-                    element = defaultRootElement.getElement(Math.min(defaultRootElement.getElementCount() - 1, line));
-                    editorPane.setCaretPosition(Math.min(element.getStartOffset() + inLineCaretPos, element.getEndOffset() - 1));
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
+                editorPane.beginAtomicEdit();
+                for (int i = children.length - 1; i >= 0; i--) {
+                    TextEdit child = children[i];
+                    if (!(child instanceof ReplaceEdit replaceEdit))
+                        continue;
+
+                    applyTextEdit(new CustomTextEdit(new Range(replaceEdit.getOffset(), replaceEdit.getLength()), replaceEdit.getText()));
                 }
+                editorPane.endAtomicEdit();
+                bottomInformationBar.setDefaultInfoText("Successfully applied %d edit(s).".formatted(children.length));
             }
         });
-        //Swing UndoManager constantly freezes the whole application. Not usable
-        //TODO: Create custom UndoManager for this
-        this.editorPane.getActionMap().put("undo", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-        this.editorPane.getActionMap().put("redo", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
+    }
+
+    private void setupAutocompletionOld() {
         this.editorPane.getActionMap().put("showSignatureHelp", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CompanionApp.LSP.signatureHelp(new SignatureHelpParams(new TextDocumentIdentifier(scriptView.getURI()), UIUtils.offsetToPosition(editorPane, editorPane.getCaretPosition())))
+                //TODO: Signature help
+                /*CompanionApp.LSP.signatureHelp(new SignatureHelpParams(new TextDocumentIdentifier(scriptView.getURI()), UIUtils.offsetToPosition(editorPane, editorPane.getCaretPosition())))
                         .thenAccept(res -> {
                             if (res.getSignatures().isEmpty() || res.getSignatures().stream().allMatch(s -> s.getParameters().isEmpty()) ||
                                 res.getActiveSignature() == null)
@@ -406,93 +321,58 @@ public class ScriptPanel extends AbstractCodeViewPanel {
                                     signatureHelpPopup.show(editorPane, (int) cursorRect.getX(), (int) cursorRect.getY() - 5, BasePopup.Alignment.TOP_CENTER);
                                 });
                             } catch (BadLocationException ignored) {}
-                        });
+                        });*/
             }
         });
-        this.editorPane.getActionMap().put("closeCompletionPopup", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                codeCompletionPopup.setVisible(false);
-            }
-        });
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl shift F"), "formatFile");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl D"), "deleteLine");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Z"), "undo");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl Y"), "redo");
         this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl P"), "showSignatureHelp");
-        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ESCAPE"), "closeCompletionPopup");
+    }
 
-        codeCompletionPopup.addKeyEnterListener(this::doAutoCompletion);
+    private void requestCompletionProposals() {
+        if (this.completionRequestor != null)
+            this.completionRequestor.setCanceled(true);
 
-        this.editorPane.getDocument().addDocumentListener((DocumentChangeListener) e -> {
-            if (e.getType() == DocumentEvent.EventType.CHANGE)
-                return;
+        var unit = new CompilationUnitImpl("SomeName", UIUtils.getText(this.editorPane));
+        var newRequestor = new CustomCompletionRequestor(unit, this.editorPane.getCaretPosition(), this::acceptCompletionList);
+        this.completionRequestor = newRequestor;
 
-            CompanionApp.LSP.getDiagnosticsManager().clearAllHighlights(this.scriptView.getURI());
+        CompletableFuture.runAsync(() -> {
+            try {
+                unit.codeComplete(this.editorPane.getCaretPosition(), newRequestor, newRequestor);
+            } catch (OperationCanceledException ignored) {} catch (Throwable e) {
+                e.printStackTrace();
+            }
         });
-        CompanionApp.LSP.getDiagnosticsManager().register(this.scriptView.getURI(), this.editorPane);
     }
 
-    private void handleAutoCompletion() {
-        final var caretPosition = this.editorPane.getCaretPosition();
-        CompanionApp.LSP.completion(new CompletionParams(new TextDocumentIdentifier(this.scriptView.getURI()), UIUtils.offsetToPosition(this.editorPane, caretPosition), new CompletionContext(CompletionTriggerKind.Invoked)))
-                .thenAccept(res -> {
-                    var items = res.getRight().getItems();
-                    if (items == null || items.isEmpty() || this.editorPane.getCaretPosition() != caretPosition) {
-                        codeCompletionPopup.setVisible(false);
-                        return;
-                    }
-
-                    items.removeIf(item -> {
-                        if (item.getTextEdit() == null)
-                            return false;
-
-                        //Exclude weird broken items?
-                        return (item.getInsertText() != null && item.getInsertText().isBlank());
-                    });
-                    if (items.isEmpty())
-                        return;
-
-                    items.sort(Comparator.comparing(i -> Optional.ofNullable(i.getSortText()).orElse(i.getLabel())));
-                    try {
-                        var cursorRect = this.editorPane.modelToView2D(this.editorPane.getCaretPosition());
-                        SwingUtilities.invokeLater(() -> {
-                            codeCompletionPopup.setItems(items);
-                            codeCompletionPopup.show(this.editorPane, (int) cursorRect.getX(), (int) (cursorRect.getY() + cursorRect.getHeight()));
-                        });
-                    } catch (BadLocationException e) {
-                        e.printStackTrace();
-                    }
-                });
-    }
-
-    private void doAutoCompletion() {
-        if (codeCompletionPopup.getSelectedIndex() == -1)
+    private void doAutoCompletion(CompletionItem item) {
+        //The item is outdated
+        if (item.getRequestor().isCanceled())
             return;
 
-        var item = codeCompletionPopup.getSelectedValue();
-        var textEdit = item.getTextEdit();
-
-        //weird snippets like sysout, dowhile...
-        if (textEdit == null) {
-            var rootElement = this.editorPane.getDocument().getDefaultRootElement();
-            var lineElement = rootElement.getElement(rootElement.getElementIndex(this.editorPane.getCaretPosition()));
-            textEdit = Either.forLeft(new TextEdit(new Range(
-                    UIUtils.offsetToPosition(this.editorPane, lineElement.getStartOffset() + UIUtils.countTabsAtStartOfLine(this.editorPane, lineElement)),
-                    UIUtils.offsetToPosition(this.editorPane, this.editorPane.getCaretPosition())), item.getInsertText()
-            ));
-        }
-
-        if (textEdit.isRight()) {
-            System.out.println("No insert replace");
-            return;
-        }
-
-        applyTextEdit(textEdit.getLeft(), item.getInsertTextFormat() == InsertTextFormat.Snippet);
-        if (item.getAdditionalTextEdits() != null)
-            item.getAdditionalTextEdits().forEach(this::applyTextEdit);
+        this.editorPane.beginAtomicEdit();
+        var snippetEdits = item.getTextEdits().stream().filter(CustomTextEdit::isSnippet).toArray(CustomTextEdit[]::new);
+        if (snippetEdits.length != 0)
+            this.snippetCompletionAdapter.insert(snippetEdits);
+        item.getTextEdits().stream().filter(e -> !e.isSnippet()).forEach(this::applyTextEdit);
+        this.editorPane.endAtomicEdit();
 
         codeCompletionPopup.setVisible(false);
+    }
+
+    private void acceptCompletionList(List<CompletionItem> completions) {
+        if (completions.isEmpty()) {
+            ScriptPanel.codeCompletionPopup.setVisible(false);
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            try {
+                codeCompletionPopup.setItems(completions);
+                codeCompletionPopup.show(this.editorPane);
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
+        });
     }
 
     public boolean canSave() {
@@ -501,9 +381,10 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
     private void saveScript() {
         try {
-            if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()) || !canSave())
+            //TODO: Maybe change to lastSavedHashCode or something
+            /*if (this.lastSavedVersion == CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI()) || !canSave())
                 return;
-            this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());
+            this.lastSavedVersion = CompanionApp.LSP.getDocumentVersion(this.scriptView.getURI());*/
             Files.writeString(this.scriptView.getPath(), UIUtils.getText(this.editorPane));
             System.out.println("Successfully saved script " + this.scriptView.getPath());
         } catch (IOException ex) {
@@ -512,47 +393,75 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         }
     }
 
-    private void applyTextEdit(TextEdit edit) {
-        applyTextEdit(edit, false);
+    private void applyTextEdit(CustomTextEdit edit) {
+        var range = edit.getRange();
+
+        try {
+            this.snippetCompletionAdapter.beginIgnoredDocumentChange();
+            ((RSyntaxDocument) this.editorPane.getDocument()).replace(range.getOffset(), range.getLength(), edit.getNewText(), null);
+            this.snippetCompletionAdapter.endIgnoredDocumentChange();
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void applyTextEdit(TextEdit edit, boolean snippet) {
-        var forceSelectionOffset = -1;
-        var forceSelectionLength = -1;
-        var text = new StringBuilder(edit.getNewText());
-        if (snippet) {
-            var lowest = 100;
-            var matches = Pattern.compile("(\\$[^{].*?)?\\$\\{(?<index>\\d{1,2}):?(?<variableName>\\w+)?(.*?)}").matcher(text).results().collect(Collectors.toList());
-            Collections.reverse(matches);
-            for (MatchResult match : matches) {
-                var variableName = match.group(3);
-                if (variableName == null)
-                    variableName = "";
-                text.replace(match.start(), match.end(), variableName);
+    private static class CustomDeletePrevCharAction extends TextAction {
 
-                var index = Integer.parseInt(match.group(2));
-                if (index < lowest) {
-                    lowest = index;
-                    forceSelectionOffset = match.start();
-                    forceSelectionLength = variableName.length();
-                } else {
-                    forceSelectionOffset -= match.end() - match.start() - variableName.length();
+        public CustomDeletePrevCharAction() {
+            super(DefaultEditorKit.deletePrevCharAction);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            var area = (RSyntaxTextArea) getTextComponent(e);
+
+            //Base implementation copied from org.fife.ui.rtextarea.RTextAreaEditorKit$DeletePrevCharAction
+            try {
+                var document = area.getDocument();
+                var caret = area.getCaret();
+                int dot = caret.getDot();
+                int mark = caret.getMark();
+                if (dot != mark) {
+                    document.remove(Math.min(dot, mark), Math.abs(dot - mark));
+                } else if (dot > 0) {
+                    int delChars = 1;
+                    if (dot > 1) {
+                        delChars = fixDelCharsCount(caret, document);
+                    }
+                    document.remove(dot - delChars, delChars);
                 }
+            } catch (BadLocationException ignored) {
             }
         }
 
-        try {
-            var range = edit.getRange();
-            var offset1 = UIUtils.posToOffset(this.editorPane, range.getStart());
-            var offset2 = UIUtils.posToOffset(this.editorPane, range.getEnd());
-            this.editorPane.getDocument().remove(offset1, offset2 - offset1);
-            this.editorPane.getDocument().insertString(offset1, text.toString(), null);
+        private int fixDelCharsCount(Caret caret, Document document) {
+            int dot = caret.getDot();
 
-            if (forceSelectionOffset != -1 && forceSelectionLength != -1) {
-                this.editorPane.select(offset1 + forceSelectionOffset, offset1 + forceSelectionOffset + forceSelectionLength);
-            }
-        } catch (BadLocationException ex) {
-            ex.printStackTrace();
+            var root = document.getDefaultRootElement();
+            var line = root.getElement(root.getElementIndex(dot));
+            var start = line.getStartOffset();
+            var len = line.getEndOffset() - 1 - start;
+            try {
+                var lineText = document.getText(start, len);
+
+                if (lineText.isEmpty())
+                    return 1;
+
+                if (lineText.isBlank())
+                    return dot - len < 1 ? len : len + 1;
+
+                if (lineText.length() < 2)
+                    return 1;
+
+                char c0 = lineText.charAt(0);
+                char c1 = lineText.charAt(1);
+                if (c0 >= '\uD800' && c0 <= '\uDBFF' &&
+                    c1 >= '\uDC00' && c1 <= '\uDFFF') {
+                    return 2;
+                }
+            } catch (BadLocationException ignored) {}
+
+            return 1;
         }
     }
 }

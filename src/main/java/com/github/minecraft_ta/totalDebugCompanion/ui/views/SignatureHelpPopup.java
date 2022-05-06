@@ -1,7 +1,5 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
-import org.eclipse.lsp4j.SignatureHelp;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -12,13 +10,14 @@ public class SignatureHelpPopup extends BasePopup {
         this.label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
 
-    public SignatureHelpPopup() {
+    public SignatureHelpPopup(Window owner) {
+        super(owner);
         add(this.label, BorderLayout.CENTER);
         ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY.darker()));
         pack();
     }
 
-    public void apply(SignatureHelp signatureHelp) {
+    /*public void apply(SignatureHelp signatureHelp) {
         var text = new StringBuilder("<html>");
         var rawMaxLength = 0;
         var lineCount = 0;
@@ -68,7 +67,7 @@ public class SignatureHelpPopup extends BasePopup {
         var fontMetrics = this.label.getFontMetrics(this.label.getFont());
         this.label.setPreferredSize(new Dimension(fontMetrics.stringWidth("9".repeat(rawMaxLength)) + 5, fontMetrics.getHeight() * lineCount + 6));
         pack();
-    }
+    }*/
 
     @Override
     public void setFont(Font f) {

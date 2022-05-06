@@ -2,8 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.github.minecraft_ta.totalDebugCompanion.lsp.JavaLanguageServer;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
 import com.github.minecraft_ta.totalDebugCompanion.model.BaseScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
@@ -44,14 +43,17 @@ public class FileTreeView extends JScrollPane {
                 return;
 
             if (item instanceof FileSystemFileItem fileItem) {
-                if (node.getParent().getUserObject().getName().equals("src")) {
+                if (node.getParent().getUserObject().getName().equals("scripts")) {
                     var name = fileItem.getName().replace(".java", "");
-                    if (name.equals("BaseScript"))
-                        tabs.openEditorTab(new BaseScriptView(name));
-                    else
-                        tabs.openEditorTab(new ScriptView(name));
+
+                    tabs.focusOrCreateIfAbsent(ScriptView.class, sv -> sv.getTitle().equals(name + ".java"), () -> {
+                        if (name.equals("BaseScript"))
+                            return new BaseScriptView(name);
+                        else
+                            return new ScriptView(name);
+                    });
                 } else {
-                    tabs.openEditorTab(new CodeView(fileItem.getPath(), 1));
+                    tabs.focusOrCreateIfAbsent(CodeView.class, cv -> cv.getPath().equals(fileItem.getPath()), () -> new CodeView(fileItem.getPath(), 0));
                 }
             } else if (item instanceof ZipFileRootItem.Entry) {
                 if (!item.getName().endsWith(".class"))
@@ -62,7 +64,7 @@ public class FileTreeView extends JScrollPane {
                 while (!((node = node.getParent()).getUserObject() instanceof ZipFileRootItem)) {
                     fullName.insert(0, '.').insert(0, node.getUserObject().getName());
                 }
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(fullName.toString()));
+                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileOrOpenMessage(fullName.toString()));
             }
         });
 
@@ -76,7 +78,7 @@ public class FileTreeView extends JScrollPane {
                 if (splitIndex != -1)
                     item.setRenderedName(TextUtils.htmlHighlightString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
 
-                if (path.getParent().getFileName().toString().equals("src"))
+                if (path.getParent().getFileName().toString().equals("scripts"))
                     item.setIcon(Icons.JAVA_FILE);
                 else
                     item.setIcon(Icons.JAVA_CLASS);
@@ -85,7 +87,7 @@ public class FileTreeView extends JScrollPane {
         });
 
         tree.addRootNodes(
-                tree.getItemFactory().createFileSystemDirectoryItem(JavaLanguageServer.SRC_DIR, true),
+                tree.getItemFactory().createFileSystemDirectoryItem(CompanionApp.getRootPath().resolve("scripts"), true),
                 tree.getItemFactory().createFileSystemDirectoryItem(CompanionApp.getRootPath().resolve("decompiled-files"), true),
                 new DirectoryTreeItem("mods") {
                     @Override

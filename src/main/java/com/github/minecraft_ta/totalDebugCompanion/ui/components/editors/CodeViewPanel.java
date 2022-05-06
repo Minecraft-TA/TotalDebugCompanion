@@ -1,49 +1,37 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
-import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.CodeViewClickMessage;
+import com.github.minecraft_ta.totalDebugCompanion.GlobalConfig;
+import com.github.minecraft_ta.totalDebugCompanion.jdt.diagnostics.ASTCache;
 import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.search.SearchManager;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SearchHeaderBar;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.BasePopup;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.FindImplementationsPopup;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
+import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
+import com.github.tth05.jindex.IndexedMethod;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.SourceMethod;
+import org.eclipse.jdt.internal.core.SourceType;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
+import javax.swing.text.TextAction;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 
 public class CodeViewPanel extends AbstractCodeViewPanel {
+
+    private static final FindImplementationsPopup FIND_IMPLEMENTATIONS_POPUP = new FindImplementationsPopup(MainWindow.INSTANCE);
 
     private final SearchManager searchManager = new SearchManager(editorPane);
 
     public CodeViewPanel(CodeView codeView) {
+        super(codeView.getPath().toString(), codeView.getTitle());
         this.editorPane.setEditable(false);
-        this.editorPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int offset = editorPane.viewToModel2D(e.getPoint());
-                Rectangle2D modelView;
-                try {
-                    modelView = editorPane.modelToView2D(offset);
-                    //Did we click to the right of a line, and the cursor got adjusted to the left?
-                    if (modelView.getX() < e.getX() && offset == Utilities.getRowEnd(editorPane, offset))
-                        return;
-                } catch (BadLocationException ex) {
-                    throw new RuntimeException("Offset not in view", ex);
-                }
-
-                int line = editorPane.getDocument().getDefaultRootElement().getElementIndex(offset);
-                int column = (offset - editorPane.getDocument().getDefaultRootElement().getElement(line).getStartOffset());
-
-                CompanionApp.SERVER.getMessageProcessor().enqueueMessage(
-                        new CodeViewClickMessage(codeView.getPath().getFileName().toString(), line, column)
-                );
-            }
-        });
 
         //Ctrl+F keybind for search
         this.editorPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed F"), "openSearchPopup");
@@ -62,6 +50,10 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
             }
         });
 
+        this.editorPane.getActionMap().put(FindImplementationsAction.KEY, new FindImplementationsAction());
+        this.editorPane.getInputMap().put(KeyStroke.getKeyStroke("ctrl T"), FindImplementationsAction.KEY);
+        this.editorPane.getCaret().addChangeListener(e -> FIND_IMPLEMENTATIONS_POPUP.setVisible(false));
+
         //Stop search thread if the tab is closed
         addHierarchyListener(e -> {
             if (e.getChangeFlags() == HierarchyEvent.PARENT_CHANGED && getParent() == null) {
@@ -74,11 +66,93 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
             if (this.searchManager.getMatchCount() == 0)
                 return;
 
-            SwingUtilities.invokeLater(() -> focusRange(this.searchManager.getFocusedRangeStart(), this.searchManager.getFocusedRangeEnd()));
+            SwingUtilities.invokeLater(() -> UIUtils.centerViewportOnRange(this.editorScrollPane, this.searchManager.getFocusedRangeStart(), this.searchManager.getFocusedRangeEnd()));
         });
     }
 
     public void setCode(String code) {
-        CodeUtils.highlightAndSetJavaCodeAnsi(this.editorPane, code);
+        CodeUtils.initSyntaxScheme(this.editorPane);
+        this.editorPane.setText(code);
+    }
+
+    @Override
+    protected void updateFonts() {
+        super.updateFonts();
+        SwingUtilities.invokeLater(() -> {
+            var newFont = JETBRAINS_MONO_FONT.deriveFont(GlobalConfig.getInstance().<Float>getValue("fontSize"));
+            FIND_IMPLEMENTATIONS_POPUP.setFont(newFont);
+        });
+    }
+
+    private class FindImplementationsAction extends TextAction {
+
+        private static final String KEY = "findImplementations";
+
+        public FindImplementationsAction() {
+            super(KEY);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            var textArea = (RSyntaxTextArea) getTextComponent(event);
+
+            try {
+                var fromCache = ASTCache.getFromCache(identifier);
+                if (fromCache == null)
+                    return;
+
+                var offset = textArea.getCaretPosition();
+                var elements = fromCache.getTypeRoot().codeSelect(offset, 0);
+                if (elements == null || elements.length == 0)
+                    return;
+                if (elements.length > 1) {
+                    System.err.println("Multiple elements found at offset " + offset + ": " + Arrays.toString(elements));
+                    return;
+                }
+
+                var el = elements[0];
+                if (el.getClass() == SourceMethod.class || el.getClass() == SourceType.class) {
+                    switch (el) {
+                        case SourceMethod sr -> {
+                            var className = CodeUtils.splitTypeName(sr.getDeclaringType().getFullyQualifiedName());
+                            var declaringClass = SearchEverywherePopup.CLASS_INDEX.findClass(className[0], className[1]);
+                            if (declaringClass == null) {
+                                System.err.println("Declaring class not found in index: " + className[0] + "." + className[1]);
+                                return;
+                            }
+
+                            var targetMethodName = sr.getElementName();
+                            if (targetMethodName.equals(declaringClass.getName()))
+                                targetMethodName = "<init>";
+
+                            var targetDescriptor = CodeUtils.minimalizeMethodIdentifier(sr.getSignature());
+                            for (IndexedMethod method : declaringClass.getMethods()) {
+                                if (method.getName().equals(targetMethodName) && CodeUtils.minimalizeMethodIdentifier(method.getDescriptorString()).equals(targetDescriptor)) {
+                                    FIND_IMPLEMENTATIONS_POPUP.setItems(method);
+                                    FIND_IMPLEMENTATIONS_POPUP.show(editorPane, BasePopup.Alignment.BOTTOM_CENTER);
+                                    return;
+                                }
+                            }
+
+                            System.err.println("Method not found in declaring class: " + declaringClass + " " + sr.getSignature());
+                        }
+                        case SourceType st -> {
+                            var className = CodeUtils.splitTypeName(st.getFullyQualifiedName());
+                            var indexedClass = SearchEverywherePopup.CLASS_INDEX.findClass(className[0], className[1]);
+                            if (indexedClass == null) {
+                                System.err.println("Class not found in index: " + st.getFullyQualifiedName());
+                                return;
+                            }
+
+                            FIND_IMPLEMENTATIONS_POPUP.setItems(indexedClass);
+                            FIND_IMPLEMENTATIONS_POPUP.show(editorPane, BasePopup.Alignment.BOTTOM_CENTER);
+                        }
+                        default -> {}
+                    }
+                }
+            } catch (JavaModelException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

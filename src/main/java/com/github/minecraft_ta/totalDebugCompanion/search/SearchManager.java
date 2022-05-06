@@ -1,5 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.search;
 
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
@@ -17,7 +19,7 @@ public class SearchManager {
     private static final DefaultHighlighter.DefaultHighlightPainter HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(74, 136, 199));
     private static final DefaultHighlighter.DefaultHighlightPainter FOCUSED_HIGHLIGHT_PAINTER = new DefaultHighlighter.DefaultHighlightPainter(new Color(45, 83, 220));
 
-    private final JTextPane textPane;
+    private final RSyntaxTextArea textPane;
     private final List<IntConsumer> focusedIndexChangeListeners = new ArrayList<>();
 
     private final List<HighlightInfo> highlights = new ArrayList<>();
@@ -30,7 +32,7 @@ public class SearchManager {
     private boolean matchCase;
     private boolean useRegex;
 
-    public SearchManager(JTextPane textPane) {
+    public SearchManager(RSyntaxTextArea textPane) {
         this.textPane = textPane;
         this.searchThread = new Thread(() -> {
             while (true) {

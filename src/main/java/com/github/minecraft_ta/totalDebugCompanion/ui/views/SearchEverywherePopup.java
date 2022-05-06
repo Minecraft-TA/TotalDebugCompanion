@@ -2,13 +2,14 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
-import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileAndOpenRequestMessage;
+import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
 import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.jindex.ClassIndex;
 import com.github.tth05.jindex.IndexedClass;
+import com.github.tth05.jindex.SearchOptions;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -26,7 +27,7 @@ import java.util.Arrays;
 
 public class SearchEverywherePopup extends JFrame {
 
-    private static final ClassIndex CLASS_INDEX = new ClassIndex(CompanionApp.getRootPath().resolve("index").toAbsolutePath().normalize().toString());
+    public static final ClassIndex CLASS_INDEX = ClassIndex.fromFile(CompanionApp.getRootPath().resolve("index").toAbsolutePath().normalize().toString());
 
     private static final SearchEverywherePopup INSTANCE = new SearchEverywherePopup();
 
@@ -45,8 +46,7 @@ public class SearchEverywherePopup extends JFrame {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 var indexedClass = (IndexedClass) value;
-                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ",
-                        indexedClass.getNameWithPackage().substring(0, indexedClass.getNameWithPackage().lastIndexOf('.')));
+                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ", indexedClass.getPackage().getNameWithParentsDot());
 
                 var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
                 component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
@@ -79,6 +79,7 @@ public class SearchEverywherePopup extends JFrame {
     private final JScrollPane resultListScrollPane = new JScrollPane(this.resultList);
     {
         resultListScrollPane.setPreferredSize(new Dimension(500, 500));
+        resultListScrollPane.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.GRAY));
     }
 
     private final FlatIconTextField searchTextField = new FlatIconTextField(Icons.SEARCH_ICON);
@@ -91,7 +92,7 @@ public class SearchEverywherePopup extends JFrame {
                 return;
             }
 
-            var classes = CLASS_INDEX.findClasses(query, 40);
+            var classes = CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, 200));
             var selectedClass = resultList.getSelectedIndex() == -1 ? null : model.get(resultList.getSelectedIndex()).getNameWithPackage();
 
             model.clear();
@@ -136,6 +137,8 @@ public class SearchEverywherePopup extends JFrame {
         add(this.searchTextField, BorderLayout.NORTH);
         add(this.resultListScrollPane, BorderLayout.CENTER);
 
+        ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1,1,1,1, Color.GRAY.darker()));
+
         setUndecorated(true);
         pack();
         addWindowFocusListener(new WindowAdapter() {
@@ -163,7 +166,7 @@ public class SearchEverywherePopup extends JFrame {
         if (index < 0)
             return;
 
-        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileAndOpenRequestMessage(resultList.getModel().getElementAt(index).getNameWithPackage()));
+        CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileOrOpenMessage(resultList.getModel().getElementAt(index).getNameWithPackageDot()));
         setVisible(false);
     }
 }

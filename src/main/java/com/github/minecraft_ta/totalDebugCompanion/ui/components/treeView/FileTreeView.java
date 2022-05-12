@@ -76,7 +76,7 @@ public class FileTreeView extends JScrollPane {
                 var fileName = item.getName();
                 var splitIndex = fileName.lastIndexOf('.', fileName.length() - ".java".length() - 1);
                 if (splitIndex != -1)
-                    item.setRenderedName(TextUtils.htmlHighlightString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
+                    item.setRenderedName(TextUtils.htmlPrimarySecondaryString(fileName.substring(splitIndex + 1), "  ", fileName.substring(0, splitIndex)));
 
                 if (path.getParent().getFileName().toString().equals("scripts"))
                     item.setIcon(Icons.JAVA_FILE);

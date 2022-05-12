@@ -151,7 +151,7 @@ public class FindImplementationsPopup extends BaseListPopup<FindImplementationsP
 
         @Override
         public String toString() {
-            return TextUtils.htmlHighlightString(indexedClass.getName(), " ", indexedClass.getPackage().getNameWithParentsDot());
+            return TextUtils.htmlPrimarySecondaryString(indexedClass.getName(), " ", indexedClass.getPackage().getNameWithParentsDot());
         }
     }
 
@@ -189,7 +189,7 @@ public class FindImplementationsPopup extends BaseListPopup<FindImplementationsP
         @Override
         public String toString() {
             var indexedClass = this.indexedMethod.getDeclaringClass();
-            return TextUtils.htmlHighlightString(indexedClass.getName(), " ", indexedClass.getPackage().getNameWithParentsDot());
+            return TextUtils.htmlPrimarySecondaryString(indexedClass.getName(), " ", indexedClass.getPackage().getNameWithParentsDot());
         }
     }
 }

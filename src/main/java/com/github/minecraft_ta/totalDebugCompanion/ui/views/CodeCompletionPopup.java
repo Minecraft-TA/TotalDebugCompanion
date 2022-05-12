@@ -21,7 +21,7 @@ public class CodeCompletionPopup extends BaseListPopup<CompletionItem> {
                     dividerIndex = label.indexOf(':');
 
                 var renderText = dividerIndex == -1 ? label :
-                        TextUtils.htmlHighlightString(label.substring(0, dividerIndex - 1), "  ", label.substring(dividerIndex + 2));
+                        TextUtils.htmlPrimarySecondaryString(label.substring(0, dividerIndex - 1), "  ", label.substring(dividerIndex + 2));
                 renderText = item.getLabel();
                 var component = super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
 

@@ -91,7 +91,7 @@ public class PacketViewPanel extends JPanel {
             if (!isCapturing || root.getChildCount() >= (int) packetCountSelector.getSelectedItem()) return;
 
             if (message.getPacketName().equals(packetView.getPacket())) {
-                String packetName = TextUtils.htmlHighlightString(message.getPacketName(), " ", "channel: " + message.getChannel() + ", size: " + message.getBytes() + "B");
+                String packetName = TextUtils.htmlPrimarySecondaryString(message.getPacketName(), " ", "channel: " + message.getChannel() + ", size: " + message.getBytes() + "B");
                 DefaultMutableTreeNode packetNode = jsonToTree(JsonParser.parseString(message.getPacketData()), packetName, Type.VALUE);
                 DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
                 model.insertNodeInto(packetNode, root, root.getChildCount());
@@ -123,7 +123,7 @@ public class PacketViewPanel extends JPanel {
                 root.add(jsonToTree(element, String.valueOf(i), Type.VALUE));
                 i++;
             }
-            root.setUserObject(new TreeItem(TextUtils.htmlHighlightString(name, " ", "size = " + jsonElement.getAsJsonArray().size()), Type.ARRAY));
+            root.setUserObject(new TreeItem(TextUtils.htmlPrimarySecondaryString(name, " ", "size = " + jsonElement.getAsJsonArray().size()), Type.ARRAY));
         } else {
             root.setUserObject(new TreeItem(name + " = " + jsonElement.getAsString(), Type.PRIMITIVE));
         }

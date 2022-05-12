@@ -5,7 +5,6 @@ import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
-import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.jindex.ClassIndex;
 import com.github.tth05.jindex.IndexedClass;
@@ -24,6 +23,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class SearchEverywherePopup extends JFrame {
 
@@ -43,22 +43,30 @@ public class SearchEverywherePopup extends JFrame {
         });
 
         resultList.setCellRenderer(new DefaultListCellRenderer() {
+
+            private final int spaceWidth = resultList.getFontMetrics(resultList.getFont()).stringWidth(" ");
+
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                var indexedClass = (IndexedClass) value;
-                var renderText = TextUtils.htmlHighlightString(indexedClass.getName(), "  ", indexedClass.getPackage().getNameWithParentsDot());
+                super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
 
-                var component = (JLabel) super.getListCellRendererComponent(list, renderText, index, isSelected, cellHasFocus);
-                component.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), component.getBorder()));
+                var indexedClass = (IndexedClass) value;
+
+                var p = primaryLabel(indexedClass.getName());
+                var s = secondaryLabel(indexedClass.getPackage().getNameWithParentsDot());
 
                 if (Modifier.isInterface(indexedClass.getAccessFlags()))
-                    setIcon(Icons.JAVA_INTERFACE);
+                    p.setIcon(Icons.JAVA_INTERFACE);
                 else if ((indexedClass.getAccessFlags() & 0x00004000) != 0)
-                    setIcon(Icons.JAVA_ENUM);
+                    p.setIcon(Icons.JAVA_ENUM);
                 else
-                    setIcon(Icons.JAVA_CLASS);
+                    p.setIcon(Icons.JAVA_CLASS);
 
-                return component;
+                var layout = UIUtils.horizontalLayout(p, Box.createHorizontalStrut(spaceWidth), s);
+                layout.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0), getBorder()));
+                layout.setBackground(getBackground());
+                layout.setOpaque(true);
+                return layout;
             }
         });
         resultList.addMouseListener(new MouseAdapter() {
@@ -92,14 +100,19 @@ public class SearchEverywherePopup extends JFrame {
                 return;
             }
 
-            var classes = CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, Integer.MAX_VALUE));
+            var classes = Arrays
+                    .stream(CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, 800)))
+                    // Down-rank inner classes
+                    .sorted((a, b) -> a.getInnerClassType() != null ? b.getInnerClassType() != null ? 0 : 1 : b.getInnerClassType() != null ? -1 : 0)
+                    .collect(Collectors.toList());
+
             var selectedClass = resultList.getSelectedIndex() == -1 ? null : model.get(resultList.getSelectedIndex()).getNameWithPackage();
 
             model.clear();
-            model.addAll(Arrays.asList(classes));
+            model.addAll(classes);
 
-            for (int i = 0; i < classes.length && selectedClass != null; i++) {
-                if (!classes[i].getNameWithPackage().equals(selectedClass))
+            for (int i = 0; i < classes.size() && selectedClass != null; i++) {
+                if (!classes.get(i).getNameWithPackage().equals(selectedClass))
                     continue;
 
                 resultList.setSelectedIndex(i);
@@ -137,7 +150,7 @@ public class SearchEverywherePopup extends JFrame {
         add(this.searchTextField, BorderLayout.NORTH);
         add(this.resultListScrollPane, BorderLayout.CENTER);
 
-        ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1,1,1,1, Color.GRAY.darker()));
+        ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY.darker()));
 
         setUndecorated(true);
         pack();
@@ -168,5 +181,17 @@ public class SearchEverywherePopup extends JFrame {
 
         CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new DecompileOrOpenMessage(resultList.getModel().getElementAt(index).getNameWithPackageDot()));
         setVisible(false);
+    }
+
+    private static JLabel primaryLabel(String primary) {
+        var primaryLabel = new JLabel(primary);
+        primaryLabel.setForeground(new Color(187, 187, 187));
+        return primaryLabel;
+    }
+
+    private static JLabel secondaryLabel(String secondary) {
+        var secondaryLabel = new JLabel(secondary);
+        secondaryLabel.setForeground(new Color(150, 150, 150));
+        return secondaryLabel;
     }
 }

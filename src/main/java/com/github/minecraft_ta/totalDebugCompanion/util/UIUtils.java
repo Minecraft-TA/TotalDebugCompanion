@@ -58,7 +58,7 @@ public class UIUtils {
         return box;
     }
 
-    public static Component horizontalLayout(Component... component) {
+    public static Box horizontalLayout(Component... component) {
         var box = Box.createHorizontalBox();
         for (Component c : component) {
             box.add(c, Box.LEFT_ALIGNMENT);

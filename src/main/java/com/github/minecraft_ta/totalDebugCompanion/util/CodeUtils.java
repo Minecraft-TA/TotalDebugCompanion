@@ -123,7 +123,7 @@ public class CodeUtils {
 
         // Remove class name, class type parameters
         var dotIndex = builder.indexOf(".");
-        if (dotIndex != -1)
+        if (dotIndex != -1 && dotIndex < builder.indexOf("("))
             builder.delete(0, dotIndex + 1);
 
         // Remove any type parameters

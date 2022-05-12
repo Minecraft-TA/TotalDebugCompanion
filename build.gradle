@@ -15,18 +15,18 @@ repositories {
 
 dependencies {
     implementation("com.github.tth05:jindex:0.0.35")
-    implementation("com.github.tth05:SCNet:18bc6c5")
+    implementation("com.github.tth05:SCNet:d683b47")
 
-    implementation('com.formdev:flatlaf:2.1')
-    implementation('com.formdev:flatlaf-intellij-themes:2.1')
-    implementation('com.formdev:flatlaf-extras:2.1')
+    implementation('com.formdev:flatlaf:2.2')
+    implementation('com.formdev:flatlaf-intellij-themes:2.2')
+    implementation('com.formdev:flatlaf-extras:2.2')
     implementation('com.fifesoft:rsyntaxtextarea:3.2.0')
     implementation('com.fifesoft:autocomplete:3.2.0')
 
-    implementation('com.github.javaparser:javaparser-core:3.24.0')
+    implementation('com.github.javaparser:javaparser-core:3.24.2')
     implementation("org.apache.commons:commons-compress:1.21")
     implementation("com.google.code.gson:gson:2.9.0")
-    implementation("org.eclipse.jdt:org.eclipse.jdt.core:3.28.0") {
+    implementation('org.eclipse.jdt:org.eclipse.jdt.core:3.29.0') {
         exclude group: "org.eclipse.platform", module: "org.eclipse.equinox.app"
         exclude group: "org.eclipse.platform", module: "org.eclipse.core.filesystem"
         exclude group: "org.eclipse.platform", module: "org.eclipse.core.commands"

@@ -92,7 +92,7 @@ public class SearchEverywherePopup extends JFrame {
                 return;
             }
 
-            var classes = CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, 200));
+            var classes = CLASS_INDEX.findClasses(query, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.IGNORE_CASE, Integer.MAX_VALUE));
             var selectedClass = resultList.getSelectedIndex() == -1 ? null : model.get(resultList.getSelectedIndex()).getNameWithPackage();
 
             model.clear();

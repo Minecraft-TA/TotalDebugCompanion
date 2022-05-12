@@ -162,7 +162,6 @@ public class ChunkGridWindow extends JFrame {
                 CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false));
             }
         });
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ReceiveDataStateMessage(false))));
 
         pack();
     }

@@ -20,6 +20,7 @@ import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SimpleMe
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
+import com.github.tth05.scnet.IConnectedListener;
 import com.github.tth05.scnet.Server;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -58,14 +59,17 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, ReadyMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, DecompileOrOpenMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OpenSearchResultsMessage.class);
+
         SERVER.getMessageProcessor().registerMessage((short) id++, ReceiveDataStateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridDataMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ChunkGridRequestInfoUpdateMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, UpdateFollowPlayerStateMessage.class);
+
         SERVER.getMessageProcessor().registerMessage((short) id++, RunScriptMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, ScriptStatusMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, StopScriptMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, FocusWindowMessage.class);
+
         SERVER.getMessageProcessor().registerMessage((short) id++, PacketLoggerStateChangeMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, IncomingPacketsMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, OutgoingPacketsMessage.class);
@@ -75,6 +79,10 @@ public class CompanionApp {
         SERVER.getMessageProcessor().registerMessage((short) id++, PacketContentMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, CapturePacketMessage.class);
         SERVER.getMessageProcessor().registerMessage((short) id++, BlockPacketMessage.class);
+
+        SERVER.getMessageBus().listenAlways(DecompileOrOpenMessage.class, DecompileOrOpenMessage::handle);
+        SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, OpenSearchResultsMessage::handle);
+        SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(MainWindow.INSTANCE));
         SERVER.bind(new InetSocketAddress(25570));
 
         FlatDarculaLaf.setup();
@@ -102,26 +110,16 @@ public class CompanionApp {
         UIManager.put("TitlePane.unifiedBackground", false);
         UIManager.put("MenuBar.border", new SimpleMenuBarBorder());
 
-        SERVER.getMessageBus().listenAlways(DecompileOrOpenMessage.class, DecompileOrOpenMessage::handle);
-        SERVER.getMessageBus().listenAlways(OpenSearchResultsMessage.class, OpenSearchResultsMessage::handle);
-        SERVER.getMessageBus().listenAlways(FocusWindowMessage.class, (m) -> UIUtils.focusWindow(MainWindow.INSTANCE));
-        SERVER.addOnConnectionListener(() -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));
-
-        SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            SERVER.getMessageProcessor().enqueueMessage(new StopScriptMessage(-1));
-            SERVER.getMessageProcessor().enqueueMessage(new PacketLoggerStateChangeMessage(false, false));
-            SERVER.getMessageProcessor().enqueueMessage(new ClearPacketsMessage());
-            SERVER.getMessageProcessor().enqueueMessage(new SetChannelMessage("All channels"));
-        }));
-
         SwingUtilities.invokeLater(() -> {
             MainWindow.INSTANCE.setSize(1280, 720);
             MainWindow.INSTANCE.setVisible(true);
             UIUtils.centerJFrame(MainWindow.INSTANCE);
 
             ToolTipManager.sharedInstance().setInitialDelay(200);
+
+            SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage());
+            // After this point, we're always ready
+            SERVER.addConnectionListener((IConnectedListener) () -> SERVER.getMessageProcessor().enqueueMessage(new ReadyMessage()));
         });
     }
 

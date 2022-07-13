@@ -93,6 +93,20 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
+                
+                public static <T> T invokeStaticMethod(Class<?> c, String methodName, Object... args) {
+                    return  invokeStaticMethod(c, methodName, Arrays.stream(args).map(Object::getClass).toArray(Class[]::new), args);
+                }
+                	
+                public static <T> T invokeStaticMethod(Class<?> c, String methodName, Class<?>[] argClasses, Object... args) {
+                    try {
+                        Method method = c.getDeclaredMethod(methodName, argClasses);
+                        method.setAccessible(true);
+                        return (T) method.invoke(null, args);
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                
                 public static <T> T getFieldValue(Object o, String fieldName) {
                     Field f = findField(o.getClass(), fieldName);

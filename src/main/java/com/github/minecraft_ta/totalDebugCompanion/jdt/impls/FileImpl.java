@@ -20,7 +20,7 @@ public class FileImpl implements IFileStub {
 
     @Override
     public String getName() {
-        return className + ".java";
+        return className.replace('.', '/') + ".java";
     }
 
     @Override

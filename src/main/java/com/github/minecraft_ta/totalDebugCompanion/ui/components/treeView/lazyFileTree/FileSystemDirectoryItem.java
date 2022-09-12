@@ -2,6 +2,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.lazyF
 
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +22,7 @@ public class FileSystemDirectoryItem extends DirectoryTreeItem {
         this.path = path;
 
         if (watch) {
-            FileUtils.startNewDirectoryWatcher(path, () -> lazyFileJTree.loadItemsForTopLevelItem(this));
+            FileUtils.startNewDirectoryWatcher(path, () -> SwingUtilities.invokeLater(() -> lazyFileJTree.loadItemsForTopLevelItem(this)));
         }
     }
 

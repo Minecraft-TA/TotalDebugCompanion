@@ -12,10 +12,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -175,6 +173,7 @@ public class LazyFileJTree extends JTree {
 
         var rows = getSelectionRows();
 
+        var toReload = new HashSet<LazyTreeNode>();
         Arrays.stream(paths)
                 .map(TreePath::getLastPathComponent)
                 .filter(Objects::nonNull)
@@ -182,8 +181,10 @@ public class LazyFileJTree extends JTree {
                     var item = ((LazyTreeNode) node).getUserObject();
                     item.delete();
 
-                    loadItemsForNode(((LazyTreeNode) node).getParent());
+                    toReload.add(((LazyTreeNode) node).getParent());
                 });
+        for (var lazyTreeNode : toReload)
+            loadItemsForNode(lazyTreeNode);
 
         if (rows == null || rows.length == 0)
             return;

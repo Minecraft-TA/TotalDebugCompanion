@@ -3,6 +3,7 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
+import com.github.minecraft_ta.totalDebugCompanion.ui.components.editors.AbstractCodeViewPanel;
 import com.github.minecraft_ta.totalDebugCompanion.util.TextUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.jindex.IndexedClass;
@@ -19,8 +20,8 @@ import java.util.List;
 public class FindImplementationsPopup extends BaseListPopup<FindImplementationsPopup.InternalListItem> {
 
     private final JList<InternalListItem> implementationsList = new JList<>(new DefaultListModel<>());
-    private Component currentHeaderComponent;
     {
+        implementationsList.setLayout(new FlowLayout(FlowLayout.CENTER));
         implementationsList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -30,14 +31,23 @@ public class FindImplementationsPopup extends BaseListPopup<FindImplementationsP
             }
         });
     }
+    private Component oldCenterComponent;
+    private Component currentHeaderComponent;
 
     public FindImplementationsPopup(Window owner) {
         super(owner);
+        setShowWhenEmpty(true);
         setList(this.implementationsList);
         setMinimumListWidth(400);
         addKeyEnterListener(InternalListItem::onAction);
 
         ((JPanel) getContentPane()).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY.darker()));
+    }
+
+    @Override
+    public void setItems(List<? extends InternalListItem> internalListItems) {
+        updateEmptyState(internalListItems.isEmpty());
+        super.setItems(internalListItems);
     }
 
     public void setItems(IndexedClass indexedClass) {
@@ -48,6 +58,25 @@ public class FindImplementationsPopup extends BaseListPopup<FindImplementationsP
     public void setItems(IndexedMethod indexedMethod) {
         updateHeader(indexedMethod);
         setItems(Arrays.stream(indexedMethod.findImplementations()).map(MethodListItem::new).toList());
+    }
+
+    private void updateEmptyState(boolean empty) {
+        if (this.oldCenterComponent != null && empty)
+            return;
+        if (this.oldCenterComponent != null) {
+            remove(((BorderLayout) getRootPane().getContentPane().getLayout()).getLayoutComponent(BorderLayout.CENTER));
+            add(this.oldCenterComponent, BorderLayout.CENTER);
+            this.oldCenterComponent = null;
+        } else if (empty) {
+            var label = new JLabel("<html><span style=\"color:#E05555\">No implementations found</span></html>");
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            label.setMinimumSize(new Dimension(50, 5));
+            label.setFont(AbstractCodeViewPanel.JETBRAINS_MONO_FONT.deriveFont(13f));
+            label.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7));
+            this.oldCenterComponent = ((BorderLayout) getRootPane().getContentPane().getLayout()).getLayoutComponent(BorderLayout.CENTER);
+            remove(this.oldCenterComponent);
+            add(label, BorderLayout.CENTER);
+        }
     }
 
     private void updateHeader(Object reference) {
@@ -94,7 +123,7 @@ public class FindImplementationsPopup extends BaseListPopup<FindImplementationsP
             default -> throw new IllegalArgumentException();
         }
         var textBox = new JPanel(new GridBagLayout());
-        textBox.setBorder(BorderFactory.createEmptyBorder(0, 0,5, 0));
+        textBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         textBox.add(UIUtils.horizontalLayout(headerTextParts.toArray(new JComponent[0])));
 
         header.add(textBox, BorderLayout.NORTH);

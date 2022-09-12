@@ -76,6 +76,7 @@ public class CodeView implements IEditorPanel {
     public static String readCode(Path path) {
         try {
             String code = Files.readString(path);
+            code = code.replace("\r\n", "\n");
             code = StringUtils.removeTrailing(code, "\n");
             return code;
         } catch (IOException e) {

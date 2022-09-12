@@ -22,6 +22,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
     }
 
+    private boolean showWhenEmpty;
     private JList<ITEM> list;
     private Component invoker;
     private int minimumListWidth = 200;
@@ -49,7 +50,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     public void show(Component invoker, int x, int y, Alignment alignment) {
         if (!(invoker instanceof JTextComponent))
             throw new IllegalArgumentException("invoker must be a JTextComponent");
-        if (this.list.getModel().getSize() == 0)
+        if (!this.showWhenEmpty && this.list.getModel().getSize() == 0)
             return;
 
         super.show(invoker, x, y, alignment);
@@ -134,6 +135,10 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
 
     public void addKeyEnterListener(Consumer<ITEM> r) {
         this.enterKeyListeners.add(r);
+    }
+
+    public void setShowWhenEmpty(boolean showWhenEmpty) {
+        this.showWhenEmpty = showWhenEmpty;
     }
 
     private void runEnterKeyListeners() {

@@ -275,6 +275,7 @@ public class ChunkGridWindow extends JFrame {
             addComponentListener(new ComponentAdapter() {
                 @Override
                 public void componentResized(ComponentEvent e) {
+                    setChunkRenderSize(ChunkGridPanel.this.chunkRenderSize);
                     updateGridSize();
                 }
             });
@@ -324,19 +325,16 @@ public class ChunkGridWindow extends JFrame {
                 public void mouseWheelMoved(MouseWheelEvent e) {
                     int wheelRotation = e.getWheelRotation();
 
-                    ChunkGridPanel.this.chunkRenderSize = Math.max(1, ChunkGridPanel.this.chunkRenderSize - wheelRotation);
+                    var cellX = e.getX() / ChunkGridPanel.this.chunkRenderSize;
+                    var cellY = e.getY() / ChunkGridPanel.this.chunkRenderSize;
+
+                    setChunkRenderSize(ChunkGridPanel.this.chunkRenderSize - wheelRotation);
                     updateGridSize();
+
+                    var changeX = (cellX - e.getX() / ChunkGridPanel.this.chunkRenderSize);
+                    var changeZ = (cellY - e.getY() / ChunkGridPanel.this.chunkRenderSize);
+                    chunkGridRequestInfo.moveTo(chunkGridRequestInfo.getMinChunkX() + changeX, chunkGridRequestInfo.getMinChunkZ() + changeZ);
                     updateCoordinateTextFields(false);
-                }
-
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    requestFocus();
-
-                    if (!SwingUtilities.isLeftMouseButton(e) || !new Rectangle(getWidth() - 22, 2, 20, 20).contains(e.getPoint()))
-                        return;
-
-                    ChunkGridWindow.this.toggleOverlayMode();
                 }
             };
 
@@ -398,6 +396,12 @@ public class ChunkGridWindow extends JFrame {
             );
 
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(this.chunkGridRequestInfo));
+        }
+
+        private void setChunkRenderSize(int newChunkRenderSize) {
+            newChunkRenderSize = Math.min(getWidth(), Math.min(getHeight(), newChunkRenderSize));
+            newChunkRenderSize = Math.max(1, newChunkRenderSize);
+            this.chunkRenderSize = newChunkRenderSize;
         }
 
         @Override

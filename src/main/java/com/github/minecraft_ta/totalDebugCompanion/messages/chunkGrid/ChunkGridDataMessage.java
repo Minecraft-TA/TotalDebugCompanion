@@ -10,20 +10,25 @@ import java.util.Map;
 public class ChunkGridDataMessage extends AbstractMessageIncoming {
 
     private ChunkGridRequestInfo requestInfo;
-    private Map<Long, Byte> stateMap;
+    private Map<Integer, Map<Integer, Byte>> stateMap;
 
     @Override
     public void read(ByteBufferInputStream messageStream) {
         this.requestInfo = ChunkGridRequestInfo.fromBytes(messageStream);
         int count = messageStream.readInt();
 
-        this.stateMap = new HashMap<>();
+        var sizeEstimate = (int) Math.sqrt(count);
+        this.stateMap = new HashMap<>(sizeEstimate);
         for (int i = 0; i < count; i++) {
-            this.stateMap.put(messageStream.readLong(), messageStream.readByte());
+            var encodedPos = messageStream.readLong();
+            int x = (int) (encodedPos >> 32);
+            int z = (int) (encodedPos);
+            var state = messageStream.readByte();
+            this.stateMap.computeIfAbsent(x, (k) -> new HashMap<>(sizeEstimate)).putIfAbsent(z, state);
         }
     }
 
-    public Map<Long, Byte> getStateMap() {
+    public Map<Integer, Map<Integer, Byte>> getStateMap() {
         return this.stateMap;
     }
 }

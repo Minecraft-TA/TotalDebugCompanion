@@ -14,8 +14,8 @@ import com.github.minecraft_ta.totalDebugCompanion.util.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -130,7 +130,7 @@ public class ChunkGridWindow extends JFrame {
         gridStyleComboBox.setPreferredSize(new Dimension(200, gridStyleComboBox.getPreferredSize().height));
         gridStyleComboBox.setMaximumSize(new Dimension(250, gridStyleComboBox.getPreferredSize().height));
         gridStyleComboBox.setSelectedItem(this.chunkGridPanel.gridStyle);
-        gridStyleComboBox.addActionListener(e -> this.chunkGridPanel.gridStyle = (GridStyle) gridStyleComboBox.getSelectedItem());
+        gridStyleComboBox.addActionListener(e -> this.chunkGridPanel.setGridStyle((GridStyle) gridStyleComboBox.getSelectedItem()));
         var followPlayerCheckBox = new JCheckBox("Follow player");
         followPlayerCheckBox.addItemListener(e -> {
             this.chunkXTextField.setEnabled(e.getStateChange() == ItemEvent.DESELECTED);
@@ -265,8 +265,9 @@ public class ChunkGridWindow extends JFrame {
         private int chunkRenderSize = 20;
 
         private final ChunkGridRequestInfo chunkGridRequestInfo = new ChunkGridRequestInfo(0, 0, 21, 21, 0);
-        private Map<Long, Byte> stateMap;
+        private Map<Integer, Map<Integer, Byte>> stateMap;
         private GridStyle gridStyle = GridStyle.CHECKER_BOARD;
+        private BufferedImage cachedRenderBackground;
 
         public ChunkGridPanel() {
             setMinimumSize(new Dimension(100, 100));
@@ -276,7 +277,6 @@ public class ChunkGridWindow extends JFrame {
                 @Override
                 public void componentResized(ComponentEvent e) {
                     setChunkRenderSize(ChunkGridPanel.this.chunkRenderSize);
-                    updateGridSize();
                 }
             });
 
@@ -329,7 +329,6 @@ public class ChunkGridWindow extends JFrame {
                     var cellY = e.getY() / ChunkGridPanel.this.chunkRenderSize;
 
                     setChunkRenderSize(ChunkGridPanel.this.chunkRenderSize - wheelRotation);
-                    updateGridSize();
 
                     var changeX = (cellX - e.getX() / ChunkGridPanel.this.chunkRenderSize);
                     var changeZ = (cellY - e.getY() / ChunkGridPanel.this.chunkRenderSize);
@@ -386,6 +385,8 @@ public class ChunkGridWindow extends JFrame {
                 SwingUtilities.invokeLater(this::repaint);
             });
 
+            generateCachedBackground();
+
             SwingUtilities.invokeLater(this::requestFocus);
         }
 
@@ -396,12 +397,68 @@ public class ChunkGridWindow extends JFrame {
             );
 
             CompanionApp.SERVER.getMessageProcessor().enqueueMessage(new ChunkGridRequestInfoUpdateMessage(this.chunkGridRequestInfo));
+
+            generateCachedBackground();
         }
 
         private void setChunkRenderSize(int newChunkRenderSize) {
             newChunkRenderSize = Math.min(getWidth(), Math.min(getHeight(), newChunkRenderSize));
             newChunkRenderSize = Math.max(1, newChunkRenderSize);
             this.chunkRenderSize = newChunkRenderSize;
+
+            updateGridSize();
+        }
+
+        private void generateCachedBackground() {
+            var width = this.chunkGridRequestInfo.getWidth();
+            var height = this.chunkGridRequestInfo.getHeight();
+            this.cachedRenderBackground = new BufferedImage(this.chunkRenderSize * width, this.chunkRenderSize * height, BufferedImage.TYPE_INT_RGB);
+
+            var g = this.cachedRenderBackground.createGraphics();
+
+            if (this.gridStyle != GridStyle.CHECKER_BOARD || width <= 0 || height <= 0) {
+                g.setColor(getBackground());
+                g.fillRect(0, 0, this.cachedRenderBackground.getWidth(), this.cachedRenderBackground.getHeight());
+                g.dispose();
+                return;
+            }
+
+            var subWidth = (int) Math.sqrt(width);
+            var subHeight = (int) Math.sqrt(height);
+            for (int x = 0; x < subWidth; x++) {
+                for (int z = 0; z < subHeight; z++) {
+                    var renderX = x * this.chunkRenderSize;
+                    var renderZ = z * this.chunkRenderSize;
+                    g.setPaint(getChunkColor(x, z, (byte) 0, renderX, renderZ));
+                    g.fillRect(renderX, renderZ, this.chunkRenderSize, this.chunkRenderSize);
+                }
+            }
+
+            // Exponentially enlarge the image by copying itself
+            while (subWidth < width || subHeight < height) {
+                var needsWidth = subWidth < width;
+                var needsHeight = subHeight < height;
+
+                var subImage = this.cachedRenderBackground.getSubimage(0, 0, subWidth * chunkRenderSize, subHeight * chunkRenderSize);
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        if (i == 0 && j == 0 || (!needsWidth && i != 0) || (!needsHeight && j != 0))
+                            continue;
+
+                        // This offsets the sub image to keep the tiling grid pattern
+                        var posX = i != 0 && subWidth % 2 != 0 ? --subWidth : subWidth;
+                        var posY = j != 0 && subHeight % 2 != 0 ? --subHeight  : subHeight;
+                        g.drawImage(subImage, null, i * posX * chunkRenderSize, j * posY * chunkRenderSize);
+                    }
+                }
+
+                if (needsWidth)
+                    subWidth = Math.min(width, subWidth * 2);
+                if (needsHeight)
+                    subHeight = Math.min(height, subHeight * 2);
+            }
+
+            g.dispose();
         }
 
         @Override
@@ -415,35 +472,23 @@ public class ChunkGridWindow extends JFrame {
             int outerPaddingX = (getWidth() - (this.chunkRenderSize * this.chunkGridRequestInfo.getWidth())) / 2;
             int outerPaddingY = (getHeight() - (this.chunkRenderSize * this.chunkGridRequestInfo.getHeight())) / 2;
 
-            for (int x = this.chunkGridRequestInfo.getMinChunkX(); x < this.chunkGridRequestInfo.getMaxChunkX(); x++) {
-                for (int z = this.chunkGridRequestInfo.getMinChunkZ(); z < this.chunkGridRequestInfo.getMaxChunkZ(); z++) {
-                    long posLong = (long) x << 32 | (z & 0xffffffffL);
+            g.drawImage(this.cachedRenderBackground, null, outerPaddingX, outerPaddingY);
 
-                    byte b = this.stateMap.getOrDefault(posLong, (byte) 0);
-                    if (b == 0 && this.gridStyle != GridStyle.CHECKER_BOARD)
+            for (int x = this.chunkGridRequestInfo.getMinChunkX(); x < this.chunkGridRequestInfo.getMaxChunkX(); x++) {
+                var zAxisMap = this.stateMap.get(x);
+                if (zAxisMap == null)
+                    continue;
+
+                for (int z = this.chunkGridRequestInfo.getMinChunkZ(); z < this.chunkGridRequestInfo.getMaxChunkZ(); z++) {
+                    var state = zAxisMap.getOrDefault(z, (byte) 0);
+                    if (state == 0)
                         continue;
 
                     int renderX = this.chunkRenderSize * (x - this.chunkGridRequestInfo.getMinChunkX()) + outerPaddingX;
                     int renderZ = this.chunkRenderSize * (z - this.chunkGridRequestInfo.getMinChunkZ()) + outerPaddingY;
 
-                    var oldG = g;
-                    g = (Graphics2D) g.create();
-
-                    if (this.gridStyle == GridStyle.GRADIENT) {
-                        g.setPaint(new GradientPaint(0, 0, COLORS[b * 2 + 1], this.chunkRenderSize, this.chunkRenderSize, COLORS[b * 2]));
-                        g.setTransform(AffineTransform.getTranslateInstance(
-                                renderX,
-                                renderZ
-                        ));
-                        renderX = 0;
-                        renderZ = 0;
-                    } else {
-                        g.setColor(COLORS[this.gridStyle == GridStyle.CHECKER_BOARD && (x % 2 == 0) == (z % 2 == 0) ? (b * 2) + 1 : (b * 2)]);
-                    }
-
+                    g.setPaint(getChunkColor(x, z, state, renderX, renderZ));
                     g.fillRect(renderX, renderZ, this.chunkRenderSize, this.chunkRenderSize);
-                    g.dispose();
-                    g = oldG;
                 }
             }
 
@@ -486,6 +531,20 @@ public class ChunkGridWindow extends JFrame {
 
                 Icons.OVERLAY_MODE.paintIcon(this, g, getWidth() - 20, 4);
             }
+        }
+
+        private Paint getChunkColor(int chunkX, int chunkZ, byte state, int renderX, int renderZ) {
+            if (this.gridStyle == GridStyle.GRADIENT) {
+                return new GradientPaint(renderX, renderZ, COLORS[state * 2 + 1], renderX + this.chunkRenderSize, renderZ + this.chunkRenderSize, COLORS[state * 2]);
+            } else {
+                return COLORS[this.gridStyle == GridStyle.CHECKER_BOARD && (chunkX % 2 == 0) == (chunkZ % 2 == 0) ? (state * 2) + 1 : (state * 2)];
+            }
+        }
+
+        public void setGridStyle(GridStyle gridStyle) {
+            this.gridStyle = gridStyle;
+
+            generateCachedBackground();
         }
     }
 }

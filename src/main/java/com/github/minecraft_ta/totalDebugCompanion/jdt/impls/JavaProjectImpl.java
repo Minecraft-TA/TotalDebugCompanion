@@ -63,6 +63,11 @@ public class JavaProjectImpl extends JavaProject {
     }
 
     @Override
+    public IClasspathEntry[] getResolvedClasspath() throws JavaModelException {
+        return new IClasspathEntry[0];
+    }
+
+    @Override
     public IEclipsePreferences getEclipsePreferences() {
         return null;
     }

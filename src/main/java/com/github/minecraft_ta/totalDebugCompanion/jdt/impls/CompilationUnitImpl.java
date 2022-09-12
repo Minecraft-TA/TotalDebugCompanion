@@ -19,7 +19,7 @@ public class CompilationUnitImpl extends CompilationUnit {
     private final IBuffer buffer;
 
     public CompilationUnitImpl(String name, String contents) {
-        super(JDTHacks.createPackageFragment(extractPackageName(contents)), name, DefaultWorkingCopyOwner.PRIMARY);
+        super(JDTHacks.createPackageFragment(extractPackageName(contents)), extractPackageName(contents) + "." + name, DefaultWorkingCopyOwner.PRIMARY);
         this.buffer = new BufferImpl(contents);
         //Force some model updates
         bufferChanged(new BufferChangedEvent(this.buffer, 0, 0, ""));

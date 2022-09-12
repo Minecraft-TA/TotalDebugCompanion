@@ -31,13 +31,13 @@ public class JDTHacks {
     static {
         try {
             long t = System.nanoTime();
-            System.out.println("Starting init hack");
-            init();
-            System.out.println("Init hack too: " + (System.nanoTime() - t) / 1_000_000.0);
-
             var theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
             theUnsafe.setAccessible(true);
             UNSAFE = (Unsafe) theUnsafe.get(null);
+
+            System.out.println("Starting init hack");
+            init();
+            System.out.println("Init hack too: " + (System.nanoTime() - t) / 1_000_000.0);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -109,13 +109,17 @@ public class JDTHacks {
 
     private static void init() throws Throwable {
         //Set global instance
-        new ResourcesPlugin();
         new JavaCore();
 
         //bundleContext
         var field = InternalPlatform.class.getDeclaredField("context");
         field.setAccessible(true);
         field.set(InternalPlatform.getDefault(), new BundleContextImpl());
+
+        // plugin
+        field = ResourcesPlugin.class.getDeclaredField("plugin");
+        field.setAccessible(true);
+        field.set(null, new ResourcesPlugin());
 
         //bundle
         field = ResourcesPlugin.class.getSuperclass().getDeclaredField("bundle");
@@ -171,9 +175,13 @@ public class JDTHacks {
         });
 
         //workspace
-        field = ResourcesPlugin.class.getDeclaredField("workspace");
+        var instance = UNSAFE.allocateInstance(Class.forName("org.eclipse.core.resources.ResourcesPlugin$WorkspaceInitCustomizer"));
+        field = instance.getClass().getDeclaredField("workspace");
         field.setAccessible(true);
-        field.set(null, new Workspace());
+        field.set(instance, new Workspace());
+        field = ResourcesPlugin.class.getDeclaredField("workspaceInitCustomizer");
+        field.setAccessible(true);
+        field.set(ResourcesPlugin.getPlugin(), instance);
 
         CompletionEngine.DEBUG = false;
     }

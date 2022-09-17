@@ -3,7 +3,9 @@ package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
+import com.github.minecraft_ta.totalDebugCompanion.model.ItemScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
+import com.github.minecraft_ta.totalDebugCompanion.model.TileEntityScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconTextField;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.util.DocumentChangeListener;
@@ -20,7 +22,7 @@ import java.util.function.Supplier;
 
 public class CreateScriptWindow extends JFrame {
 
-    public CreateScriptWindow(EditorTabs editorTabs) {
+    public CreateScriptWindow(EditorTabs editorTabs, MainWindow.ScriptType scriptType) {
         var header = new JPanel();
         header.add(new JLabel("New Script"));
 
@@ -37,7 +39,12 @@ public class CreateScriptWindow extends JFrame {
         textField.addActionListener((e) -> {
             if (!setIconAndVerify.get())
                 return;
-            editorTabs.openEditorTab(new ScriptView(textField.getText()));
+
+            switch (scriptType) {
+                case NORMAL ->  editorTabs.openEditorTab(new ScriptView(textField.getText()));
+                case TILE_ENTITY -> editorTabs.openEditorTab(new TileEntityScriptView(textField.getText()));
+                case ITEM -> editorTabs.openEditorTab(new ItemScriptView(textField.getText()));
+            }
             dispose();
         });
         textField.addKeyListener(new KeyAdapter() {

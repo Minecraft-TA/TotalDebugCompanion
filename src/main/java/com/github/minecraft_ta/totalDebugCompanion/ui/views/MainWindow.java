@@ -43,11 +43,13 @@ public class MainWindow extends JFrame implements AWTEventListener {
                     var button = f.get(divider);
                     var method = button.getClass().getSuperclass().getDeclaredMethod("setArrowWidth", int.class);
                     method.invoke(button, 10);
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                }
             };
             setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("leftButton"));
             setButtonSize.accept(divider.getClass().getSuperclass().getDeclaredField("rightButton"));
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
         getContentPane().add(root);
 
@@ -70,9 +72,21 @@ public class MainWindow extends JFrame implements AWTEventListener {
         scriptMenu.add(new AbstractAction("New Script", Icons.JAVA_FILE) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                var window = new CreateScriptWindow(editorTabs);
-                window.setVisible(true);
-                UIUtils.centerJFrame(window);
+                createScriptWindow(ScriptType.NORMAL);
+            }
+        });
+
+        scriptMenu.add(new AbstractAction("Tile Entity Script", Icons.JAVA_FILE) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createScriptWindow(ScriptType.TILE_ENTITY);
+            }
+        });
+
+        scriptMenu.add(new AbstractAction("Item Script", Icons.JAVA_FILE) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createScriptWindow(ScriptType.ITEM);
             }
         });
 
@@ -84,6 +98,18 @@ public class MainWindow extends JFrame implements AWTEventListener {
         setTitle("TotalDebugCompanion");
 
         Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.KEY_EVENT_MASK);
+    }
+
+    private void createScriptWindow(ScriptType type) {
+        var window = new CreateScriptWindow(editorTabs, type);
+        window.setVisible(true);
+        UIUtils.centerJFrame(window);
+    }
+
+    enum ScriptType {
+        NORMAL,
+        TILE_ENTITY,
+        ITEM
     }
 
     @Override

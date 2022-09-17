@@ -1,7 +1,6 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.components.editors;
 
 import com.formdev.flatlaf.extras.components.FlatComboBox;
-import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
 import com.github.minecraft_ta.totalDebugCompanion.messages.codeView.DecompileOrOpenMessage;
@@ -9,6 +8,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.packetLogger.*;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.FlatIconButton;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.util.Pair;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -290,14 +290,14 @@ public class PacketLoggerViewPanel extends JPanel {
             String value = (String) table.getValueAt(i, 0);
             Pair<Integer, Integer> packetData = packets.remove(value);
             if (packetData != null) {
-                table.setValueAt(packetData.a, i, 1);
-                table.setValueAt(new ByteWrapper(packetData.b), i, 2);
+                table.setValueAt(packetData.a(), i, 1);
+                table.setValueAt(new ByteWrapper(packetData.b()), i, 2);
             }
         }
 
         //Adds any new packets to the table
         for (Map.Entry<String, Pair<Integer, Integer>> entry : packets.entrySet()) {
-            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue().a, new ByteWrapper(entry.getValue().b)});
+            ((DefaultTableModel) table.getModel()).addRow(new Object[]{entry.getKey(), entry.getValue().a(), new ByteWrapper(entry.getValue().b())});
         }
     }
 

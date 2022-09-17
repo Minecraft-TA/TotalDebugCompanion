@@ -100,6 +100,7 @@ public class ScriptPanel extends AbstractCodeViewPanel {
     private CustomCompletionRequestor completionRequestor;
     private boolean didTypeBeforeCaretMove;
     private int lastSavedVersion = -1;
+    private int lastCaretPos;
 
     public ScriptPanel(ScriptView scriptView) {
         super(scriptView.getPath().toString(), scriptView.getTitle().replace(".java", ""));
@@ -238,6 +239,11 @@ public class ScriptPanel extends AbstractCodeViewPanel {
 
     private void setupAutocompletion() {
         this.editorPane.getCaret().addChangeListener(e -> {
+            var caretPos = this.editorPane.getCaretPosition();
+            if (caretPos == this.lastCaretPos)
+                return;
+            this.lastCaretPos = caretPos;
+
             if (this.completionRequestor != null)
                 this.completionRequestor.setCanceled(true);
 
@@ -338,7 +344,12 @@ public class ScriptPanel extends AbstractCodeViewPanel {
         CompletableFuture.runAsync(() -> {
             try {
                 unit.codeComplete(this.editorPane.getCaretPosition(), newRequestor, newRequestor);
-            } catch (OperationCanceledException ignored) {} catch (Throwable e) {
+            } catch (OperationCanceledException ignored) {} catch (RuntimeException e) {
+                if (e.getCause() instanceof OperationCanceledException)
+                    return;
+
+                e.printStackTrace();
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         });

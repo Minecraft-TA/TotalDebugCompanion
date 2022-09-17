@@ -25,6 +25,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     private boolean showWhenEmpty;
     private JList<ITEM> list;
     private Component invoker;
+    private int maximumListWidth = 600;
     private int minimumListWidth = 200;
     private int boundXPos = -1;
 
@@ -114,7 +115,7 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
         var longestItemLength = items.isEmpty() ? 0 : this.list.getFontMetrics(this.list.getFont()).stringWidth(
                 "9".repeat(items.stream().mapToInt(ListItem::getLabelLength).max().getAsInt())
         );
-        var preferredSize = new Dimension(longestItemLength + 35, Math.min(this.minimumListWidth, this.list.getPreferredSize().height));
+        var preferredSize = new Dimension(Math.min(this.maximumListWidth, longestItemLength) + 35, Math.min(this.minimumListWidth, this.list.getPreferredSize().height));
         this.scrollPane.setPreferredSize(preferredSize);
         setMinimumSize(new Dimension(this.minimumListWidth, 20));
         pack();
@@ -127,6 +128,10 @@ public class BaseListPopup<ITEM extends BaseListPopup.ListItem> extends BasePopu
     @Override
     public void setFont(Font f) {
         this.list.setFont(f);
+    }
+
+    public void setMaximumListWidth(int maximumListWidth) {
+        this.maximumListWidth = maximumListWidth;
     }
 
     public void setMinimumListWidth(int minimumListWidth) {

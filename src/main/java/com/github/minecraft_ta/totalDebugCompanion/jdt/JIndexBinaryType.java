@@ -17,6 +17,14 @@ public class JIndexBinaryType implements IBinaryTypeStub {
         this.indexedClass = indexedClass;
     }
 
+    public IndexedClass[] getMemberClasses() {
+        return this.indexedClass.getMemberClasses();
+    }
+
+    public String getFullyQualifiedName() {
+        return this.indexedClass.getNameWithPackageDot();
+    }
+
     @Override
     public IBinaryAnnotation[] getAnnotations() {
         return ITypeAnnotationWalker.NO_ANNOTATIONS;
@@ -29,6 +37,10 @@ public class JIndexBinaryType implements IBinaryTypeStub {
 
     @Override
     public char[] getEnclosingMethod() {
+        //TODO: Handle this better? `Blocks.` crashes otherwise. "scala.tools.nsc.backend.jvm.GenASM$newNormal$$anonfun$elimUnreachableBlocks$4$$anonfun$apply$28"
+        if (this.indexedClass.getEnclosingClass() == null)
+            return null;
+
         var desc = this.indexedClass.getEnclosingMethodNameAndDesc();
         return desc == null ? null : desc.toCharArray();
     }

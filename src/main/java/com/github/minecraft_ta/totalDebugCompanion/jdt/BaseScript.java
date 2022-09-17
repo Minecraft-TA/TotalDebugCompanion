@@ -1,7 +1,7 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt;
 
-import com.github.javaparser.utils.Pair;
 import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
+import com.github.minecraft_ta.totalDebugCompanion.util.Pair;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -184,7 +184,7 @@ public class BaseScript {
 
     public static String mergeWithNormalScript(String scriptText) {
         var pair = extractImports(getText());
-        return pair.a + scriptText + pair.b;
+        return pair.a() + scriptText + pair.b();
     }
 
     public static void writeToFileIfNotExists() {

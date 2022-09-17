@@ -14,6 +14,11 @@ import java.util.Map;
 public interface IProjectStub extends IProject {
 
     @Override
+    default String getDefaultLineSeparator() throws CoreException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     default void build(int kind, String builderName, Map<String, String> args, IProgressMonitor monitor) throws CoreException {
 
     }

@@ -4,22 +4,21 @@ import com.github.minecraft_ta.totalDebugCompanion.jdt.impls.ClassFileImpl;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.SearchEverywherePopup;
 import com.github.minecraft_ta.totalDebugCompanion.util.CodeUtils;
 import com.github.tth05.jindex.IndexedClass;
-import org.eclipse.jdt.core.IOrdinaryClassFile;
-import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeParameter;
-import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.core.JavaElement;
 import org.eclipse.jdt.internal.core.ResolvedBinaryType;
 import org.eclipse.jdt.internal.core.TypeParameter;
 import org.eclipse.jdt.internal.core.TypeParameterElementInfo;
 
+import java.util.Arrays;
+
 public class JIndexResolvedBinaryType extends ResolvedBinaryType {
 
     private final JIndexBinaryType binaryType;
 
     public JIndexResolvedBinaryType(IndexedClass indexedClass) {
-        super(null, indexedClass.getSourceName(), indexedClass.getNameWithPackage());
+        super(null, indexedClass.getName(), indexedClass.getNameWithPackage());
         this.binaryType = new JIndexBinaryType(indexedClass);
         setParent(new ClassFileImpl(this, indexedClass));
     }
@@ -82,6 +81,63 @@ public class JIndexResolvedBinaryType extends ResolvedBinaryType {
         var typeStr = new String(enclosingTypeName);
         var parts = CodeUtils.splitTypeName(typeStr);
         return new JIndexResolvedBinaryType(SearchEverywherePopup.CLASS_INDEX.findClass(parts[0], parts[1]));
+    }
+
+    @Override
+    public IMethod[] getMethods() {
+        var methods = this.binaryType.getMethods();
+        var resolvedMethods = new IMethod[methods.length];
+
+        var invalid = 0;
+        for (int i = 0; i < methods.length; i++) {
+            try {
+                resolvedMethods[i] = new JIndexResolvedBinaryMethod((JIndexBinaryMethod) methods[i]);
+            } catch (IllegalArgumentException e) {
+                invalid++;
+            }
+        }
+
+        if (invalid > 0) {
+            var newMethods = new IMethod[methods.length - invalid];
+            var index = 0;
+            for (var method : resolvedMethods) {
+                if (method != null)
+                    newMethods[index++] = method;
+            }
+            return newMethods;
+        }
+
+        return resolvedMethods;
+    }
+
+    @Override
+    public IType getType(String typeName) {
+        var types = getTypes();
+        if (types == null)
+            return null;
+
+        for (IType type : types) {
+            var name = type.getElementName();
+            var idx = name.lastIndexOf('$');
+            if (idx == -1 && name.equals(typeName))
+                return type;
+            else if (idx != -1 && name.regionMatches(idx + 1, typeName, 0, typeName.length()))
+                return type;
+        }
+        return null;
+    }
+
+    @Override
+    public IType[] getTypes() {
+        var memberClasses = this.binaryType.getMemberClasses();
+        if (memberClasses.length == 0)
+            return null;
+        return Arrays.stream(memberClasses).map(JIndexResolvedBinaryType::new).toArray(IType[]::new);
+    }
+
+    @Override
+    public String getFullyQualifiedName() {
+        return this.binaryType.getFullyQualifiedName();
     }
 
     @Override

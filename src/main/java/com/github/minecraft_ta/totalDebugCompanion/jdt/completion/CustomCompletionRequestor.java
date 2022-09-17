@@ -57,7 +57,13 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     }
 
     private List<CompletionItem> convertProposals() {
-        var items = proposals.stream().map(this::toCompletionItem).filter(Objects::nonNull).sorted(new CompletionItemComparator()).limit(50).collect(Collectors.toList());
+        var items = proposals.stream()
+                .sorted(new CompletionProposalComparator())
+                .limit(50)
+                .map(this::toCompletionItem)
+                .filter(Objects::nonNull)
+                .sorted(new CompletionItemComparator())
+                .collect(Collectors.toList());
 
         prependLiveTemplates(items);
         items.addAll(SnippetCompletionProposalProvider.getSnippets(this.unit, this));
@@ -258,13 +264,16 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
     private static final char[][] TYPE_FILTERS = Arrays.stream(new String[]{
             "com.sun",
             "sun.",
+            "scala",
+            "org.omg",
             "org.jcp",
             "org.omg",
             "org.jline",
             "oshi",
             "javassist.",
             "com.ibm",
-            "com.jcraft"
+            "com.jcraft",
+            "akka"
     }).map(String::toCharArray).toArray(char[][]::new);
 
     protected boolean isTypeFiltered(CompletionProposal proposal) {
@@ -285,45 +294,35 @@ public class CustomCompletionRequestor extends CompletionRequestor implements IP
      * org.eclipse.jdt.ui.text.java.CompletionProposalCollector.getDeclaringType(CompletionProposal)
      */
     protected final char[] getDeclaringType(CompletionProposal proposal) {
-        switch (proposal.getKind()) {
-            case CompletionProposal.METHOD_DECLARATION:
-            case CompletionProposal.METHOD_NAME_REFERENCE:
-            case CompletionProposal.JAVADOC_METHOD_REF:
-            case CompletionProposal.METHOD_REF:
-            case CompletionProposal.CONSTRUCTOR_INVOCATION:
-            case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-            case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
-            case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
-            case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-            case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-            case CompletionProposal.FIELD_REF:
-            case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
-            case CompletionProposal.JAVADOC_FIELD_REF:
-            case CompletionProposal.JAVADOC_VALUE_REF:
+        var ar = switch (proposal.getKind()) {
+            case CompletionProposal.METHOD_DECLARATION, CompletionProposal.METHOD_NAME_REFERENCE,
+                    CompletionProposal.JAVADOC_METHOD_REF, CompletionProposal.METHOD_REF,
+                    CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION,
+                    CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER, CompletionProposal.ANNOTATION_ATTRIBUTE_REF,
+                    CompletionProposal.POTENTIAL_METHOD_DECLARATION, CompletionProposal.ANONYMOUS_CLASS_DECLARATION,
+                    CompletionProposal.FIELD_REF, CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER,
+                    CompletionProposal.JAVADOC_FIELD_REF, CompletionProposal.JAVADOC_VALUE_REF -> {
                 char[] declaration = proposal.getDeclarationSignature();
                 // special methods may not have a declaring type: methods defined on arrays etc.
                 // Currently known: class literals don't have a declaring type - use Object
-                if (declaration == null) {
-                    return "java.lang.Object".toCharArray(); //$NON-NLS-1$
-                }
-                return Signature.toCharArray(declaration);
-            case CompletionProposal.PACKAGE_REF:
-                return proposal.getDeclarationSignature();
-            case CompletionProposal.JAVADOC_TYPE_REF:
-            case CompletionProposal.TYPE_REF:
-                return Signature.toCharArray(proposal.getSignature());
-            case CompletionProposal.LOCAL_VARIABLE_REF:
-            case CompletionProposal.VARIABLE_DECLARATION:
-            case CompletionProposal.KEYWORD:
-            case CompletionProposal.LABEL_REF:
-            case CompletionProposal.JAVADOC_BLOCK_TAG:
-            case CompletionProposal.JAVADOC_INLINE_TAG:
-            case CompletionProposal.JAVADOC_PARAM_REF:
-                return null;
-            default:
+                if (declaration == null)
+                    yield "java.lang.Object".toCharArray();
+                yield declaration;
+            }
+            case CompletionProposal.PACKAGE_REF -> proposal.getDeclarationSignature();
+            case CompletionProposal.JAVADOC_TYPE_REF, CompletionProposal.TYPE_REF -> proposal.getSignature();
+            case CompletionProposal.LOCAL_VARIABLE_REF, CompletionProposal.VARIABLE_DECLARATION, CompletionProposal.KEYWORD,
+                    CompletionProposal.LABEL_REF, CompletionProposal.JAVADOC_BLOCK_TAG, CompletionProposal.JAVADOC_INLINE_TAG,
+                    CompletionProposal.JAVADOC_PARAM_REF -> null;
+            default -> {
                 Assert.isTrue(false);
-                return null;
-        }
+                yield null;
+            }
+        };
+
+        if (ar == null)
+            return null;
+        return ar[ar.length - 1] == ';' ? CharOperation.subarray(ar, 1, ar.length - 1) : ar;
     }
 
     public CompletionContext getContext() {

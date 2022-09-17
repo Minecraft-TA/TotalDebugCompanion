@@ -1,11 +1,17 @@
 package com.github.minecraft_ta.totalDebugCompanion.jdt.stubs;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IAccessRule;
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
 
 public interface IClassPathEntryStub extends IClasspathEntry {
+
+    @Override
+    default IPath getExternalAnnotationPath(IProject project, boolean resolve) {
+        return null;
+    }
 
     @Override
     default boolean combineAccessRules() {

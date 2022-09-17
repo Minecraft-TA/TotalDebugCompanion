@@ -171,7 +171,9 @@ public class JDTHacks {
         field = JavaModelManager.class.getDeclaredField("indexManager");
         field.setAccessible(true);
         field.set(JavaModelManager.getJavaModelManager(), new IndexManager() {
-
+            {
+                super.reset();
+            }
         });
 
         //workspace

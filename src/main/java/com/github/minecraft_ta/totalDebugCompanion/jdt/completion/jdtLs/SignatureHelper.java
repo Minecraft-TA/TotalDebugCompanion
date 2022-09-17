@@ -33,7 +33,10 @@ public class SignatureHelper {
     public static String stripSignatureToFQN(String signature) throws IllegalArgumentException {
         signature = Signature.getTypeErasure(signature);
         signature = Signature.getElementType(signature);
-        return Signature.toString(signature);
+        var str = Signature.toString(signature);
+        if (str.endsWith("."))
+            str = str.substring(0, str.length() - 1);
+        return str;
     }
 
     public static String qualifySignature(final String signature, final IType context) {

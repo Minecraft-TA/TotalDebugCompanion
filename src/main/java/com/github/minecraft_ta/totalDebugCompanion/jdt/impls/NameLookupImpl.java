@@ -74,11 +74,11 @@ public class NameLookupImpl extends NameLookup {
             else
                 classes = Arrays.stream(indexedPackage.getClasses()).filter(c -> c.getName().equals(finalName)).toArray(IndexedClass[]::new);
         } else {
-            classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.MATCH_CASE_FIRST_CHAR_ONLY, 300));
+            classes = SearchEverywherePopup.CLASS_INDEX.findClasses(name, SearchOptions.with(SearchOptions.SearchMode.CONTAINS, SearchOptions.MatchMode.MATCH_CASE_FIRST_CHAR_ONLY, 5000));
         }
 
         for (IndexedClass foundClass : classes) {
-            if (!considerSecondaryTypes && foundClass.getName().lastIndexOf('$') != -1)
+            if (!considerSecondaryTypes && foundClass.getInnerClassType() != null)
                 continue;
 
             requestor.acceptType(new JIndexResolvedBinaryType(foundClass));

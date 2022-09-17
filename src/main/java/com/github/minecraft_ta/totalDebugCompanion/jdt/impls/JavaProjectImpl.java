@@ -39,7 +39,7 @@ public class JavaProjectImpl extends JavaProject {
 
     @Override
     public SearchableEnvironment newSearchableNameEnvironment(WorkingCopyOwner owner, boolean excludeTestCode) throws JavaModelException {
-        return new SearchableEnvironment(this, (WorkingCopyOwner) null, true);
+        return new SearchableEnvironmentImpl(this);
     }
 
     @Override

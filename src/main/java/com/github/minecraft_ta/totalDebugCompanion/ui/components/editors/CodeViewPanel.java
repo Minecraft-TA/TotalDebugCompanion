@@ -125,9 +125,11 @@ public class CodeViewPanel extends AbstractCodeViewPanel {
                             if (targetMethodName.equals(declaringClass.getName()))
                                 targetMethodName = "<init>";
 
-                            var targetDescriptor = CodeUtils.minimalizeMethodIdentifier(sr.getSignature());
+                            var targetDescriptor = CodeUtils.minimalizeMethodIdentifier(sr.getSignature(), false);
                             for (IndexedMethod method : declaringClass.getMethods()) {
-                                if (method.getName().equals(targetMethodName) && CodeUtils.minimalizeMethodIdentifier(method.getDescriptorString()).equals(targetDescriptor)) {
+                                var genericSig = method.getGenericSignatureString();
+                                if (method.getName().equals(targetMethodName) &&
+                                    CodeUtils.minimalizeMethodIdentifier(genericSig != null ? genericSig : method.getDescriptorString(), true).equals(targetDescriptor)) {
                                     FIND_IMPLEMENTATIONS_POPUP.setItems(method);
                                     FIND_IMPLEMENTATIONS_POPUP.show(editorPane, BasePopup.Alignment.BOTTOM_CENTER);
                                     return;

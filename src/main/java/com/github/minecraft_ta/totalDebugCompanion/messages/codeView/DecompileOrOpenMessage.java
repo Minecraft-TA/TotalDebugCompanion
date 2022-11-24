@@ -51,7 +51,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
     public void read(ByteBufferInputStream messageStream) {
         this.name = messageStream.readString();
         this.targetType = messageStream.readInt();
-        this.targetIdentifier = CodeUtils.minimalizeMethodIdentifier(messageStream.readString());
+        this.targetIdentifier = CodeUtils.minimalizeMethodIdentifier(messageStream.readString(), false);
     }
 
     public static void handle(DecompileOrOpenMessage message) {
@@ -111,7 +111,7 @@ public class DecompileOrOpenMessage extends AbstractMessage {
         return ((List<BodyDeclaration>) type.bodyDeclarations()).stream()
                 .filter(decl -> decl instanceof MethodDeclaration)
                 .map(decl -> (MethodDeclaration) decl)
-                .filter((m) -> removeCUNameFromIdentifier(CodeUtils.minimalizeMethodIdentifier(m.resolveBinding().getKey())).equals(message.targetIdentifier))
+                .filter((m) -> removeCUNameFromIdentifier(CodeUtils.minimalizeMethodIdentifier(m.resolveBinding().getKey(), false)).equals(message.targetIdentifier))
                 .findFirst();
     }
 

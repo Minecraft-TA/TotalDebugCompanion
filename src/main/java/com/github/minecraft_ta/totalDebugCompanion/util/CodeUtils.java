@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 public class CodeUtils {
 
-    private static final Pattern GENERIC_PATTERN = Pattern.compile("T\\w+;");
+    private static final Pattern GENERIC_PATTERN = Pattern.compile("T(\\w+);");
     private static final Pattern TYPE_PATTERN = Pattern.compile("[LQ][\\w/]*?/?([\\w$]+);");
 
     private static final SimpleAttributeSet KEYWORD_ATTRIBUTES = new SimpleAttributeSet();
@@ -108,7 +108,7 @@ public class CodeUtils {
      * @param key the original key
      * @return the fixed key
      */
-    public static String minimalizeMethodIdentifier(String key) {
+    public static String minimalizeMethodIdentifier(String key, boolean keepGenerics) {
         var builder = new StringBuilder(key);
 
         // Remove exception data
@@ -145,7 +145,7 @@ public class CodeUtils {
             builder.delete(genericIndex, endIndex);
         }
 
-        var result = GENERIC_PATTERN.matcher(builder.toString()).replaceAll("Ljava/lang/Object;");
+        var result = GENERIC_PATTERN.matcher(builder.toString()).replaceAll(keepGenerics ? "L$1;" : "Ljava/lang/Object;");
         result = TYPE_PATTERN.matcher(result).replaceAll("L$1;");
         return result;
     }

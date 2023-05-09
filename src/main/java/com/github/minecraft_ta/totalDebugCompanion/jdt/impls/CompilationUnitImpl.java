@@ -95,4 +95,9 @@ public class CompilationUnitImpl extends CompilationUnit {
 
         return "";
     }
+
+    @Override
+    public boolean ignoreOptionalProblems() {
+        return true;
+    }
 }

@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.tth05:jindex:0.0.43")
+    implementation("com.github.tth05:jindex:0.0.45")
     implementation("com.github.tth05:SCNet:d683b47")
 
     implementation('com.formdev:flatlaf:2.6')
@@ -47,6 +47,7 @@ runtime {
             'java.net.http',
             'java.xml',
             'jdk.unsupported',
+            'jdk.zipfs',
             'java.datatransfer'
     ]
 }

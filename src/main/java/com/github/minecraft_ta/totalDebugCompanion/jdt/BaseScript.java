@@ -15,51 +15,53 @@ public class BaseScript {
     private static final Pattern IMPORT_PATTERN = Pattern.compile("import\\s(.*?);");
 
     private static final String BASE_SCRIPT_IMPORTS = """
-            import java.io.StringWriter;
-            import java.util.Arrays;
-            import java.util.List;
-            import java.lang.reflect.*;
+            import cpw.mods.fml.common.FMLCommonHandler;
             import net.minecraft.entity.player.EntityPlayerMP;
             import net.minecraft.server.MinecraftServer;
-            import net.minecraft.util.text.TextComponentString;
+            import net.minecraft.util.ChatComponentText;
             import net.minecraft.world.World;
             import net.minecraft.world.WorldServer;
-            import net.minecraftforge.fml.common.FMLCommonHandler;
-            import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+            import net.minecraftforge.common.DimensionManager;
+            
+            import java.io.StringWriter;
+            import java.lang.reflect.Constructor;
+            import java.lang.reflect.Field;
+            import java.lang.reflect.Method;
+            import java.util.Arrays;
+            import java.util.List;
             """;
 
     //language=Java
     private static final String BASE_SCRIPT_TEXT = """
             abstract class BaseScript {
-                
                 /*
                 ---- MC stuff
                 */
-                               
+                        
                 public MinecraftServer getServer() {
                     return FMLCommonHandler.instance().getMinecraftServerInstance();
                 }
                         
                 public void sendToAllPlayers(String message) {
-                    getServerPlayers().forEach(p -> p.sendMessage(new TextComponentString(message)));
+                    getServerPlayers().forEach(p -> p.addChatMessage(new ChatComponentText(message)));
                 }
                         
                 public World getServerOverworld() {
-                    return getServer().getWorld(0);
+                    return DimensionManager.getWorld(0);
                 }
                         
                 public List<WorldServer> getServerWorlds() {
-                    return Arrays.asList(getServer().worlds);
+                    return Arrays.asList(getServer().worldServers);
                 }
                         
-            	public List<EntityPlayerMP> getServerPlayers() {
-            		return getServer().getPlayerList().getPlayers();
-            	}
-                
+                public List<EntityPlayerMP> getServerPlayers() {
+                    return getServer().getConfigurationManager().playerEntityList;
+                }
+                           \s
                 /*
                 ---- Reflection
                 */
-                
+                        
                 public static <T> T createInstance(Class<T> clazz, Object... args) {
                     try {
                         Constructor<T> ctor = clazz.getDeclaredConstructor(Arrays.stream(args).map(Object::getClass).toArray(Class[]::new));
@@ -69,7 +71,7 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-            
+                        
                 public static <T> T createInstance(Class<T> clazz, Class<?>[] argClasses, Object... args) {
                     try {
                         Constructor<T> ctor = clazz.getDeclaredConstructor(argClasses);
@@ -79,11 +81,11 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-            
+                        
                 public static <T> T invokeMethod(Object o, String methodName, Object... args) {
                     return invokeMethod(o, methodName, Arrays.stream(args).map(Object::getClass).toArray(Class[]::new), args);
                 }
-            
+                        
                 public static <T> T invokeMethod(Object o, String methodName, Class<?>[] argClasses, Object... args) {
                     try {
                         Method method = o.getClass().getDeclaredMethod(methodName, argClasses);
@@ -93,11 +95,11 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-                
+                        
                 public static <T> T invokeStaticMethod(Class<?> c, String methodName, Object... args) {
                     return  invokeStaticMethod(c, methodName, Arrays.stream(args).map(Object::getClass).toArray(Class[]::new), args);
                 }
-                	
+                        
                 public static <T> T invokeStaticMethod(Class<?> c, String methodName, Class<?>[] argClasses, Object... args) {
                     try {
                         Method method = c.getDeclaredMethod(methodName, argClasses);
@@ -107,7 +109,7 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-               
+                        
                 public static <T> T getFieldValue(Object o, String fieldName) {
                     Field f = findField(o.getClass(), fieldName);
                     f.setAccessible(true);
@@ -117,11 +119,11 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-            
+                        
                 public static void setField(Object o, String fieldName, Object value) {
                     setField(o.getClass(), o, fieldName, value);
                 }
-            
+                        
                 public static void setField(Class<?> clazz, Object o, String fieldName, Object value) {
                     try {
                         Field field = findField(clazz, fieldName);
@@ -131,7 +133,11 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-            
+                        
+                public static Field findField(Object o, String fieldName) {
+                    return findField(o.getClass(), fieldName);
+                }
+                        
                 public static Field findField(Class<?> clazz, String fieldName) {
                     Class<?> current = clazz;
                     while (current != null) {
@@ -141,10 +147,10 @@ public class BaseScript {
                             current = current.getSuperclass();
                         }
                     }
-            
+                        
                     throw new RuntimeException("Field not found: " + fieldName);
                 }
-            
+                        
                 public static void setStaticField(Class<?> c, String fieldName, Object value) {
                     try {
                         Field field = c.getDeclaredField(fieldName);
@@ -154,7 +160,7 @@ public class BaseScript {
                         throw new RuntimeException(e);
                     }
                 }
-                
+                           \s
                 /*
                 ---- Logging
                 */
@@ -170,8 +176,7 @@ public class BaseScript {
                 }
                         
                 public abstract void run() throws Throwable;
-            }
-            """.replace("    ", "\t");
+            }""".replace("    ", "\t");
 
     private static final String BASE_SCRIPT = BASE_SCRIPT_IMPORTS + BASE_SCRIPT_TEXT;
     private static final Path PATH = CompanionApp.getRootPath().resolve("scripts").resolve("BaseScript.java");

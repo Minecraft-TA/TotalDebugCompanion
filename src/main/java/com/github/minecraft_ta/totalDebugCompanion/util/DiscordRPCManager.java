@@ -17,6 +17,7 @@ import java.util.zip.ZipInputStream;
 public class DiscordRPCManager {
     private Core core;
     private Activity activity;
+    private String lastActivity = "";
     private boolean enabled = true;
 
     public DiscordRPCManager() {
@@ -122,9 +123,16 @@ public class DiscordRPCManager {
         updateActivity();
     }
 
-    public void setState(String state) {
+    public void setState(String state, boolean saveLastState) {
         if (!enabled) return;
+        if (saveLastState) this.lastActivity = state;
         activity.setState(state);
+        updateActivity();
+    }
+
+    public void loadLastState() {
+        if (!enabled) return;
+        activity.setState(lastActivity);
         updateActivity();
     }
 

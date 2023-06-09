@@ -41,7 +41,7 @@ public class MainWindow extends JFrame implements AWTEventListener {
             switch (selectedEditor) {
                 case ScriptView view -> {
                     String name = view.getPath().getFileName().toString();
-                    CompanionApp.DISCORD_RPC_MANAGER.setState("Editing " + name);
+                    CompanionApp.DISCORD_RPC_MANAGER.setState("Editing " + name, true);
                 }
                 case CodeView view -> {
                     String fullName = view.getPath().getFileName().toString();
@@ -49,10 +49,10 @@ public class MainWindow extends JFrame implements AWTEventListener {
                     String packageNameAndClassName = fullName.substring(0, lastDotIndex);
                     String[] parts = packageNameAndClassName.split("\\.");
                     String name = parts[parts.length - 1] + ".java";
-                    CompanionApp.DISCORD_RPC_MANAGER.setState("Reading " + name);
+                    CompanionApp.DISCORD_RPC_MANAGER.setState("Reading " + name, true);
                 }
-                case PacketLoggerView ignored -> CompanionApp.DISCORD_RPC_MANAGER.setState("Packet Logger");
-                case null, default -> CompanionApp.DISCORD_RPC_MANAGER.setState("");
+                case PacketLoggerView ignored -> CompanionApp.DISCORD_RPC_MANAGER.setState("Packet Logger", true);
+                case null, default -> CompanionApp.DISCORD_RPC_MANAGER.setState("", true);
             }
         });
 

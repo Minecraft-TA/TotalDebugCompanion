@@ -1,7 +1,10 @@
 package com.github.minecraft_ta.totalDebugCompanion.ui.views;
 
+import com.github.minecraft_ta.totalDebugCompanion.CompanionApp;
 import com.github.minecraft_ta.totalDebugCompanion.Icons;
+import com.github.minecraft_ta.totalDebugCompanion.model.CodeView;
 import com.github.minecraft_ta.totalDebugCompanion.model.PacketLoggerView;
+import com.github.minecraft_ta.totalDebugCompanion.model.ScriptView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.EditorTabs;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeView;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.treeView.FileTreeViewHeader;
@@ -31,6 +34,27 @@ public class MainWindow extends JFrame implements AWTEventListener {
         root.setDividerSize(10);
         root.setDividerLocation(350);
         root.setOneTouchExpandable(true);
+
+        this.editorTabs.getModel().addChangeListener(e -> {
+            var selectedEditor = this.editorTabs.getSelectedEditor();
+
+            switch (selectedEditor) {
+                case ScriptView view -> {
+                    String name = view.getPath().getFileName().toString();
+                    CompanionApp.DISCORD_RPC_MANAGER.setState("Editing " + name);
+                }
+                case CodeView view -> {
+                    String fullName = view.getPath().getFileName().toString();
+                    int lastDotIndex = fullName.lastIndexOf('.');
+                    String packageNameAndClassName = fullName.substring(0, lastDotIndex);
+                    String[] parts = packageNameAndClassName.split("\\.");
+                    String name = parts[parts.length - 1] + ".java";
+                    CompanionApp.DISCORD_RPC_MANAGER.setState("Reading " + name);
+                }
+                case PacketLoggerView ignored -> CompanionApp.DISCORD_RPC_MANAGER.setState("Packet Logger");
+                case null, default -> CompanionApp.DISCORD_RPC_MANAGER.setState("");
+            }
+        });
 
         try {
             var dividerField = root.getUI().getClass().getSuperclass().getDeclaredField("divider");

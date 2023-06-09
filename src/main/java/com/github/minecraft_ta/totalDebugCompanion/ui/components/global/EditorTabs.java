@@ -56,6 +56,7 @@ public class EditorTabs extends JTabbedPane {
     public CompletableFuture<Void> openEditorTab(IEditorPanel editorPanel) {
         var future = new CompletableFuture<Void>();
         SwingUtilities.invokeLater(() -> {
+            editors.add(editorPanel);
             Component component = editorPanel.getComponent();
             addTab(editorPanel.getTitle(), component);
             int index = indexOfComponent(component);
@@ -63,7 +64,6 @@ public class EditorTabs extends JTabbedPane {
             setTabComponentAt(index, new LabelWithButtonTabComponent(this, editorPanel.getIcon()));
             setSelectedIndex(index);
 
-            editors.add(editorPanel);
             future.complete(null);
         });
 
@@ -80,5 +80,12 @@ public class EditorTabs extends JTabbedPane {
 
         var tab = supplier.get();
         return openEditorTab(tab).thenApply(v -> tab);
+    }
+
+    public IEditorPanel getSelectedEditor() {
+        if (getSelectedIndex() == -1)
+            return null;
+
+        return editors.get(getSelectedIndex());
     }
 }

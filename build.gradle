@@ -22,6 +22,7 @@ dependencies {
     implementation('com.formdev:flatlaf-extras:2.6')
     implementation('com.fifesoft:rsyntaxtextarea:3.3.0')
     implementation('com.fifesoft:autocomplete:3.2.0')
+    implementation('com.github.JnCrMx:discord-game-sdk4j:v0.5.5')
 
     implementation("org.apache.commons:commons-compress:1.21")
     implementation('com.google.code.gson:gson:2.10')

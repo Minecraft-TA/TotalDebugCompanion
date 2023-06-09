@@ -18,6 +18,7 @@ import com.github.minecraft_ta.totalDebugCompanion.messages.script.StopScriptMes
 import com.github.minecraft_ta.totalDebugCompanion.messages.search.OpenSearchResultsMessage;
 import com.github.minecraft_ta.totalDebugCompanion.ui.components.global.SimpleMenuBarBorder;
 import com.github.minecraft_ta.totalDebugCompanion.ui.views.MainWindow;
+import com.github.minecraft_ta.totalDebugCompanion.util.DiscordRPCManager;
 import com.github.minecraft_ta.totalDebugCompanion.util.FileUtils;
 import com.github.minecraft_ta.totalDebugCompanion.util.UIUtils;
 import com.github.tth05.scnet.IConnectedListener;
@@ -41,6 +42,7 @@ import java.nio.file.Paths;
 public class CompanionApp {
 
     public static final Server SERVER = new Server();
+    public static final DiscordRPCManager DISCORD_RPC_MANAGER = new DiscordRPCManager();
     private static Path ROOT_PATH;
 
     public static void main(String[] args) {

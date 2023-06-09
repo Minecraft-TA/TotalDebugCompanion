@@ -52,6 +52,7 @@ public class DiscordRPCManager {
                 }
             }
         });
+        callbackThread.setDaemon(true);
         callbackThread.start();
     }
 

@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> **This repository has been merged into [TotalDebug](https://github.com/Minecraft-TA/TotalDebug).**
+> The source code and continued development now live in [TotalDebug's `companion/` directory](https://github.com/Minecraft-TA/TotalDebug/tree/1.21.1/companion). This repository is archived.
+
 # TotalDebug Companion
 
 A desktop source browser, Java scratchpad and debugger for [TotalDebug](https://github.com/Minecraft-TA/TotalDebug). Inspect the classes in your Minecraft instance, follow their references and experiment with the running game.
